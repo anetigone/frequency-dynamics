@@ -101,7 +101,7 @@ v=(XXᵀ)^−1X beta、e=(I−P_X)beta，则
 全部观察截面数值秩保持 C=8、projection 秩保持 K。
 不同配比改变了平方 encoder 位移；它不等价于统一的任务风险损害。
 完整配对统计、bootstrap 描述区间、两校准组及全部任务见
-[结果汇总](results/subspace_summary/findings.md)和 [JSON](results/subspace_summary/summary.json)。
+[结果汇总](../results/population/subspace_summary/findings.md)和 [JSON](../results/population/subspace_summary/summary.json)。
 
 对于完整正交坐标任务，sum_j ||P_X e_j||²=rank(X)。固定秩下总风险恒为 d−rank。
 结果说明保留方向和任务偏好的重分配，而不是空间维数减少或所有任务同时变差。
@@ -117,7 +117,7 @@ v=(XXᵀ)^−1X beta、e=(I−P_X)beta，则
 模型间匹配当前 B、W，批次和增强噪声共享，窗口为 1/8/64 步。
 预测来自总体几何；实际执行经验 GUPA 图像训练。线性守恒在这里没有保证。
 checkpoint 尚不是完整有限数据预训练的确认轨迹，因此迁移证据仍有这一限制。
-分叉汇总见 [经验干预结果](results/subspace_empirical_confirm/findings.md)。
+分叉汇总见 [经验干预结果](../results/population/subspace_empirical_confirm/findings.md)。
 
 平方模型主任务 x_high 在 30 个相关 checkpoint 中有 18 个同时具有总体与首批经验正阈值、
 1 个仅总体具有正阈值、11 个两者均无正阈值。条件平均绝对 log10 阈值误差约 0.367，
@@ -130,15 +130,16 @@ checkpoint 尚不是完整有限数据预训练的确认轨迹，因此迁移证
 
 从仓库根目录执行；本地将 python 替换为 `& H:\anaconda3\envs\py312\python.exe`。
 正式目录包含协议和核心源码哈希；参数或核心代码与锁不符时程序会拒绝混入结果。
+目录整理后，旧锁对应原始源码快照；重训请选择新输出目录，见 [目录与复现说明](REPOSITORY_LAYOUT.md)。
 
 ```powershell
-python -B experiments/check_subspace_mechanism.py
-python -B experiments/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --step 0.002 --output experiments/results/subspace_confirm_k1
-python -B experiments/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --outputs 2 --step 0.002 --output experiments/results/subspace_confirm_k2
-python -B experiments/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --kernel-size 11 --step 0.002 --output experiments/results/subspace_confirm_local
-python -B experiments/summarize_subspaces.py
-python -B experiments/empirical_subspace_interventions.py
-python -B experiments/summarize_empirical_subspaces.py
+python -B experiments/code/checks/check_subspace_mechanism.py
+python -B experiments/code/population/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --step 0.002 --output experiments/results/population/subspace_confirm_k1
+python -B experiments/code/population/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --outputs 2 --step 0.002 --output experiments/results/population/subspace_confirm_k2
+python -B experiments/code/population/subspace_mechanism.py --phase confirmation --seeds 2 3 4 5 6 7 8 9 10 11 --kernel-size 11 --step 0.002 --output experiments/results/population/subspace_confirm_local
+python -B experiments/code/population/summarize_subspaces.py
+python -B experiments/code/population/empirical_subspace_interventions.py
+python -B experiments/code/population/summarize_empirical_subspaces.py
 ```
 
 `subspace_development`、`subspace_development_fine` 保留早期开发步长对照。

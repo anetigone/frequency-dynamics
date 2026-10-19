@@ -2,5 +2,8 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-experiments/results/**/*.pt
-experiments/results
+/experiments/results/**
+!/experiments/results/**/
+!/experiments/results/**/README.md
+!/experiments/results/theory/*
+/cifar-10-batches-py/

@@ -1,28 +1,40 @@
-# 代码与结果
+# 实验导航
 
-本目录集中存放正文与附录的复现代码和输出。下面的原始认证与机制代码只依赖 Python 标准库。从仓库根目录执行：
+按阶段查找代码、协议和结果；开发试跑与正式结果分别存放。最新结论先读 [本机收尾报告](docs/LOCAL_CLOSEOUT.md)。
 
-```bash
-python -B experiments/verify.py
-python -B experiments/check_arithmetic.py
-python -B experiments/mechanism_checks.py
-python -B experiments/representation_checks.py
+| 阶段 | 代码 | 结果与图表 | 协议 / 解释 |
+|---|---|---|---|
+| 理论认证与二维机制 | [code/theory](code/theory/) | [results/theory](results/theory/README.md) | [主稿附录 A](../THEORY_DRAFT.md) |
+| 图像恒等式与纹理 pilot | [code/pilot](code/pilot/) | [results/pilot](results/pilot/README.md) | [图像协议](docs/IMAGE_EXPERIMENTS.md)、[历史试跑记录](docs/PILOT_FINDINGS.md) |
+| 总体子空间机制与 K=2 / 局部核 | [code/population](code/population/) | [results/population](results/population/README.md) | [机制确认协议](docs/SUBSPACE_MECHANISM.md) |
+| 完整经验 SGD、局部复验与干预 | [code/empirical](code/empirical/) | [results/empirical](results/empirical/README.md) | [完整经验协议](docs/FULL_EMPIRICAL_PROTOCOL.md) |
+| CIFAR-10 数据 / 训练 / OLS | [code/cifar](code/cifar/) | [results/cifar](results/cifar/README.md) | [收尾报告](docs/LOCAL_CLOSEOUT.md) |
+| 实现核验与结果完整性 | [code/checks](code/checks/) | [results/checks](results/checks/README.md) | [迁移与复现说明](docs/REPOSITORY_LAYOUT.md) |
+
+共享图像模型与目标位于 [code/shared/square_images.py](code/shared/square_images.py)。数据原件保留在仓库根目录的 `cifar-10-batches-py/`。
+
+## 常用入口
+
+从仓库根目录执行；也可直接执行表中代码目录内的脚本。
+
+```powershell
+python -B experiments/run.py --list
+python -B experiments/run.py check_arithmetic
+python -B experiments/run.py audit_local_closeout
+python -B experiments/run.py audit_layout
+python -B experiments/run.py summarize_full_sgd experiments/results/empirical/full_sgd_main --repeat-dirs experiments/results/empirical/full_sgd_repeat1 experiments/results/empirical/full_sgd_repeat2
+python -B experiments/run.py summarize_cifar_local experiments/results/cifar/cifar_local_five
 ```
 
-验证器必须启用断言，请勿使用 `-O`。所有默认输出均写入本目录，不依赖运行时的工作目录。认证器从有理数初值重新计算证书，无需读取已有 JSON。
+本机解释器为 `H:\anaconda3\envs\py312\python.exe`。理论认证只依赖标准库；图像实验使用 PyTorch，绘图使用 NumPy / Matplotlib。数值评估与绘图汇总分别启动进程。
 
-| 代码 | 输出 | 对应结果 |
-|---|---|---|
-| [verify.py](verify.py)、[interval_core.py](interval_core.py) | [certificate.json](certificate.json) | 主定理 T：±0.001% 连续参数盒上的固定风险间隔、全程轨迹包络及可达性 |
-| [check_arithmetic.py](check_arithmetic.py) | 终端检查结果 | 独立 Fraction 算术外包检查，不能替代轨迹证明 |
-| [mechanism_checks.py](mechanism_checks.py) | [mechanism_results.json](mechanism_results.json)、[mechanism_profiles.csv](mechanism_profiles.csv) | 冻结头对照、方向阈值、Taylor 曲率及 GF/GD 数值核验 |
-| [representation_checks.py](representation_checks.py) | [representation_results.json](representation_results.json) | 学习率等价、±1% 初始导数证书、浮点扰动与附加维度扫描 |
+## 查找规则
 
-计算机辅助证明见[正文附录 A](../THEORY_DRAFT.md)。±1% 整盒的长轨迹回升尚未认证；普通轨迹扫描与主定理 T 的区间证书分别报告。
+- `code/`：当前可运行源码，按研究阶段分组。
+- `docs/`：实验协议、历史发现与当前结论。
+- `results/`：按同名阶段归类；[总索引](results/README.md)列出主要入口。
+- `results/archive/development/`：开发种子、步长试跑和吞吐检查，不作为正式重复。
+- `archive/sources_before_layout_20261019/`：整理前的精确源码快照，用于核验旧 protocol 哈希。
+- `layout_manifest.json`：旧路径到新路径、原始 / 当前源码哈希及原始结果哈希。
 
-新增真实空间卷积核验、可控纹理训练、干预与对照使用 PyTorch，绘图使用 NumPy/Matplotlib。
-运行方法、数据定义、学习率与解释边界见 [IMAGE_EXPERIMENTS.md](IMAGE_EXPERIMENTS.md)。
-第一批结果位于 `results/`；它们是数值试跑，不替代上面的区间认证。
-
-后续[子空间机制确认](SUBSPACE_MECHANISM.md)已完成独立十种子、两套校准、三种配比、K=2/局部核及真实经验 SGD 分叉。
-总体汇总见 [subspace_summary/findings.md](results/subspace_summary/findings.md)，分叉汇总见 [subspace_empirical_confirm/findings.md](results/subspace_empirical_confirm/findings.md)。
+现有正式训练目录保留原始锁定协议。重训应选择新输出目录，不能把整理后的源码接写到旧锁定目录；详见 [复现说明](docs/REPOSITORY_LAYOUT.md)。原始证书范围与经验结论边界保持不变。

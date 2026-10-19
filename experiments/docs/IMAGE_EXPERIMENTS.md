@@ -12,23 +12,23 @@ Matplotlib 3.10.6、RTX 4060 Laptop 8 GiB。没有安装或修改环境。
 `& H:\anaconda3\envs\py312\python.exe`。服务器使用其自己的 Python 环境。
 
 ```powershell
-python -B experiments/verify_spatial.py
-python -B experiments/check_image_pipeline.py
+python -B experiments/code/pilot/verify_spatial.py
+python -B experiments/code/checks/check_image_pipeline.py
 
 # 原始随机初始化：总体矩目标与真实图像样本 SGD
-python -B experiments/train_textures.py --objective population --device cpu --dtype float64 --interventions --ols --output experiments/results/textures_population_pilot
-python -B experiments/train_textures.py --objective empirical --device cuda --dtype float32 --interventions --ols --output experiments/results/textures_empirical_pilot
+python -B experiments/code/pilot/train_textures.py --objective population --device cpu --dtype float64 --interventions --ols --output experiments/results/pilot/textures_population_pilot
+python -B experiments/code/pilot/train_textures.py --objective empirical --device cuda --dtype float32 --interventions --ols --output experiments/results/pilot/textures_empirical_pilot
 
 # 保持初始有效映射的无标签层间尺度校准
-python -B experiments/train_textures.py --objective population --device cpu --dtype float64 --balance-init --lr 0.01 --interventions --ols --output experiments/results/textures_balanced_population_pilot
-python -B experiments/train_textures.py --objective empirical --device cuda --dtype float32 --balance-init --lr 0.01 --interventions --ols --output experiments/results/textures_balanced_empirical_pilot
+python -B experiments/code/pilot/train_textures.py --objective population --device cpu --dtype float64 --balance-init --lr 0.01 --interventions --ols --output experiments/results/pilot/textures_balanced_population_pilot
+python -B experiments/code/pilot/train_textures.py --objective empirical --device cuda --dtype float32 --balance-init --lr 0.01 --interventions --ols --output experiments/results/pilot/textures_balanced_empirical_pilot
 
 # 匹配有效映射的必要对照；步长减半用于检查离散化误差
-python -B experiments/texture_controls.py
-python -B experiments/texture_controls.py --step 0.002 --output experiments/results/texture_controls_fine
-python -B experiments/texture_controls.py --balance-init --output experiments/results/texture_controls_balanced
+python -B experiments/code/pilot/texture_controls.py
+python -B experiments/code/pilot/texture_controls.py --step 0.002 --output experiments/results/pilot/texture_controls_fine
+python -B experiments/code/pilot/texture_controls.py --balance-init --output experiments/results/pilot/texture_controls_balanced
 
-python -B experiments/plot_image_pilots.py
+python -B experiments/code/pilot/plot_image_pilots.py
 ```
 
 `--seeds`、`--ratios`、`--channels`、`--outputs`、`--kernel-size` 均可配置。
