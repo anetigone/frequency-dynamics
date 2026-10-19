@@ -1,19 +1,27 @@
 # 压缩投影表示中的功率坐标竞争
 
-更新：2026-10-19。当前主稿为 **[THEORY_DRAFT.md](THEORY_DRAFT.md)**。
+更新：2026-10-19。主稿：[THEORY_DRAFT.md](THEORY_DRAFT.md)。
 
-本稿选择研究保留用于下游的一维 projection 输出。二维 encoder 输出是不同的评测对象：只要其矩阵可逆，最优无正则总体线性 probe 风险恒为噪声底。因此现有定理不能解释丢弃 projection head 后的 encoder 退化。
+**主结果为定理 T：** 在显式八维相对 ±0.001% 的连续初值盒上，对径向增强强度 η∈[0,0.2]，无正则总体 projection 风险在相对能量截面 ℓ=1.7 至少改善 0.04，在 ℓ=6 至少超出初值 0.15，两截面回升至少 0.19。认证覆盖整段轨迹、截断与舍入误差、初值扰动、分母正性及 Q<0.689；两截面在有限物理时间可达，训练损失严格下降。
 
-v0.3 保留原定理 1–4，新增 encoder 风险与有限标签 OLS 的可逆变换不变性、层间尺度与有效学习率比例的精确等价，以及八维相对 ±1% 参数盒内初始风险导数属于 [-0.16,-0.08] 的有理数区间证书。阈值 47/96 是具体构造的相对学习率阈值。
+候选贡献集中于真实因子化训练诱导的独立语义任务风险变化。相同初始函数下的尺度敏感性、projection 几何作用及早停现象已有直接先例，正文 §1.1 对照 Kunin、Torralba–Weiss、Xue 等工作。定理 2 解释具体方向阈值，定理 3 的局部 Taylor 展开解释回升如何产生。定理 T 的完整计算机辅助证明置于正文附录 A。
 
-新增轨迹扫描覆盖 21 个尺度点、256 个参数盒顶点、64 个内部点与三个增加坐标/通道的配置；这些数值证据保留常数级回升，但不构成连续参数区域内长轨迹的严格证明。局部 U 形定理仍只有存在性宽度与 O(e²) 风险间隔。
+- [THEORY_DRAFT.md](THEORY_DRAFT.md)：主定理、机制解释、数值对照与认证附录。
+- [experiments/](experiments/)：统一的代码与结果目录，入口说明见 [experiments/README.md](experiments/README.md)。
+- [REVIEW_RESPONSE.md](REVIEW_RESPONSE.md)：审稿意见处理与当前边界。
+- [SOURCE_AUDIT.md](SOURCE_AUDIT.md)：来源记录与尚未解除的新颖性阻断。
 
-- [REVIEW_RESPONSE.md](REVIEW_RESPONSE.md)：本轮审稿意见的处理与未完成项。
-- [representation_checks.py](representation_checks.py)：新增评测位置、学习率等价、精确初始参数盒证书与稳健性扫描；运行 `python representation_checks.py`。
-- [representation_results.json](representation_results.json)：新增核验的实际输出。
-- [mechanism_checks.py](mechanism_checks.py)、[mechanism_results.json](mechanism_results.json)、[mechanism_profiles.csv](mechanism_profiles.csv)：当前主稿依赖的冻结头、精确曲率、参数梯度与总体 GF/GD 核验；运行 `python mechanism_checks.py`。
-- [SOURCE_AUDIT.md](SOURCE_AUDIT.md)：历史原文记录与尚未解除的新颖性阻断。
+从仓库根目录复算：
 
-当前结果是全支撑卷积所实现的平方因子化功率坐标竞争。定理不使用频率的空间顺序或邻接关系，尚未证明真实视觉纹理或一般 encoder 的退化。本轮未执行新文献检索或图像实验，未确认新颖性。模型采用两个同分布增强视图的 GUPA 与输出能量上限，证明仅覆盖约束未激活阶段。
+```bash
+python -B experiments/verify.py
+python -B experiments/check_arithmetic.py
+python -B experiments/mechanism_checks.py
+python -B experiments/representation_checks.py
+```
 
-工作区采用固定文件名，只保留当前稿件与其复现所需的脚本、结果和来源记录。后续历史版本交由 Git 管理；Python 缓存与虚拟环境已列入 `.gitignore`。
+所有默认结果写入 experiments/；区间验证器从有理数初值重新生成 certificate.json，无需已有证书输入。认证依赖启用断言，请勿使用 -O。浮点轨迹及扫描另存对应结果文件，不替代连续参数盒的区间证明。
+
+当前评测对象是一维 projection 输出。可逆二维 encoder 的最优无正则总体 probe 风险恒为噪声底，主定理不解释丢弃 head 后的 encoder 退化。严格长轨迹认证仅覆盖 ±0.001% 盒；±1% 盒仅有初始导数保证和数值扫描。本文不声称一般网络、高概率初始化、新颖性或真实图像结论，定点相关工作审计已更新；Tepe 全文、Liao 完整结果和前向引用图仍待核查，下一阶段并行推进这些核查与视觉验证。
+
+工作区采用固定文件名，历史版本交由 Git 管理。
