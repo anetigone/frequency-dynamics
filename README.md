@@ -8,6 +8,8 @@
 
 - [THEORY_DRAFT.md](THEORY_DRAFT.md)：主定理、机制解释、数值对照与认证附录。
 - [experiments/](experiments/)：统一的代码与结果目录，入口说明见 [experiments/README.md](experiments/README.md)。
+- [图像实验协议](experiments/IMAGE_EXPERIMENTS.md)与[第一批试跑记录](experiments/PILOT_FINDINGS.md)：真实空间卷积核验、多频带纹理训练、任务交换、干预及匹配映射对照；目前是两种子数值 pilot，尚无自然图像结论。
+- [子空间机制与十种子确认](experiments/SUBSPACE_MECHANISM.md)：补齐三种配比、匹配参数及独立校准，完成全支撑 $K=1/2$ 和局部核共 540 条总体轨迹，以及真实经验 SGD 分叉；区分 encoder 子空间改变与固定空间内 projection 重选。仍无自然图像结论。
 - [REVIEW_RESPONSE.md](REVIEW_RESPONSE.md)：审稿意见处理与当前边界。
 - [SOURCE_AUDIT.md](SOURCE_AUDIT.md)：来源记录与尚未解除的新颖性阻断。
 
@@ -22,6 +24,6 @@ python -B experiments/representation_checks.py
 
 所有默认结果写入 experiments/；区间验证器从有理数初值重新生成 certificate.json，无需已有证书输入。认证依赖启用断言，请勿使用 -O。浮点轨迹及扫描另存对应结果文件，不替代连续参数盒的区间证明。
 
-当前评测对象是一维 projection 输出。可逆二维 encoder 的最优无正则总体 probe 风险恒为噪声底，主定理不解释丢弃 head 后的 encoder 退化。严格长轨迹认证仅覆盖 ±0.001% 盒；±1% 盒仅有初始导数保证和数值扫描。本文不声称一般网络、高概率初始化、新颖性或真实图像结论，定点相关工作审计已更新；Tepe 全文、Liao 完整结果和前向引用图仍待核查，下一阶段并行推进这些核查与视觉验证。
+主定理的评测对象仍是一维 projection 输出。可逆二维 encoder 的最优无正则总体 probe 风险恒为噪声底，主定理不解释丢弃 head 后的 encoder 退化。严格长轨迹认证仅覆盖 ±0.001% 盒；±1% 盒仅有初始导数保证和数值扫描。新增高维纹理实验与十种子确认不扩大该认证范围。本文不声称一般网络、高概率初始化、新颖性或自然图像结论；Tepe 全文、Liao 完整结果和前向引用图仍待核查。
 
 工作区采用固定文件名，历史版本交由 Git 管理。
