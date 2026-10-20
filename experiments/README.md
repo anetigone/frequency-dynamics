@@ -17,6 +17,8 @@
 
 下一步 [冻结 encoder 的 head 诊断](docs/FROZEN_ENCODER_DIAGNOSTIC.md)使用原 checkpoint，固定卷积核后只训练 projection / 分类器，并提供同特征上的最优 rank-8 训练平方误差参照。独立输出目录，不改写原容量实验。
 
+新增 [CIFAR 同 checkpoint 分叉](docs/CIFAR_CHECKPOINT_BRANCHES.md)：从 r=1 的 step=1000 状态分出三个配比及整体学习率快慢对照；默认三个开发种子、额外 1000 步，独立汇总固定步数和共同审计 loss 下的任务变化。
+
 ## 常用入口
 
 从仓库根目录执行；也可直接执行表中代码目录内的脚本。

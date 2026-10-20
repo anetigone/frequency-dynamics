@@ -4,6 +4,8 @@
 
 | 脚本 | 用途 |
 |---|---|
+| [cifar_checkpoint_branches.py](cifar_checkpoint_branches.py) | 从同一 CIFAR checkpoint 作配比与整体快慢分叉；独立训练和验证评估。 |
+| [summarize_checkpoint_branches.py](summarize_checkpoint_branches.py) | 核验随机流配对，汇总固定步数及共同审计 loss 的任务变化。 |
 | [frozen_encoder_probe.py](frozen_encoder_probe.py) | 固定同一个 encoder，比较原 head、最优 rank-8 平方拟合和监督训练 head。 |
 | [summarize_frozen_encoder.py](summarize_frozen_encoder.py) | 按来源状态和配对种子汇总冻结 encoder 对照。 |
 | [audit_cifar.py](audit_cifar.py) | Verify standard CIFAR-10 Python batches before deserializing them. |

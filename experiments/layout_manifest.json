@@ -284,6 +284,21 @@
       "original_sha256": null,
       "current_path": "code/checks/check_frozen_encoder.py",
       "current_sha256": "0b37f116e2141c48eb38c6615ffe2f0591d7a08f5f9e5fe09ab2f4c4ac8094d0"
+    },
+    "cifar_checkpoint_branches.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/cifar_checkpoint_branches.py",
+      "current_sha256": "180b04a41dc74801d225fa45ad9bd2e66aa08567daf74481b4173b1d59a62a9b"
+    },
+    "summarize_checkpoint_branches.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/summarize_checkpoint_branches.py",
+      "current_sha256": "e13df88277b11f08b332af66e69d435b7343e50fb1240a690e1806a620cf8431"
+    },
+    "check_checkpoint_branches.py": {
+      "original_sha256": null,
+      "current_path": "code/checks/check_checkpoint_branches.py",
+      "current_sha256": "9ab44eea96e064fa5df94c1b197732e13d9bcb18d2db80254156ce14665bcd95"
     }
   },
   "result_groups": {
@@ -330,7 +345,8 @@
     "certificate.json": "theory",
     "mechanism_results.json": "theory",
     "mechanism_profiles.csv": "theory",
-    "representation_results.json": "theory"
+    "representation_results.json": "theory",
+    "checkpoint_branches_development": "cifar"
   },
   "original_result_sha256": {
     "experiments/results/cifar/cifar_audit.json": "48472a50768768ff18defa87ed9e4ff635f1ebaaff2f0f87db0a5da54d7fd911",
