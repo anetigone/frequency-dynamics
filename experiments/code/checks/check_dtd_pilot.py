@@ -47,17 +47,7 @@ def main():
         write_json(snapshot / 'samples.json', dict(samples=samples))
         write_json(snapshot / 'metadata.json', dict(default_classes=dtd_hf.CLASSES))
         paths = {name: snapshot / name for name in ['samples.json', 'metadata.json']}
-        digests = {name: dtd_hf.sha256(path) for name, path in paths.items()}
-        calls, snapshot_calls, index_calls = [], [], []
-        siblings = [SimpleNamespace(rfilename=name, size=(snapshot / name).stat().st_size,
-                    lfs=SimpleNamespace(sha256=dtd_hf.sha256(snapshot / name))) for name in selected_paths]
-        def fake_api(**kwargs):
-            assert kwargs['headers']['Accept-Encoding'] == 'identity'
-            def dataset_info(repo_id, **settings):
-                assert repo_id == dtd_hf.REPO and settings['revision'] == dtd_hf.REVISION and settings['files_metadata']
-                index_calls.append(settings)
-                return SimpleNamespace(sha=dtd_hf.REVISION, siblings=siblings)
-            return SimpleNamespace(dataset_info=dataset_info)
+        calls, snapshot_calls = [], []
         def fake_hub(**kwargs):
             assert kwargs['repo_id'] == dtd_hf.REPO and kwargs['revision'] == dtd_hf.REVISION
             assert kwargs['repo_type'] == 'dataset'
@@ -71,9 +61,8 @@ def main():
             snapshot_calls.append(kwargs)
             return snapshot
         # All bytes are generated locally; the patched download function never accesses the network.
-        with patch.object(dtd_hf, 'FILES', digests), patch('huggingface_hub.hf_hub_download', side_effect=fake_hub), \
-             patch('huggingface_hub.snapshot_download', side_effect=fake_snapshot), \
-             patch('huggingface_hub.HfApi', side_effect=fake_api):
+        with patch('huggingface_hub.hf_hub_download', side_effect=fake_hub), \
+             patch('huggingface_hub.snapshot_download', side_effect=fake_snapshot):
             data_root = folder / 'prepared'
             assert dtd_hf.download(data_root)['images'] == 3760
             assert len(calls) == 2
@@ -82,7 +71,6 @@ def main():
             assert snapshot_calls[-1]['local_files_only']
             dtd_hf.prepare(data_root, 16)
             assert len(calls) == 4  # Existing prepared tensors are loaded entirely offline.
-            assert len(index_calls) == 1  # Authoritative LFS hashes cached; prepare makes no API request.
             data, labels, train, validation, metadata = dtd_hf.load_prepared(data_root, 16)
             assert len(train) == len(validation) == 1880 and metadata['test_used'] is False
             assert abs(float(data[train].mean())) < 1e-5 and abs(float(data[train].std()) - 1) < 1e-5
@@ -115,49 +103,16 @@ def main():
             for row in forks['fixed_steps']:
                 if row['step'] == 0:
                     assert row['accuracy_minus_baseline']['mean'] == row['onehot_mse_minus_baseline']['mean'] == 0
-            # Content validity is independent of the cache filename (e.g. another 64-hex namespace).
-            filename = selected_paths[0]
-            original_image = snapshot / filename
-            expected = dict(sha256=dtd_hf.sha256(original_image), bytes=original_image.stat().st_size)
-            renamed = folder / ('f' * 64)
-            renamed.write_bytes(original_image.read_bytes())
-            assert dtd_hf.verify_image(renamed, filename, expected, str(folder), offline=True)[0] == expected['sha256']
-            corrupt = folder / 'corrupt.jpg'
-            corrupt.write_bytes(b'incomplete image')
-            def repaired_download(**settings):
-                assert settings['filename'] == filename and settings['force_download'] is True
-                assert settings['headers']['Accept-Encoding'] == 'identity'
-                return original_image
-            with patch('huggingface_hub.hf_hub_download', side_effect=repaired_download) as repair:
-                assert dtd_hf.verify_image(corrupt, filename, expected, str(folder))[0] == expected['sha256']
-                assert repair.call_count == 1
-            with patch('huggingface_hub.hf_hub_download', return_value=corrupt) as repair:
-                try:
-                    dtd_hf.verify_image(corrupt, filename, expected, str(folder))
-                except ValueError as error:
-                    assert 'actual_sha256=' in str(error) and 'expected_sha256=' in str(error)
-                else:
-                    raise AssertionError('Persistent image content corruption accepted')
-                assert repair.call_count == 1
-            with patch('huggingface_hub.hf_hub_download') as repair:
-                try:
-                    dtd_hf.verify_image(corrupt, filename, expected, str(folder), offline=True)
-                except ValueError:
-                    pass
-                else:
-                    raise AssertionError('Offline content corruption accepted')
-                repair.assert_not_called()
-            # Corrupted cache and incompatible label schemas must fail instead of changing the protocol.
-            sidecar = destination.with_suffix('.json')
-            content = read_json(sidecar)
-            content['tensor_sha256'] = 'bad'
-            write_json(sidecar, content)
+            # A malformed tensor is detected by its actual shape, not a file fingerprint.
+            payload = torch.load(destination, weights_only=True)
+            payload['images'] = payload['images'][:10]
+            torch.save(payload, destination)
             try:
                 dtd_hf.load_prepared(data_root, 16)
             except ValueError:
                 pass
             else:
-                raise AssertionError('Corrupt tensor cache accepted')
+                raise AssertionError('Malformed tensor shape accepted')
             write_json(paths['metadata.json'], dict(default_classes=list(reversed(dtd_hf.CLASSES))))
             try:
                 dtd_hf.select_samples(paths['samples.json'], paths['metadata.json'])
@@ -169,12 +124,10 @@ def main():
         real_dtd_downloaded=False, real_dtd_training=False,
         checks=['pinned HF metadata/snapshot API mocks and train/validation-only JPEG download',
                 'identity content encoding on metadata and snapshot requests', 'offline prepare and cache reuse',
-                'pinned remote LFS hashes cached and checked instead of cache filenames',
-                'single-image repair, persistent corruption rejection and offline no-repair',
                 'official partition 1 image names and 47-class per-split counts', 'training-only image normalization',
                 '47-class probe and validation-label isolation', 'deterministic resolution-aware augmentation',
                 'three-ratio pilot train/evaluate/summarize', 'five-branch checkpoint fork train/evaluate/summarize',
-                'source and future-stream pairing', 'corrupt cache and class-order rejection']))
+                'source and future-stream pairing', 'tensor shape and class-order rejection']))
     print('DTD offline integration checks passed; no real data downloaded or trained')
 
 

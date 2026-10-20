@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import torch
 from cifar_local import initialize, augment
 from square_images import empirical_loss
-from cifar_checkpoint_branches import (BRANCHES, read_json, write_json, file_hash, make_jobs,
+from cifar_checkpoint_branches import (BRANCHES, read_json, write_json, make_jobs,
     make_audit, audit_model, source_metadata, load_source, learning_rates, prepare_protocol,
     train_job, evaluate_job)
 from summarize_checkpoint_branches import summarize
@@ -98,8 +98,6 @@ def main():
         write_json(run_path, corrupt)
         evaluation_path = args.output / baseline['id'] / 'evaluation.json'
         evaluation = read_json(evaluation_path)
-        bad_evaluation = copy.deepcopy(evaluation); bad_evaluation['result_sha256'] = file_hash(run_path)
-        write_json(evaluation_path, bad_evaluation)
         rejects(lambda: summarize(args.output), 'Unpaired views accepted')
         write_json(run_path, original); write_json(evaluation_path, evaluation)
         bad_evaluation = copy.deepcopy(evaluation); bad_evaluation['rows'].pop()

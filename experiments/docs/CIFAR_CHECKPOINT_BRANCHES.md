@@ -19,7 +19,7 @@
 
 ## 服务器命令
 
-在仓库根目录运行。默认 plan 不读取数据、checkpoint 或 GPU。训练前需同步三个新增脚本及更新后的 `experiments/layout_manifest.json`。
+在仓库根目录运行。默认 plan 不读取数据、checkpoint 或 GPU。同步实验脚本即可，入口会自动发现脚本。
 
 ```bash
 python -B experiments/run.py cifar_checkpoint_branches plan

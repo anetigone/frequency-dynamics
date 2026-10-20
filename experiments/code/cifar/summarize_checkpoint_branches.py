@@ -5,7 +5,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from layout import RESULTS
 
 import argparse
-import hashlib
 import json
 import math
 import statistics
@@ -31,12 +30,11 @@ def summarize(directory):
         folder = directory / job['id']
         run = read_json(folder / 'result.json')
         evaluation = read_json(folder / 'evaluation.json')
-        digest = hashlib.sha256((folder / 'result.json').read_bytes()).hexdigest()
-        if run['job'] != job or evaluation['job'] != job or evaluation['result_sha256'] != digest:
+        if run['job'] != job or evaluation['job'] != job:
             raise ValueError('Branch metadata or evaluated-result identity mismatch')
         if run['steps'] != args['steps'] or run['fixed_steps'] != expected_steps or run.get('test_used') or evaluation.get('test_used'):
             raise ValueError('Incomplete or incompatible branch budget/splits')
-        if run['source'] != protocol['sources'][str(job['seed'])]:
+        if {k: v for k, v in run['source'].items() if not k.endswith('_sha256')} != {k: v for k, v in protocol['sources'][str(job['seed'])].items() if not k.endswith('_sha256')}:
             raise ValueError('Source provenance differs from protocol')
         snapshot_steps = [row['step'] for row in run['snapshots']]
         if len(set(snapshot_steps)) != len(snapshot_steps) or [r['step'] for r in evaluation['rows']] != snapshot_steps:

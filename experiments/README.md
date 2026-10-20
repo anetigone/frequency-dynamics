@@ -42,7 +42,6 @@ python -B experiments/run.py summarize_cifar_local experiments/results/cifar/cif
 - `docs/`：实验协议、历史发现与当前结论。
 - `results/`：按同名阶段归类；[总索引](results/README.md)列出主要入口。
 - `results/archive/development/`：开发种子、步长试跑和吞吐检查，不作为正式重复。
-- `archive/sources_before_layout_20261019/`：整理前的精确源码快照，用于核验旧 protocol 哈希。
-- `layout_manifest.json`：旧路径到新路径、原始 / 当前源码哈希及原始结果哈希。
+- `archive/sources_before_layout_20261019/`：整理前的历史源码快照。
 
-现有正式训练目录保留原始锁定协议。重训应选择新输出目录，不能把整理后的源码接写到旧锁定目录；详见 [复现说明](docs/REPOSITORY_LAYOUT.md)。原始证书范围与经验结论边界保持不变。
+实验记录参数与结果。运行入口自动查找源码，不依赖清单文件；详见 [复现说明](docs/REPOSITORY_LAYOUT.md)。原始证书范围与经验结论边界保持不变。

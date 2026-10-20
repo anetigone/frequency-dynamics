@@ -33,14 +33,6 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def file_hash(path):
-    digest = hashlib.sha256()
-    with path.open('rb') as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b''):
-            digest.update(block)
-    return digest.hexdigest()
-
-
 def tensor_hash(tensor):
     return hashlib.sha256(tensor.detach().cpu().contiguous().numpy().tobytes()).hexdigest()
 
@@ -52,6 +44,15 @@ def state_hash(state):
         digest.update(str((tuple(value.shape), str(value.dtype))).encode())
         digest.update(value.detach().cpu().contiguous().numpy().tobytes())
     return digest.hexdigest()
+
+
+def without_hashes(value):
+    """Read older protocols without treating their historical fingerprints as settings."""
+    if isinstance(value, dict):
+        return {key: without_hashes(item) for key, item in value.items() if not key.endswith('_sha256')}
+    if isinstance(value, list):
+        return [without_hashes(item) for item in value]
+    return value
 
 
 def source_paths(args, seed):
@@ -90,8 +91,7 @@ def source_metadata(args, seed):
     mobility = result['calibration']['common_mobility']
     if not math.isfinite(mobility) or mobility <= 0:
         raise ValueError('Invalid source mobility')
-    return dict(checkpoint=str(checkpoint.resolve()), checkpoint_sha256=file_hash(checkpoint),
-                result_sha256=file_hash(result_path), common_mobility=mobility)
+    return dict(checkpoint=str(checkpoint.resolve()), common_mobility=mobility)
 
 
 def load_source(args, seed, device):
@@ -157,7 +157,7 @@ def train_job(args, job, source, data, train, audit, source_loader=None, augment
     directory = args.output / job['id']
     if (directory / 'result.json').exists():
         previous = read_json(directory / 'result.json')
-        if previous['job'] != job or previous['steps'] != args.steps or previous['source'] != source:
+        if previous['job'] != job or previous['steps'] != args.steps or without_hashes(previous['source']) != without_hashes(source):
             raise ValueError('Completed branch differs from locked job')
         print(f'Already complete: {job["id"]}', flush=True)
         return
@@ -227,11 +227,10 @@ def train_job(args, job, source, data, train, audit, source_loader=None, augment
 def evaluate_job(args, job, data, labels, train, validation, probe_fn=fit_probe):
     directory = args.output / job['id']
     run = read_json(directory / 'result.json')
-    result_hash = file_hash(directory / 'result.json')
     destination = directory / 'evaluation.json'
     if destination.exists():
         old = read_json(destination)
-        if old.get('result_sha256') != result_hash or old['job'] != job:
+        if old['job'] != job or [r['step'] for r in old['rows']] != [r['step'] for r in run['snapshots']]:
             raise ValueError('Stale branch evaluation; use a fresh output directory')
         return
     model = NaturalSquare().to(data.device)
@@ -245,7 +244,7 @@ def evaluate_job(args, job, data, labels, train, validation, probe_fn=fit_probe)
         projection = features.double() @ model.weight.detach().cpu().double().T
         rows.append(dict(step=snapshot['step'], encoder=probe_fn(features, labels, train, validation),
                          projection=probe_fn(projection, labels, train, validation)))
-    write_json(destination, dict(job=job, result_sha256=result_hash, rows=rows, test_used=False))
+    write_json(destination, dict(job=job, rows=rows, test_used=False))
 
 
 def prepare_protocol(args, jobs, sources, split, audit_metadata, source_protocol):
@@ -262,7 +261,7 @@ def prepare_protocol(args, jobs, sources, split, audit_metadata, source_protocol
                     primary_metric='validation onehot_mse; lower is better',
                     loss_matching='first downward audit-grid crossing after fork; no interpolation; overshoot retained')
     path = args.output / 'protocol.json'
-    if path.exists() and read_json(path) != protocol:
+    if path.exists() and without_hashes(read_json(path)) != without_hashes(protocol):
         raise ValueError('Existing branch protocol differs; use a separate output')
     write_json(path, protocol)
     return protocol
@@ -318,7 +317,7 @@ def main():
         # Require the complete training suite before any branch label evaluation.
         for job in jobs:
             run = read_json(args.output / job['id'] / 'result.json')
-            if run['job'] != job or run['steps'] != args.steps or run['source'] != sources[str(job['seed'])]:
+            if run['job'] != job or run['steps'] != args.steps or without_hashes(run['source']) != without_hashes(sources[str(job['seed'])]):
                 raise ValueError('Incomplete or incompatible planned branch')
         for job in jobs:
             evaluate_job(args, job, data, labels, train, validation)

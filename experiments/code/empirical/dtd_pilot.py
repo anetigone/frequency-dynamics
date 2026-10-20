@@ -53,31 +53,32 @@ def make_jobs(seeds, branching=False):
     return [dict(id=f'seed_{seed}_{branch["name"]}', seed=seed, **branch) for seed in seeds for branch in branches]
 
 
-def initialize_sources(args, data, train, data_fingerprint):
+def initialize_sources(args, data, train, data_config):
     import torch
     from cifar_capacity import initialize
-    from cifar_checkpoint_branches import file_hash, state_hash
     indices = train[torch.randperm(len(train), generator=torch.Generator().manual_seed(20261021))[:min(256, len(train))]]
     calibration = data[indices.to(data.device)]
     sources = {}
     for seed in args.seeds:
-        model, info = initialize(seed, 64, 8, calibration, args.trace_draws)
         path = args.output / 'initializations' / f'seed_{seed}.pt'
-        identity = dict(seed=seed, data_fingerprint=data_fingerprint, calibration=info)
         if path.exists():
             previous = torch.load(path, map_location='cpu', weights_only=True)
-            if previous['identity'] != identity or state_hash(previous['model']) != state_hash(model.state_dict()):
-                raise ValueError('Existing DTD initialization differs; use a new output directory')
+            identity = previous['identity']
+            if identity['seed'] != seed or identity.get('data_config', data_config) != data_config:
+                raise ValueError('Existing DTD initialization settings differ')
+            info = dict(identity['calibration'])
+            info.pop('initial_state_sha256', None)
         else:
+            model, info = initialize(seed, 64, 8, calibration, args.trace_draws, record_state_hash=False)
             path.parent.mkdir(parents=True, exist_ok=True)
-            torch.save(dict(model={k: v.cpu() for k, v in model.state_dict().items()}, identity=identity), path)
-        sources[str(seed)] = dict(checkpoint=str(path.resolve()), checkpoint_sha256=file_hash(path),
-                                 common_mobility=info['common_mobility'], calibration=info)
+            torch.save(dict(model={k: v.cpu() for k, v in model.state_dict().items()},
+                       identity=dict(seed=seed, data_config=data_config, calibration=info)), path)
+        sources[str(seed)] = dict(checkpoint=str(path.resolve()), common_mobility=info['common_mobility'], calibration=info)
     return sources
 
 
 def branch_sources(args, split):
-    from cifar_checkpoint_branches import file_hash, read_json
+    from cifar_checkpoint_branches import read_json
     protocol = read_json(args.source / 'protocol.json')
     original = protocol['arguments']
     if protocol.get('dataset_name') != 'DTD' or protocol['split'] != split or original['branching']:
@@ -97,8 +98,7 @@ def branch_sources(args, split):
         if snapshot is None:
             raise ValueError('Fork source must be a saved fixed-step pilot checkpoint')
         path = directory / snapshot['file']
-        sources[str(seed)] = dict(checkpoint=str(path.resolve()), checkpoint_sha256=file_hash(path),
-                result_sha256=file_hash(directory / 'result.json'),
+        sources[str(seed)] = dict(checkpoint=str(path.resolve()),
                 common_mobility=result['source']['common_mobility'], source_step=args.source_step)
     return sources
 
@@ -139,26 +139,21 @@ def lock_protocol(args, jobs, sources, split, audit):
 
 def run(args):
     import torch
-    from cifar_checkpoint_branches import make_audit, train_job, evaluate_job, read_json, file_hash
+    from cifar_checkpoint_branches import make_audit, train_job, evaluate_job, read_json
     torch.set_num_threads(1)
     torch.use_deterministic_algorithms(True)
     data, labels, train, validation, metadata = load_prepared(args.data_root, args.image_size)
     data = data.to(args.device)
-    tensor_path = args.data_root / f'prepared_gray_{args.image_size}.pt'
-    fingerprint = file_hash(tensor_path)
     split = dict(dataset='DTD', repo_id=metadata['repo_id'], revision=metadata['revision'],
-                 prepared_tensor_sha256=fingerprint, train_size=len(train), validation_size=len(validation),
+                 train_size=len(train), validation_size=len(validation),
                  image_size=args.image_size, mean=metadata['mean'], std=metadata['std'], test_used=False)
     jobs = make_jobs(args.seeds, args.branching)
     # Evaluate never creates or reinitializes missing sources.
     if args.phase == 'evaluate':
         existing = read_json(args.output / 'protocol.json')
         sources = existing['sources']
-        for source in sources.values():
-            if file_hash(Path(source['checkpoint'])) != source['checkpoint_sha256']:
-                raise ValueError('DTD source checkpoint changed')
     else:
-        sources = branch_sources(args, split) if args.branching else initialize_sources(args, data, train, fingerprint)
+        sources = branch_sources(args, split) if args.branching else initialize_sources(args, data, train, split)
     if args.audit_size > len(train):
         raise ValueError('Audit size exceeds training split')
     audit, audit_metadata = make_audit(data, train, args.audit_size, args.audit_seed, augment_fn=augment_dtd)

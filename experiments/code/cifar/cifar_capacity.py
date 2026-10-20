@@ -56,7 +56,7 @@ def state_hash(model):
     return digest.hexdigest()
 
 
-def initialize(seed, channels, outputs, calibration_x, draws=16):
+def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_hash=True):
     """Same rule as the original experiment, generalized to C and K."""
     device = calibration_x.device
     generator = torch.Generator().manual_seed(seed)
@@ -89,11 +89,13 @@ def initialize(seed, channels, outputs, calibration_x, draws=16):
         model.weight.mul_(scale ** -2)
         error = float((model(calibration_x) - before).abs().max())
         initial_energy = float((before - before.mean(0)).square().sum(1).mean())
-    return model, dict(scale=scale, matched_function_max_error=error, initial_energy=initial_energy,
+    calibration = dict(scale=scale, matched_function_max_error=error, initial_energy=initial_energy,
                        front_trace_after_estimate=front * scale ** -2,
                        head_trace_after=head * scale ** 4, hutchinson_draws=draws,
-                       common_mobility=1 / (front * scale ** -2 + head * scale ** 4),
-                       initial_state_sha256=state_hash(model))
+                       common_mobility=1 / (front * scale ** -2 + head * scale ** 4))
+    if record_state_hash:
+        calibration['initial_state_sha256'] = state_hash(model)
+    return model, calibration
 
 
 def supervised_head(model, objective, calibration_x, seed):

@@ -14,9 +14,7 @@
 - 训练集和验证集各 1,880 张，每类各 40 张；只下载这 3,760 张 JPEG 和两份 JSON。测试图片不下载、不解码、不做性能评估。
 - 图片实际下载字节数由命令输出的 `image_bytes` 报告，不能把整个仓库 646 MB 当作本次下载量。
 
-本地缓存默认位于 `experiments/data/dtd_hf/`，已加入 Git 忽略。HF native cache 支持复用与恢复未完成下载；失败时可重复同一 download 命令。镜像 commit、元数据校验、每图摘要和正式划分均记录。数据准备后的 tensor 另存 SHA-256 校验。
-
-图片校验使用固定 commit 的远端 LFS SHA-256 和文件大小，记录于本地 `image_metadata.json`，不从缓存文件名推断内容哈希。若某张图片的真实内容不符，在线 download 只强制重下这一张一次并重新校验；仍失败则报告期望/实际哈希与大小并停止。prepare 离线运行，不下载或跳过坏图。旧缓存更新代码后先重跑一次 download，以获取这份远端校验元数据，无需清空已下载图片。
+本地缓存默认位于 `experiments/data/dtd_hf/`，已加入 Git 忽略。下载与续传直接使用 Hugging Face 自带缓存；失败时重复 download 命令即可。预处理检查图片能否解码及张量形状、类别数，不增加自定义清单、文件哈希或跨划分查重。
 
 下载请求显式设置 `Accept-Encoding: identity`，覆盖 metadata、Hub API 和图片请求，避免某些环境中新版 httpx2 与旧 Brotli 后端的 `process() takes no keyword arguments` 解压兼容错误。仍使用原 HF 缓存及续传，不需卸载或替换服务器依赖；更新代码后重跑 download 即可。
 
@@ -30,7 +28,7 @@ python -m pip install huggingface_hub pillow
 
 不需要 `datasets`、`pyarrow` 或 `fiftyone`。如需设置 `HF_ENDPOINT`，应在启动 Python 前设置；下载沿用 Hugging Face Hub 的环境配置，不会静默改镜像地址。
 
-在仓库根目录运行，先同步新增代码、共享入口更新、`experiments/resources/` 及 `layout_manifest.json`：
+在仓库根目录运行，先同步实验代码和 `experiments/resources/`；脚本入口自动发现：
 
 ```bash
 # 不读取数据、不联网、不初始化 GPU
@@ -82,7 +80,7 @@ python -B experiments/run.py dtd_pilot summarize --branching
 
 ## 实现与检查
 
-- `code/shared/dtd_hf.py`：Voxel51 数据获取、官方名单映射、原图校验、离线预处理及 tensor 缓存。
+- `code/shared/dtd_hf.py`：Voxel51 数据获取、官方名单映射、图片解码、离线预处理及 tensor 缓存。
 - `code/empirical/dtd_pilot.py`：九条学习有效性轨迹、47 类 probe、可选五分支实验。
 - 原 CIFAR runner 增加可选 source/augmentation/probe 回调，默认 CIFAR 行为保持；汇总器支持三分支 pilot 与五分支实验。
 
@@ -91,4 +89,4 @@ python -B experiments/run.py check_dtd_pilot
 python -B experiments/run.py check_checkpoint_branches
 ```
 
-DTD 检查使用本地生成的 JPEG 和镜像 JSON，mock HF 下载调用；覆盖正式名单筛选、禁止测试图片下载、缓存复用、训练集归一化、47 类 probe、pilot/fork 完整流程与损坏输入拒绝。另已检查真实镜像元数据与官方 partition 1 的一致性。未下载真实图片或训练真实 DTD；检查不算机制实验证据。
+DTD 检查使用本地生成的 JPEG 和镜像 JSON，mock HF 下载调用；覆盖正式名单筛选、禁止测试图片下载、缓存复用、训练集归一化、47 类 probe、pilot/fork 完整流程与无效张量形状检查。另已检查真实镜像元数据与官方 partition 1 的一致性。未下载真实图片或训练真实 DTD；检查不算机制实验证据。
