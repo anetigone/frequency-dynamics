@@ -56,7 +56,7 @@ def state_hash(model):
     return digest.hexdigest()
 
 
-def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_hash=True):
+def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_hash=True, zero_dc=False):
     """Same rule as the original experiment, generalized to C and K."""
     device = calibration_x.device
     generator = torch.Generator().manual_seed(seed)
@@ -64,6 +64,8 @@ def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_ha
     with torch.no_grad():
         model.kernel.copy_(torch.randn(model.kernel.shape, generator=generator).to(device) / 11)
         model.weight.copy_(torch.randn(model.weight.shape, generator=generator).to(device) / math.sqrt(channels))
+        if zero_dc:
+            model.kernel.sub_(model.kernel.mean((-2, -1), keepdim=True))
         z = model(calibration_x)
         energy = (z - z.mean(0)).square().sum(1).mean()
         if float(energy) <= 0:
@@ -76,6 +78,9 @@ def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_ha
     for _ in range(draws):
         signs = torch.randint(2, z.shape, generator=generator, device=device).float() * 2 - 1
         grad = torch.autograd.grad((z * signs).sum() / math.sqrt(len(z)), model.kernel, retain_graph=True)[0]
+        if zero_dc:
+            # Actual constrained front update is P grad, not the unconstrained Jacobian.
+            grad = grad-grad.mean((-2, -1), keepdim=True)
         estimates.append(float(grad.square().sum()))
     with torch.no_grad():
         f = model.features(calibration_x)
@@ -95,6 +100,10 @@ def initialize(seed, channels, outputs, calibration_x, draws=16, record_state_ha
                        common_mobility=1 / (front * scale ** -2 + head * scale ** 4))
     if record_state_hash:
         calibration['initial_state_sha256'] = state_hash(model)
+    if zero_dc:
+        calibration['kernel_constraint'] = 'spatial_zero_mean'
+        calibration['front_trace_geometry'] = 'spatial_zero_mean_projected_vjp'
+        calibration['max_abs_kernel_spatial_mean'] = float(model.kernel.detach().mean((-2, -1)).abs().max())
     return model, calibration
 
 

@@ -116,14 +116,15 @@ def learning_rates(base_lr, mobility, job):
     return [scale, scale * job['ratio']]
 
 
-def make_audit(data, train, size, seed, augment_fn=augment):
+def make_audit(data, train, size, seed, augment_fn=augment, record_hashes=True):
     selection = torch.Generator().manual_seed(seed)
     indices = train[torch.randperm(len(train), generator=selection)[:size]]
     clean = data[indices.to(data.device)]
     generator = torch.Generator(device=data.device).manual_seed(seed + 1)
     first, second = augment_fn(clean, generator), augment_fn(clean, generator)
-    metadata = dict(indices=indices.tolist(), first_view_sha256=tensor_hash(first),
-                    second_view_sha256=tensor_hash(second), seed=seed)
+    metadata = dict(indices=indices.tolist(), seed=seed)
+    if record_hashes:
+        metadata.update(first_view_sha256=tensor_hash(first), second_view_sha256=tensor_hash(second))
     return (clean, first, second), metadata
 
 
@@ -153,23 +154,26 @@ def save_state(path, model, optimizer, generator, job, step):
                     generator_state=generator.get_state(), job=job, branch_step=step), path)
 
 
-def train_job(args, job, source, data, train, audit, source_loader=None, augment_fn=augment):
+def train_job(args, job, source, data, train, audit, source_loader=None, augment_fn=augment,
+              zero_dc=False, record_hashes=True):
     directory = args.output / job['id']
     if (directory / 'result.json').exists():
         previous = read_json(directory / 'result.json')
         if previous['job'] != job or previous['steps'] != args.steps or without_hashes(previous['source']) != without_hashes(source):
             raise ValueError('Completed branch differs from locked job')
+        if bool(previous.get('kernel_constraint') == 'spatial_zero_mean') != zero_dc:
+            raise ValueError('Completed run kernel constraint differs')
         print(f'Already complete: {job["id"]}', flush=True)
         return
     directory.mkdir(parents=True, exist_ok=True)
     model = (source_loader or load_source)(args, job['seed'], data.device)
-    initial_hash = state_hash(model.state_dict())
+    initial_hash = state_hash(model.state_dict()) if record_hashes else None
     rates = learning_rates(args.lr, source['common_mobility'], job)
     optimizer = torch.optim.SGD([dict(params=[model.kernel], lr=rates[0]),
                                  dict(params=[model.weight], lr=rates[1])], momentum=0., weight_decay=0.)
     # A new, paired future stream, not a reconstruction of the original source stream.
     generator = torch.Generator(device=data.device).manual_seed(args.future_seed + job['seed'])
-    batch_hash, view_hash = hashlib.sha256(), hashlib.sha256()
+    batch_hash, view_hash = (hashlib.sha256(), hashlib.sha256()) if record_hashes else (None, None)
     fixed_steps = sorted({0, args.steps, *range(args.eval_every, args.steps, args.eval_every)})
     history, snapshots, crossings = [], [], []
     initial_loss = None
@@ -179,10 +183,11 @@ def train_job(args, job, source, data, train, audit, source_loader=None, augment
         for step in range(args.steps + 1):
             if step:
                 selected = indices[torch.randint(len(indices), (args.batch_size,), generator=generator, device=data.device)]
-                batch_hash.update(selected.cpu().numpy().tobytes())
+                if record_hashes:
+                    batch_hash.update(selected.cpu().numpy().tobytes())
                 first, second = augment_fn(data[selected], generator), augment_fn(data[selected], generator)
                 # Hash actual views occasionally, plus every batch index and final RNG state.
-                if step == 1 or step % args.audit_every == 0 or step == args.steps:
+                if record_hashes and (step == 1 or step % args.audit_every == 0 or step == args.steps):
                     view_hash.update(bytes.fromhex(tensor_hash(first)))
                     view_hash.update(bytes.fromhex(tensor_hash(second)))
                 optimizer.zero_grad(set_to_none=True)
@@ -192,11 +197,18 @@ def train_job(args, job, source, data, train, audit, source_loader=None, augment
                 loss.backward()
                 if any(p.grad is None or not bool(p.grad.isfinite().all()) for p in model.parameters()):
                     raise FloatingPointError('Nonfinite/missing branch gradient')
+                if zero_dc:
+                    model.kernel.grad.sub_(model.kernel.grad.mean((-2, -1), keepdim=True))
                 optimizer.step()
+                if zero_dc:
+                    with torch.no_grad():
+                        model.kernel.sub_(model.kernel.mean((-2, -1), keepdim=True))
                 if any(not bool(p.isfinite().all()) for p in model.parameters()):
                     raise FloatingPointError('Nonfinite branch parameters')
             if step % args.audit_every == 0 or step in fixed_steps:
                 metrics = audit_model(model, audit)
+                if zero_dc:
+                    metrics['kernel_max_abs_spatial_mean'] = float(model.kernel.detach().mean((-2, -1)).abs().max())
                 if initial_loss is None:
                     initial_loss = metrics['loss']
                 reached = [level for level in args.loss_levels if initial_loss > level >= metrics['loss']
@@ -215,11 +227,14 @@ def train_job(args, job, source, data, train, audit, source_loader=None, augment
     except (FloatingPointError, RuntimeError) as error:
         write_json(directory / 'failure.json', dict(job=job, step=step, error=str(error), status='failed; restart from source'))
         raise
-    write_json(directory / 'result.json', dict(job=job, steps=args.steps, source=source,
-               initial_state_sha256=initial_hash, learning_rates=rates, fixed_steps=fixed_steps,
-               history=history, snapshots=snapshots, loss_crossings=crossings,
-               batch_index_sha256=batch_hash.hexdigest(), sampled_views_sha256=view_hash.hexdigest(),
-               final_generator_sha256=tensor_hash(generator.get_state()), test_used=False))
+    result = dict(job=job, steps=args.steps, source=source, learning_rates=rates, fixed_steps=fixed_steps,
+                  history=history, snapshots=snapshots, loss_crossings=crossings, test_used=False)
+    if zero_dc:
+        result['kernel_constraint'] = 'spatial_zero_mean'
+    if record_hashes:
+        result.update(initial_state_sha256=initial_hash, batch_index_sha256=batch_hash.hexdigest(),
+                      sampled_views_sha256=view_hash.hexdigest(), final_generator_sha256=tensor_hash(generator.get_state()))
+    write_json(directory / 'result.json', result)
     (directory / 'failure.json').unlink(missing_ok=True)
 
 

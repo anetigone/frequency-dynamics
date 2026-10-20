@@ -47,9 +47,13 @@ def fit_probe_dtd(features, labels, train, validation):
                 singular_values=fit.singular_values.tolist(), training_feature_spectrum=spectrum(matrix[train]))
 
 
-def make_jobs(seeds, branching=False):
+def make_jobs(seeds, branching=False, dc_free=False):
     from cifar_checkpoint_branches import BRANCHES
     branches = BRANCHES if branching else [b for b in BRANCHES if b['name'] not in ['slow', 'fast']]
+    if dc_free:
+        if branching:
+            raise ValueError('DC-free pilot is a from-initialization r=1 study')
+        branches = [b for b in branches if b['name'] == 'baseline']
     return [dict(id=f'seed_{seed}_{branch["name"]}', seed=seed, **branch) for seed in seeds for branch in branches]
 
 
@@ -59,6 +63,7 @@ def initialize_sources(args, data, train, data_config):
     indices = train[torch.randperm(len(train), generator=torch.Generator().manual_seed(20261021))[:min(256, len(train))]]
     calibration = data[indices.to(data.device)]
     sources = {}
+    dc_free = getattr(args, 'dc_free', False)
     for seed in args.seeds:
         path = args.output / 'initializations' / f'seed_{seed}.pt'
         if path.exists():
@@ -66,13 +71,19 @@ def initialize_sources(args, data, train, data_config):
             identity = previous['identity']
             if identity['seed'] != seed or identity.get('data_config', data_config) != data_config:
                 raise ValueError('Existing DTD initialization settings differ')
+            if bool(identity.get('dc_free', False)) != dc_free:
+                raise ValueError('Existing DTD initialization kernel constraint differs; use a separate output directory')
             info = dict(identity['calibration'])
             info.pop('initial_state_sha256', None)
         else:
-            model, info = initialize(seed, 64, 8, calibration, args.trace_draws, record_state_hash=False)
+            extra = dict(zero_dc=True) if dc_free else {}
+            model, info = initialize(seed, 64, 8, calibration, args.trace_draws, record_state_hash=False, **extra)
             path.parent.mkdir(parents=True, exist_ok=True)
+            identity = dict(seed=seed, data_config=data_config, calibration=info)
+            if dc_free:
+                identity['dc_free'] = True
             torch.save(dict(model={k: v.cpu() for k, v in model.state_dict().items()},
-                       identity=dict(seed=seed, data_config=data_config, calibration=info)), path)
+                       identity=identity), path)
         sources[str(seed)] = dict(checkpoint=str(path.resolve()), common_mobility=info['common_mobility'], calibration=info)
     return sources
 
@@ -81,7 +92,7 @@ def branch_sources(args, split):
     from cifar_checkpoint_branches import read_json
     protocol = read_json(args.source / 'protocol.json')
     original = protocol['arguments']
-    if protocol.get('dataset_name') != 'DTD' or protocol['split'] != split or original['branching']:
+    if protocol.get('dataset_name') != 'DTD' or protocol['split'] != split or original['branching'] or original.get('dc_free', False):
         raise ValueError('DTD forks require a matching from-initialization pilot source')
     for key in ['lr', 'batch_size', 'image_size']:
         if original[key] != getattr(args, key):
@@ -123,13 +134,20 @@ def lock_protocol(args, jobs, sources, split, audit):
     import torch
     from cifar_checkpoint_branches import read_json, write_json
     protocol = dict(schema_version=1, dataset_name='DTD',
-                    arguments={k: str(v.resolve()) if isinstance(v, Path) else v for k, v in vars(args).items() if k != 'phase'},
+                    arguments={k: str(v.resolve()) if isinstance(v, Path) else v for k, v in vars(args).items()
+                               if k != 'phase' and not (k == 'dc_free' and not v)},
                     branch_names=list(dict.fromkeys(j['name'] for j in jobs)), jobs=jobs, sources=sources,
                     split=split, audit=audit, torch_version=str(torch.__version__), test_used=False,
                     primary_metric='validation onehot_mse, 47 classes; accuracy is secondary',
                     scope='Exploratory grayscale texture pilot; matched parameter starts and paired future streams',
                     augmentation='reflection crop +/-size/8, horizontal flip, contrast .9..1.1, Gaussian .01; no per-image normalization',
                     source_rng='new paired future stream; fork does not reconstruct the historical source RNG')
+    if getattr(args, 'dc_free', False):
+        protocol.update(kernel_constraint='spatial_zero_mean',
+                        scope='Exploratory from-initialization DC-free r=1 training; not matched-function to the original pilot',
+                        calibration='Clean energy 0.01; front mobility uses projected VJPs; both blocks equalized without task labels',
+                        constraint_update='project kernel gradients and reproject kernels after each stateless SGD update',
+                        source_rng='same pilot future_seed rule; no replay hashes or historical-stream reconstruction')
     destination = args.output / 'protocol.json'
     if destination.exists() and read_json(destination) != protocol:
         raise ValueError('Existing DTD protocol differs; keep arguments or use a new output directory')
@@ -147,7 +165,8 @@ def run(args):
     split = dict(dataset='DTD', repo_id=metadata['repo_id'], revision=metadata['revision'],
                  train_size=len(train), validation_size=len(validation),
                  image_size=args.image_size, mean=metadata['mean'], std=metadata['std'], test_used=False)
-    jobs = make_jobs(args.seeds, args.branching)
+    dc_free = getattr(args, 'dc_free', False)
+    jobs = make_jobs(args.seeds, args.branching, dc_free)
     # Evaluate never creates or reinitializes missing sources.
     if args.phase == 'evaluate':
         existing = read_json(args.output / 'protocol.json')
@@ -156,13 +175,14 @@ def run(args):
         sources = branch_sources(args, split) if args.branching else initialize_sources(args, data, train, split)
     if args.audit_size > len(train):
         raise ValueError('Audit size exceeds training split')
-    audit, audit_metadata = make_audit(data, train, args.audit_size, args.audit_seed, augment_fn=augment_dtd)
+    audit, audit_metadata = make_audit(data, train, args.audit_size, args.audit_seed,
+                                     augment_fn=augment_dtd, record_hashes=not dc_free)
     lock_protocol(args, jobs, sources, split, audit_metadata)
     loader = partial(load_model, sources=sources)
     if args.phase == 'train':
         for job in jobs:
             train_job(args, job, sources[str(job['seed'])], data, train, audit,
-                      source_loader=loader, augment_fn=augment_dtd)
+                      source_loader=loader, augment_fn=augment_dtd, zero_dc=dc_free, record_hashes=not dc_free)
     else:
         for job in jobs:
             result = read_json(args.output / job['id'] / 'result.json')
@@ -178,6 +198,7 @@ def main():
     parser.add_argument('--data-root', type=Path, default=EXPERIMENTS / 'data' / 'dtd_hf')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--branching', action='store_true')
+    parser.add_argument('--dc-free', action='store_true', help='From-initialization spatial-zero-mean kernels; r=1 only')
     parser.add_argument('--source', type=Path, default=RESULTS / 'empirical' / 'dtd_pilot')
     parser.add_argument('--source-step', type=int, default=500)
     parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 12])
@@ -197,7 +218,9 @@ def main():
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--download-workers', type=int, default=8)
     args = parser.parse_args()
-    args.output = args.output or RESULTS / 'empirical' / ('dtd_branches' if args.branching else 'dtd_pilot')
+    if args.dc_free and args.branching:
+        parser.error('--dc-free is a from-initialization r=1 study; do not combine with --branching')
+    args.output = args.output or RESULTS / 'empirical' / ('dtd_dc_free' if args.dc_free else 'dtd_branches' if args.branching else 'dtd_pilot')
     args.steps = args.steps if args.steps is not None else (1000 if args.branching else 2000)
     args.eval_every = args.eval_every if args.eval_every is not None else (250 if args.branching else 500)
     args.future_seed = args.future_seed if args.future_seed is not None else (950000 if args.branching else 940000)
@@ -216,12 +239,15 @@ def main():
     if args.phase == 'plan':
         # No Torch/PIL/HF import, network access or data reads.
         branches = [('ratio_0.1', .1, 1.), ('baseline', 1., 1.), ('ratio_10', 10., 1.)]
+        if args.dc_free:
+            branches = [('baseline', 1., 1.)]
         if args.branching:
             branches += [('slow', 1., .5), ('fast', 1., 2.)]
         print(json.dumps(dict(dataset=REPO, revision=REVISION, files=list(FILES),
               image_selection='official partition 1: 1880 train + 1880 validation JPEGs; no test images',
               jobs=[dict(seed=s, branch=n, ratio=r, speed=v) for s in args.seeds for n, r, v in branches],
               steps=args.steps, image_size=args.image_size, output=str(args.output), test_used=False,
+              kernel_constraint='spatial_zero_mean' if args.dc_free else 'unconstrained',
               status='plan only; no download, data read or training'), indent=2))
     elif args.phase == 'download':
         paths = download(args.data_root, workers=args.download_workers)

@@ -70,11 +70,18 @@ def summarize(directory):
         raise ValueError('Unique branch names including baseline required')
     if set(runs) != {(s, n) for s in seeds for n in names}:
         raise ValueError('Missing planned seed or branch')
+    dc_free = protocol.get('kernel_constraint') == 'spatial_zero_mean'
+    if dc_free and names != ['baseline']:
+        raise ValueError('DC-free development study requires only the r=1 baseline')
     for seed in seeds:
         group = [runs[seed, n] for n in names]
-        for key in ['initial_state_sha256', 'batch_index_sha256', 'sampled_views_sha256', 'final_generator_sha256']:
-            if len({r[key] for r in group}) != 1:
-                raise ValueError(f'Branch pairing mismatch: seed={seed}, {key}')
+        if dc_free:
+            if group[0].get('kernel_constraint') != 'spatial_zero_mean':
+                raise ValueError('DC-free run metadata differs from protocol')
+        else:
+            for key in ['initial_state_sha256', 'batch_index_sha256', 'sampled_views_sha256', 'final_generator_sha256']:
+                if len({r[key] for r in group}) != 1:
+                    raise ValueError(f'Branch pairing mismatch: seed={seed}, {key}')
         if any(evaluations[seed, n][0] != evaluations[seed, 'baseline'][0] for n in names):
             raise ValueError('Initial probes differ across branches')
         if any(r['history'][0] != group[0]['history'][0] for r in group):
@@ -92,6 +99,12 @@ def summarize(directory):
                     entry[metric] = describe(values)
                     entry[metric + '_minus_fork'] = describe([v - a for v, a in zip(values, initial)])
                     entry[metric + '_minus_baseline'] = describe([v - a for v, a in zip(values, baseline)])
+                    if dc_free:
+                        entry[metric + '_minus_initial'] = entry[metric + '_minus_fork']
+                        training = [evaluations[s, name][step][rep]['train'][metric] for s in seeds]
+                        training_initial = [evaluations[s, name][0][rep]['train'][metric] for s in seeds]
+                        entry['train_' + metric] = describe(training)
+                        entry['train_' + metric + '_minus_initial'] = describe([v-a for v, a in zip(training, training_initial)])
                 for metric in ['loss', 'clean_energy']:
                     entry['audit_' + metric] = describe([next(h for h in runs[s, name]['history'] if h['step'] == step)[metric] for s in seeds])
                 fixed.append(entry)
@@ -132,6 +145,10 @@ def summarize(directory):
     result = dict(dataset_name=dataset_name, n_seeds=len(seeds), seeds=seeds, paired_streams_and_initial_states_valid=True,
                   fixed_steps=fixed, loss_matched=matched, test_used=False,
                   interpretation='Exploratory single-task finite-sample OLS; seed-level descriptive summaries. Missing matches retained; no interpolation or automatic causal conclusion.')
+    if dc_free:
+        result.update(kernel_constraint='spatial_zero_mean', cross_branch_pairing_applicable=False,
+                      paired_streams_and_initial_states_valid=None,
+                      interpretation='Exploratory DC-free r=1 training from initialization; train/validation changes are relative to its own initialization. Not matched-function to the original pilot.')
     (directory / 'summary.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n', encoding='utf-8')
     lines = [f'# {dataset_name} 配对训练诊断', '',
              '验证集 OLS，按配对种子汇总。MSE 为主要终点，越低越好；准确率差用百分点。',
@@ -157,6 +174,19 @@ def summarize(directory):
                      f'{row["available_seeds"]} | {[m["seed"] for m in row["missing"]]} | {accuracy_text} | {mse_text} |')
     lines += ['', '逐种子数值、实际 loss、超调和缺失原因见 summary.json。',
               '不自动据均值差宣布机制成立或失效；单个分类任务不能证明多任务取舍。', '']
+    if dc_free:
+        lines = ['# DTD DC-free 从初始化训练诊断', '',
+                 'r=1；每个卷积核空间均值保持为零。所有变化相对本运行自身初始化，不是与旧 pilot 的同函数干预。',
+                 '验证 one-hot MSE 为主要终点，accuracy 并列报告；逐种子值见 summary.json。', '',
+                 '| 表示 | 训练 accuracy % | 训练变化 pp | 验证 accuracy % | 验证变化 pp | 验证 MSE | 验证 MSE 变化 |',
+                 '|---|---:|---:|---:|---:|---:|---:|']
+        for row in fixed:
+            if row['step'] == args['steps']:
+                lines.append(f'| {row["representation"]} | {100*row["train_accuracy"]["mean"]:.4f} | '
+                             f'{100*row["train_accuracy_minus_initial"]["mean"]:+.4f} | {100*row["accuracy"]["mean"]:.4f} | '
+                             f'{100*row["accuracy_minus_initial"]["mean"]:+.4f} | {row["onehot_mse"]["mean"]:.8f} | '
+                             f'{row["onehot_mse_minus_initial"]["mean"]:+.8g} |')
+        lines += ['', 'audit 的 loss 分解、谱和 kernel_max_abs_spatial_mean 见每种子的 result.json；本实验没有跨配比分支比较。', '']
     (directory / 'findings.md').write_text('\n'.join(lines), encoding='utf-8')
     return result
 
