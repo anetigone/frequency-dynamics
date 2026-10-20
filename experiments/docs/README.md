@@ -2,7 +2,9 @@
 
 | 阅读目的 | 文档 |
 |---|---|
-| 新的容量诊断配置与命令（尚未正式训练） | [CIFAR_CAPACITY_DIAGNOSTICS.md](CIFAR_CAPACITY_DIAGNOSTICS.md) |
+| 冻结同一个 encoder，只训练 projection | [FROZEN_ENCODER_DIAGNOSTIC.md](FROZEN_ENCODER_DIAGNOSTIC.md) |
+| 服务器 33 条容量诊断汇总解读 | [DIAGNOSTIC_REVIEW.md](../results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md) |
+| 容量诊断配置与命令 | [CIFAR_CAPACITY_DIAGNOSTICS.md](CIFAR_CAPACITY_DIAGNOSTICS.md) |
 | 最新完整结果与边界 | [LOCAL_CLOSEOUT.md](LOCAL_CLOSEOUT.md) |
 | 完整经验训练、随机波动、干预和 CIFAR 配置 | [FULL_EMPIRICAL_PROTOCOL.md](FULL_EMPIRICAL_PROTOCOL.md) |
 | 此前总体子空间机制与确认配置 | [SUBSPACE_MECHANISM.md](SUBSPACE_MECHANISM.md) |

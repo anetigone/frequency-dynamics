@@ -125,3 +125,7 @@ python -B experiments/run.py summarize_cifar_capacity
 
 发生数值错误时保存 `failure.json`（任务、步数、学习率、参数 / 梯度统计、近期 loss）和 `failure_state.pt`。
 失败状态只供诊断，不是可续训的优化器快照；失败任务不写成功 result.json，非有限数值仍直接报错，不自动回滚或尝试其他学习率。监督裁剪是预先设定且记录的优化规则。
+
+## 服务器结果已收回
+
+2026-10-20：33 条开发运行的 summary 已同步，见 [结果解读](../results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md)。该批运行使用 RTX 4090 D、PyTorch 2.8.0+cu128，与本机数值稳定性验证分开记录。所有准确率均为验证集指标，没有测试集选型。

@@ -269,6 +269,21 @@
       "original_sha256": null,
       "current_path": "code/checks/check_cifar_capacity.py",
       "current_sha256": "3f6a8685ba3731698a601281c00dfe2d8b1c1e5a97f2e0b8b5fb7171b1ef4454"
+    },
+    "frozen_encoder_probe.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/frozen_encoder_probe.py",
+      "current_sha256": "2817d2058b07b7739875c6fa7e82bbead99db02d9fc9504848140ba5faab56ec"
+    },
+    "summarize_frozen_encoder.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/summarize_frozen_encoder.py",
+      "current_sha256": "1b57d142f92afeacced3e0de135f3a0d7be37af3b63401ff2209b7f479cdc553"
+    },
+    "check_frozen_encoder.py": {
+      "original_sha256": null,
+      "current_path": "code/checks/check_frozen_encoder.py",
+      "current_sha256": "0b37f116e2141c48eb38c6615ffe2f0591d7a08f5f9e5fe09ab2f4c4ac8094d0"
     }
   },
   "result_groups": {

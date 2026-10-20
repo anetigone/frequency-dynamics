@@ -2,12 +2,15 @@
 
 五配对种子、三配比、各 4000 更新的有限预算比较；共同能量下 projection 差异不稳定。
 
-后续 [容量诊断代码与协议](../../docs/CIFAR_CAPACITY_DIAGNOSTICS.md)已就绪，开发训练在进行；当前索引尚不包含完整的容量诊断结论。监督数值稳定性与恢复检查位于 checks 分组。
+后续 [容量诊断代码与协议](../../docs/CIFAR_CAPACITY_DIAGNOSTICS.md)已就绪，服务器的 33 条运行汇总已复制到本地，解读见下表；当前本地只含服务器 summary，未同步其原始 checkpoint。监督数值稳定性与恢复检查位于 checks 分组。
 
 [实验总导航](../../README.md)
 
+后续 [冻结 encoder / head 对照](../../docs/FROZEN_ENCODER_DIAGNOSTIC.md)已提供独立入口；默认六个来源状态需使用服务器原始 checkpoint，本地仅有 capacity summary 不足以运行。
+
 | 结果目录 / 文件 | 内容入口 |
 |---|---|
+| [capacity_development](capacity_development/DIAGNOSTIC_REVIEW.md) | 三开发种子容量诊断解读；[原汇总](capacity_development/summary.json)；[比较图](capacity_development/diagnostic_review.png) |
 | [cifar_audit.json](cifar_audit.json) | 保存的证书 / 诊断 / 数值结果 |
 | [cifar_local_five](cifar_local_five/) | [findings.md](cifar_local_five/findings.md)；[summary.json](cifar_local_five/summary.json)；[protocol.json](cifar_local_five/protocol.json)；15 份运行结果；[cifar_validation](cifar_local_five/cifar_validation.png) |
 
