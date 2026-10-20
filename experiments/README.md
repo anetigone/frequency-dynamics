@@ -2,6 +2,8 @@
 
 按阶段查找代码、协议和结果；开发试跑与正式结果分别存放。最新结论先读 [本机收尾报告](docs/LOCAL_CLOSEOUT.md)。
 
+真实纹理下一阶段：[DTD pilot](docs/DTD_PILOT.md)，使用 Voxel51 Hugging Face 原 JPEG 镜像和官方 partition 1。先检查三个配比的学习增量，再独立决定是否运行同 checkpoint 分叉。
+
 | 阶段 | 代码 | 结果与图表 | 协议 / 解释 |
 |---|---|---|---|
 | 理论认证与二维机制 | [code/theory](code/theory/) | [results/theory](results/theory/README.md) | [主稿附录 A](../THEORY_DRAFT.md) |

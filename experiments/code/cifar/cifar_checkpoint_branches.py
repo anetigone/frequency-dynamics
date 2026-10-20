@@ -116,12 +116,12 @@ def learning_rates(base_lr, mobility, job):
     return [scale, scale * job['ratio']]
 
 
-def make_audit(data, train, size, seed):
+def make_audit(data, train, size, seed, augment_fn=augment):
     selection = torch.Generator().manual_seed(seed)
     indices = train[torch.randperm(len(train), generator=selection)[:size]]
     clean = data[indices.to(data.device)]
     generator = torch.Generator(device=data.device).manual_seed(seed + 1)
-    first, second = augment(clean, generator), augment(clean, generator)
+    first, second = augment_fn(clean, generator), augment_fn(clean, generator)
     metadata = dict(indices=indices.tolist(), first_view_sha256=tensor_hash(first),
                     second_view_sha256=tensor_hash(second), seed=seed)
     return (clean, first, second), metadata
@@ -153,7 +153,7 @@ def save_state(path, model, optimizer, generator, job, step):
                     generator_state=generator.get_state(), job=job, branch_step=step), path)
 
 
-def train_job(args, job, source, data, train, audit):
+def train_job(args, job, source, data, train, audit, source_loader=None, augment_fn=augment):
     directory = args.output / job['id']
     if (directory / 'result.json').exists():
         previous = read_json(directory / 'result.json')
@@ -162,7 +162,7 @@ def train_job(args, job, source, data, train, audit):
         print(f'Already complete: {job["id"]}', flush=True)
         return
     directory.mkdir(parents=True, exist_ok=True)
-    model = load_source(args, job['seed'], data.device)
+    model = (source_loader or load_source)(args, job['seed'], data.device)
     initial_hash = state_hash(model.state_dict())
     rates = learning_rates(args.lr, source['common_mobility'], job)
     optimizer = torch.optim.SGD([dict(params=[model.kernel], lr=rates[0]),
@@ -180,7 +180,7 @@ def train_job(args, job, source, data, train, audit):
             if step:
                 selected = indices[torch.randint(len(indices), (args.batch_size,), generator=generator, device=data.device)]
                 batch_hash.update(selected.cpu().numpy().tobytes())
-                first, second = augment(data[selected], generator), augment(data[selected], generator)
+                first, second = augment_fn(data[selected], generator), augment_fn(data[selected], generator)
                 # Hash actual views occasionally, plus every batch index and final RNG state.
                 if step == 1 or step % args.audit_every == 0 or step == args.steps:
                     view_hash.update(bytes.fromhex(tensor_hash(first)))
@@ -224,7 +224,7 @@ def train_job(args, job, source, data, train, audit):
 
 
 @torch.no_grad()
-def evaluate_job(args, job, data, labels, train, validation):
+def evaluate_job(args, job, data, labels, train, validation, probe_fn=fit_probe):
     directory = args.output / job['id']
     run = read_json(directory / 'result.json')
     result_hash = file_hash(directory / 'result.json')
@@ -243,8 +243,8 @@ def evaluate_job(args, job, data, labels, train, validation):
         model.load_state_dict(payload['model'])
         features = torch.cat([model.features(data[i:i + args.feature_batch]).cpu() for i in range(0, len(data), args.feature_batch)])
         projection = features.double() @ model.weight.detach().cpu().double().T
-        rows.append(dict(step=snapshot['step'], encoder=fit_probe(features, labels, train, validation),
-                         projection=fit_probe(projection, labels, train, validation)))
+        rows.append(dict(step=snapshot['step'], encoder=probe_fn(features, labels, train, validation),
+                         projection=probe_fn(projection, labels, train, validation)))
     write_json(destination, dict(job=job, result_sha256=result_hash, rows=rows, test_used=False))
 
 

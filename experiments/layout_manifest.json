@@ -288,17 +288,32 @@
     "cifar_checkpoint_branches.py": {
       "original_sha256": null,
       "current_path": "code/cifar/cifar_checkpoint_branches.py",
-      "current_sha256": "bfc85c4bbb41e4b858c926fa24e61374ebd4a10000112cf3e25d6769873e44d5"
+      "current_sha256": "5b1061cee195a917d6584d24308f3f11d10dac698f0d72525a2f2de51bfb5984"
     },
     "summarize_checkpoint_branches.py": {
       "original_sha256": null,
       "current_path": "code/cifar/summarize_checkpoint_branches.py",
-      "current_sha256": "e13df88277b11f08b332af66e69d435b7343e50fb1240a690e1806a620cf8431"
+      "current_sha256": "56c503cac4d8404d8ea5b3b541a8eb992a1709f9d20da307d3f94687967036a0"
     },
     "check_checkpoint_branches.py": {
       "original_sha256": null,
       "current_path": "code/checks/check_checkpoint_branches.py",
       "current_sha256": "428256e388bb955a0544f3e092fde4baef91123316ce0e43675f892251ec4b19"
+    },
+    "dtd_hf.py": {
+      "original_sha256": null,
+      "current_path": "code/shared/dtd_hf.py",
+      "current_sha256": "84f6507ac5cc8ed8797a2ccc6f926f6e329f8254bde2a54604bfcbae5a906a37"
+    },
+    "dtd_pilot.py": {
+      "original_sha256": null,
+      "current_path": "code/empirical/dtd_pilot.py",
+      "current_sha256": "5afc6af3c753338de0f264ebf657679067bcfead7ef33969ab86c6d06b3527e4"
+    },
+    "check_dtd_pilot.py": {
+      "original_sha256": null,
+      "current_path": "code/checks/check_dtd_pilot.py",
+      "current_sha256": "b5887b9866f57c920458142e39f73553514732cf454cbe0b8654c4d5825d3227"
     }
   },
   "result_groups": {
@@ -346,7 +361,9 @@
     "mechanism_results.json": "theory",
     "mechanism_profiles.csv": "theory",
     "representation_results.json": "theory",
-    "checkpoint_branches_development": "cifar"
+    "checkpoint_branches_development": "cifar",
+    "dtd_pilot": "empirical",
+    "dtd_branches": "empirical"
   },
   "original_result_sha256": {
     "experiments/results/cifar/cifar_audit.json": "48472a50768768ff18defa87ed9e4ff635f1ebaaff2f0f87db0a5da54d7fd911",

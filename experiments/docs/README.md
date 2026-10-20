@@ -2,6 +2,7 @@
 
 | 阅读目的 | 文档 |
 |---|---|
+| DTD Hugging Face 镜像、pilot 与后续分叉 | [DTD_PILOT.md](DTD_PILOT.md) |
 | 同 checkpoint 配比与整体学习率速度分叉 | [CIFAR_CHECKPOINT_BRANCHES.md](CIFAR_CHECKPOINT_BRANCHES.md) |
 | 冻结同一个 encoder，只训练 projection | [FROZEN_ENCODER_DIAGNOSTIC.md](FROZEN_ENCODER_DIAGNOSTIC.md) |
 | 服务器 33 条容量诊断汇总解读 | [DIAGNOSTIC_REVIEW.md](../results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md) |

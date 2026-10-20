@@ -67,7 +67,9 @@ def summarize(directory):
             raise ValueError('Duplicate seed/branch')
         runs[key], evaluations[key] = run, {r['step']: r for r in evaluation['rows']}
     seeds = args['seeds']
-    names = ['ratio_0.1', 'baseline', 'ratio_10', 'slow', 'fast']
+    names = protocol.get('branch_names', ['ratio_0.1', 'baseline', 'ratio_10', 'slow', 'fast'])
+    if 'baseline' not in names or len(set(names)) != len(names):
+        raise ValueError('Unique branch names including baseline required')
     if set(runs) != {(s, n) for s in seeds for n in names}:
         raise ValueError('Missing planned seed or branch')
     for seed in seeds:
@@ -97,7 +99,8 @@ def summarize(directory):
                 fixed.append(entry)
 
     contrasts = [(n, 'baseline') for n in names if n != 'baseline']
-    contrasts += [(n, control) for n in ['ratio_0.1', 'ratio_10'] for control in ['slow', 'fast']]
+    contrasts += [(n, control) for n in ['ratio_0.1', 'ratio_10'] if n in names
+                  for control in ['slow', 'fast'] if control in names]
     matched = []
     for name, control in contrasts:
         for target in args['loss_levels']:
@@ -127,11 +130,12 @@ def summarize(directory):
                         evaluations[p['seed'], name][p['branch_step']][rep]['validation'][metric]
                         - evaluations[p['seed'], control][p['control_step']][rep]['validation'][metric] for p in pairs])
                 matched.append(row)
-    result = dict(n_seeds=len(seeds), seeds=seeds, paired_streams_and_initial_states_valid=True,
+    dataset_name = protocol.get('dataset_name', 'CIFAR-10')
+    result = dict(dataset_name=dataset_name, n_seeds=len(seeds), seeds=seeds, paired_streams_and_initial_states_valid=True,
                   fixed_steps=fixed, loss_matched=matched, test_used=False,
                   interpretation='Exploratory single-task finite-sample OLS; seed-level descriptive summaries. Missing matches retained; no interpolation or automatic causal conclusion.')
     (directory / 'summary.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n', encoding='utf-8')
-    lines = ['# CIFAR 同 checkpoint 分叉', '',
+    lines = [f'# {dataset_name} 配对训练诊断', '',
              '验证集 OLS，按配对种子汇总。MSE 为主要终点，越低越好；准确率差用百分点。',
              '同 checkpoint 使用新配对随机流，不声称恢复旧轨迹。整体快慢与共同 loss 只是进度对照。', '',
              '| 分支 | 表示 | 最终准确率 % | 相对分叉 pp | 相对 baseline pp | 相对 baseline MSE |',

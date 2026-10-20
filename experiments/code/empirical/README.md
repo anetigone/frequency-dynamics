@@ -4,6 +4,7 @@
 
 | 脚本 | 用途 |
 |---|---|
+| [dtd_pilot.py](dtd_pilot.py) | Voxel51 DTD 镜像下载、学习有效性 pilot、47 类评估及可选 checkpoint 分叉。 |
 | [batch_drift_diagnostic.py](batch_drift_diagnostic.py) | Conditional mean projector step vs mean squared step; no zero-drift assumption. |
 | [compare_empirical_snapshots.py](compare_empirical_snapshots.py) | Compare complete empirical states to EXISTING population checkpoints only. |
 | [conditional_moment_diagnostic.py](conditional_moment_diagnostic.py) | Exploratory finite-dataset moment reference for the conditional drift diagnostic. |
