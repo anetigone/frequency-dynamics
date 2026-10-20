@@ -288,7 +288,7 @@
     "cifar_checkpoint_branches.py": {
       "original_sha256": null,
       "current_path": "code/cifar/cifar_checkpoint_branches.py",
-      "current_sha256": "180b04a41dc74801d225fa45ad9bd2e66aa08567daf74481b4173b1d59a62a9b"
+      "current_sha256": "bfc85c4bbb41e4b858c926fa24e61374ebd4a10000112cf3e25d6769873e44d5"
     },
     "summarize_checkpoint_branches.py": {
       "original_sha256": null,
@@ -298,7 +298,7 @@
     "check_checkpoint_branches.py": {
       "original_sha256": null,
       "current_path": "code/checks/check_checkpoint_branches.py",
-      "current_sha256": "9ab44eea96e064fa5df94c1b197732e13d9bcb18d2db80254156ce14665bcd95"
+      "current_sha256": "428256e388bb955a0544f3e092fde4baef91123316ce0e43675f892251ec4b19"
     }
   },
   "result_groups": {

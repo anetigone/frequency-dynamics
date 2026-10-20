@@ -74,8 +74,17 @@ def source_metadata(args, seed):
         expected = dict(seed=seed, architecture='baseline', objective='unsupervised', ratio=1., channels=64, outputs=8)
         if result['job'] != dict(id=f'seed_{seed}_baseline_unsupervised_r1', **expected):
             raise ValueError('Source is not the requested baseline r=1 run')
-        if result['optimization']['optimizer'] != 'SGD':
-            raise ValueError('Only the existing stateless unsupervised SGD sources are supported')
+        if 'optimization' in result:
+            optimization = result['optimization']
+            if not isinstance(optimization, dict) or optimization.get('optimizer') != 'SGD':
+                raise ValueError('Only the existing stateless unsupervised SGD sources are supported')
+        else:
+            # Capacity runs before the supervised-optimizer fix did not log this
+            # field. Their unsupervised path already used the same stateless SGD;
+            # supervised_momentum in the protocol never applied to that path.
+            protocol = read_json(args.source / 'protocol.json')
+            if result['job'] not in protocol.get('jobs', []):
+                raise ValueError('Legacy capacity source job is missing from its source protocol')
     elif result['seed'] != seed or result['ratio'] != 1.:
         raise ValueError('Source seed/ratio mismatch')
     mobility = result['calibration']['common_mobility']

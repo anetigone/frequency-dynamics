@@ -126,12 +126,31 @@ def main():
         source_metadata(capacity, 0)
         loaded = load_source(capacity, 0, 'cpu')
         assert all(torch.equal(v, loaded.state_dict()[k]) for k, v in source.state_dict().items())
+        # Real server unsupervised results may predate optimization logging.
+        result_path = directory / 'result.json'
+        legacy = read_json(result_path)
+        del legacy['optimization']
+        write_json(result_path, legacy)
+        write_json(capacity.source / 'protocol.json', dict(jobs=[job],
+                   arguments=dict(lr=.002, batch_size=4, supervised_momentum=.9)))
+        source_metadata(capacity, 0)
+        legacy_model = load_source(capacity, 0, 'cpu')
+        assert all(torch.equal(v, legacy_model.state_dict()[k]) for k, v in source.state_dict().items())
+        write_json(capacity.source / 'protocol.json', dict(jobs=[]))
+        rejects(lambda: source_metadata(capacity, 0), 'Unregistered legacy source accepted')
+        for optimizer in ['Adam', None]:
+            invalid = copy.deepcopy(legacy)
+            invalid['optimization'] = dict(optimizer=optimizer)
+            write_json(result_path, invalid)
+            rejects(lambda: source_metadata(capacity, 0), 'Unsupported explicit optimizer accepted')
     write_json(root / 'checkpoint_branch_checks.json', dict(status='passed', device='cpu',
         checks=['two-seed five-branch synthetic train/evaluate/summarize', 'exact baseline SGD first step',
                 'identical starts and actual paired future streams', 'deterministic replay',
                 'fixed audit loss equals empirical objective', 'source protocol mismatch rejection',
                 'missing and overshot loss matches retained', 'corrupted pairing and incomplete evaluation rejected',
-                'local and capacity source checkpoint formats'], real_cifar_training=False))
+                'local and capacity source checkpoint formats',
+                'legacy capacity results without optimization metadata',
+                'legacy source protocol membership and explicit optimizer rejection'], real_cifar_training=False))
     print('Checkpoint branch integration checks passed')
 
 
