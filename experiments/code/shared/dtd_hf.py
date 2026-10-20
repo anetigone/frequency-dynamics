@@ -225,8 +225,6 @@ def decode_images(snapshot, manifest, image_size):
         images.append(preprocess_image(raw, image_size))
         targets.append(row['label'])
         hashes.append(digest)
-    if set(hashes[:1880]) & set(hashes[1880:]):
-        raise ValueError('Identical image bytes appear in training and validation')
     return torch.stack(images), torch.tensor(targets), 1880, hashes
 
 

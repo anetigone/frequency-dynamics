@@ -41,6 +41,9 @@ def main():
                 path.parent.mkdir(parents=True, exist_ok=True)
                 Image.fromarray(pixels).save(path, format='JPEG')
                 selected_paths.append(relative)
+        # Source-valid duplicate content must not block the official train/val split.
+        (snapshot / 'data/data_0/dotted_0171.jpg').write_bytes(
+            (snapshot / 'data/data_0/dotted_0146.jpg').read_bytes())
         write_json(snapshot / 'samples.json', dict(samples=samples))
         write_json(snapshot / 'metadata.json', dict(default_classes=dtd_hf.CLASSES))
         paths = {name: snapshot / name for name in ['samples.json', 'metadata.json']}
