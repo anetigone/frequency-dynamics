@@ -1,0 +1,38 @@
+\section{Model, Objective, and Risk}
+\label{sec:setup}
+\paragraph{Images and effective coordinates.}
+Choose $d$ independent non-DC, non-self-conjugate Fourier pairs of a real periodic image. Let $x_k^F\sim\mathcal{CN}(0,g_k)$ independently and set
+\begin{equation}
+q_k=\frac{|x_k^F|^2-g_k}{g_k},\qquad \E q=0,\quad \operatorname{Cov}(q)=I.
+\end{equation}
+The network is $x\mapsto W\operatorname{GAP}((h*x)^2)$, without biases. With the spatial/Fourier normalization fixed in Appendix~\ref{app:metric}, its centered encoder and projection are
+\begin{equation}
+r_{\rm enc}=Bq,\qquad z=Aq,\qquad
+B_{ck}=g_k|h_{ck}|^2,\quad A=WB.
+\label{eq:effective}
+\end{equation}
+For full-support kernels the Fourier coordinates are free; for local kernels they are coupled by the spatial support constraint. We retain that constraint in training and differentiation.
+
+\paragraph{Pretraining objective.}
+For centered view covariance $\Sigma=ASA^\top$ and view-difference second moment $D$, we analyze the Gaussian Uniformity Plus Alignment objective (GUPA)~\cite{torralba2026theory}
+\begin{align}
+L(A)={}&\tfrac12\tr(ADA^\top)-\tfrac12\log\det(I+\Sigma)\nonumber\\
+&-\tfrac12\tr\big((I+\Sigma)^{-1}\Sigma\big).
+\label{eq:gupa}
+\end{align}
+The energy features are not Gaussian embeddings; GUPA is the objective studied directly, without invoking exact InfoNCE equivalence. In the isotropic texture setting, independent spectral noise of relative power $\eta$ gives $S=sI$, $D=2(s-1)I$, $s=(1+\eta)^2$. For $K=1$, write $A=a^\top$, $V=\norm a^2$, and $Q=sV$. Then
+\begin{align}
+L(a)&=(s-1)V+f(sV),\\
+f(Q)&=-\tfrac12\log(1+Q)-\frac{Q}{2(1+Q)}.
+\end{align}
+The theorem remains strictly inside the constraint $Q\leq1$. Empirical experiments use the full matrix objective with within-view sample centering and do not normalize individual images or outputs.
+
+\paragraph{Independent tasks.}
+For $Y=\beta^\top q+\xi$, assume $\E[\xi\mid q]=0$ and $\E\xi^2=\sigma^2$. The optimal population linear probe satisfies
+\begin{align}
+R_{\rm pop}(A)&=\sigma^2+\norm\beta^2-\beta^\top P_A\beta,\label{eq:risk}\\
+P_A&=A^\top(AA^\top)^\dagger A.
+\end{align}
+We denote excess risk by $\risk=R_{\rm pop}-\sigma^2$. Equation~\eqref{eq:risk} is evaluated by an SVD row-space basis, with singular values and numerical ranks recorded. It is invariant to invertible changes of representation coordinates. For $K=1$, $d=2$, and $\beta=e_1$, $\risk=a_2^2/(a_1^2+a_2^2)$. The encoder has the same risk formula with $B$ replacing $A$; an invertible $B$ has risk $\sigma^2$ regardless of the head.
+
+For complete orthonormal coordinate tasks, $\sum_j\risk_{e_j}(A)=d-\operatorname{rank}(A)$. Thus fixed-rank improvements and losses represent a redistribution of a fixed total budget, not necessarily a decrease in dimension. The substantive question is which directions the training geometry selects.

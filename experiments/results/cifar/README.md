@@ -6,10 +6,11 @@
 
 [实验总导航](../../README.md)
 
-后续 [冻结 encoder / head 对照](../../docs/FROZEN_ENCODER_DIAGNOSTIC.md)已提供独立入口；默认六个来源状态需使用服务器原始 checkpoint，本地仅有 capacity summary 不足以运行。
+[冻结 encoder / head 对照](../../docs/FROZEN_ENCODER_DIAGNOSTIC.md)的六状态汇总已收回，解读见下表。本地保留用户原文件名 summey.json；当前只收到汇总，未同步原始 head 权重。
 
 | 结果目录 / 文件 | 内容入口 |
 |---|---|
+| [frozen_encoder_heads](frozen_encoder_heads/FROZEN_HEAD_REVIEW.md) | 三种子、六状态冻结 encoder 诊断；[原汇总](frozen_encoder_heads/summey.json)；[比较图](frozen_encoder_heads/frozen_head_review.png) |
 | [capacity_development](capacity_development/DIAGNOSTIC_REVIEW.md) | 三开发种子容量诊断解读；[原汇总](capacity_development/summary.json)；[比较图](capacity_development/diagnostic_review.png) |
 | [cifar_audit.json](cifar_audit.json) | 保存的证书 / 诊断 / 数值结果 |
 | [cifar_local_five](cifar_local_five/) | [findings.md](cifar_local_five/findings.md)；[summary.json](cifar_local_five/summary.json)；[protocol.json](cifar_local_five/protocol.json)；15 份运行结果；[cifar_validation](cifar_local_five/cifar_validation.png) |

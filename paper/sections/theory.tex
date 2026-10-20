@@ -1,0 +1,90 @@
+\section{Certified Risk Rebound and Update Geometry}
+\label{sec:theory}
+\subsection{A finite-time fixed-gap construction}
+Take $C=d=2$, $K=1$, $\beta=e_1$, and unit parameter learning rates. Define the positive initialization coordinates
+\begin{equation}
+x=(w_1,w_2,B_{11},B_{12},B_{21},B_{22},g_1,g_2)
+\end{equation}
+and the rational center
+\begin{equation}
+\bar x=(1/25,9/25,8/25,4/125,4/125,8/125,1,2).
+\end{equation}
+Each $B_{ck}$ is realized by $|h_{ck}|^2=B_{ck}/g_k$. Spectral powers $g$ are fixed along each trajectory, but vary across the initialization box. Set $\ell=\log(V/V_0)$ separately for each trajectory.
+
+\begin{theorem}[Certified fixed risk gaps]
+\label{thm:gap}
+Let $\delta=10^{-5}$ and let $x_i(0)\in[(1-\delta)\bar x_i,(1+\delta)\bar x_i]$ independently. For every $\eta\in[0,1/5]$, Euclidean parameter gradient flow for the isotropic GUPA objective reaches $\ell_1=1.7$ and $\ell_2=6$ in finite physical time. Throughout this interval the parameters and vector-field denominators remain positive and $Q<0.689<1$. Moreover,
+\begin{align}
+\risk(1.7)&\leq\risk(0)-0.04,\\
+\risk(6)&\geq\risk(0)+0.15,
+\end{align}
+and hence $\risk(6)-\risk(1.7)\geq0.19$. The pretraining loss strictly decreases between these times and initialization.
+\end{theorem}
+
+The relative half-width is $0.001\%$, not $1\%$. This is a continuous-box existence result, not a high-probability random-initialization theorem. The guarantee concerns two sections and does not assert a unique risk minimum or monotonicity between sections. It does not assert encoder deterioration: whenever the two-dimensional encoder is invertible, its optimal encoder risk is at the noise floor. The theorem concerns the compressed projection.
+
+\paragraph{Proof structure.}
+Write $\gamma(Q)=(Q+2)/(2(Q+1)^2)$ and $\Gamma_s(Q)=s\gamma(Q)-(s-1)$. A positive time change $d\zeta/dt=2\Gamma_s(Q)$ gives
+\begin{equation}
+w_c'=\sum_k B_{ck}a_k,\qquad
+B_{ck}'=4g_kB_{ck}w_ca_k.
+\label{eq:zeta}
+\end{equation}
+For $K_B=B^\top B+\diag(4g_k\sum_c B_{ck}w_c^2)$ and $H=a^\top K_Ba$, $d\ell/d\zeta=2H/V>0$. The resulting rational vector field is integrated with outward-rounded fixed-point intervals. A Taylor enclosure certifies the center trajectory, and a logarithmic-coordinate perturbation bound encloses every initialization in the box. Strict positivity, the energy bound, and $\Gamma_s\geq0.1$ ensure finite physical reachability. Appendix~\ref{app:certificate} supplies the enclosure argument and exact reproduction settings.
+
+The stored certificate is stronger than the displayed conservative theorem: it gives improvement at least $0.09122$, excess over initialization at least $0.33664$, and rebound at least $0.42790$. These are certified bounds, not sampled means.
+
+\subsection{Matched functions can move in opposite task directions}
+\begin{proposition}[Scale and learning-rate equivalence]
+\label{prop:scale}
+For a loss depending on $A=WB(h)$ with $B(ch)=c^2B(h)$, scaling $h\mapsto ch$ and $W\mapsto c^{-2}W$ preserves the initial function. Euclidean gradient training at this scaled initialization is equivalent, in the unscaled coordinates, to learning rates
+\begin{equation}
+(\eta_h,\eta_W)\mapsto(c^{-2}\eta_h,c^4\eta_W).
+\end{equation}
+This holds step by step for ordinary gradient descent. The relative rate acquires the factor $c^6$.
+\end{proposition}
+\begin{proof}
+In coordinates $h_c=c\bar h$, $W_c=c^{-2}\bar W$, the gradients scale as $\nabla_{h_c}L=c^{-1}\nabla_{\bar h}L$ and $\nabla_{W_c}L=c^2\nabla_{\bar W}L$. Substituting into the update gives the stated factors.
+\end{proof}
+
+An explicit direction test uses a different initialization from Theorem~\ref{thm:gap}:
+\begin{equation}
+B_0=\begin{pmatrix}2&1/5\\1/5&2/5\end{pmatrix},\quad
+w_0=\begin{pmatrix}1/10\\9/10\end{pmatrix},\quad g=(1,2).
+\end{equation}
+All scaled versions have $a_0=(19/50,19/50)^\top$. For $S=I,D=0$, direct differentiation yields
+\begin{equation}
+\left.\frac{d\risk}{d\ell}\right|_0
+=\frac{235-480c^6}{834+1300c^6}.
+\label{eq:threshold}
+\end{equation}
+The sign reverses at $c_*=(47/96)^{1/6}\simeq0.887778$, or relative learning rate $r_*=47/96$ in the unscaled coordinates. Opposite derivatives at the same initial representation and equal-energy section cannot be removed by a positive time change. This threshold is specific to the displayed construction, not a universal recommended ratio. The fixed-gap initialization is a separate scaled-down state and is certified independently.
+
+\subsection{Which space changes?}
+\begin{proposition}[Linear population row-space conservation]
+\label{prop:linear}
+Suppose $A=WV$, $L(A)=F(AA^\top)$, and $G=\nabla_A L=H(A)A$, with $H$ continuous along a finite, bounded parameter trajectory. Then ordinary linear gradient flow preserves $\row V(t)=\row V(0)$. Every task's optimal population encoder risk is constant.
+\end{proposition}
+\begin{proof}
+The front-layer update is
+\begin{equation}
+\dot V=-\eta_V W^\top H(A)WV=C(t)V.
+\end{equation}
+Its solution is $V(t)=U(t)V(0)$, where $U'=C(t)U$, $U(0)=I$, and $\det U(t)=\exp(\int_0^t\tr C(s)ds)\ne0$. Left multiplication preserves row space; Equation~\eqref{eq:risk} completes the proof.
+\end{proof}
+This statement covers matrix outputs, not just $K=1$. The front-layer contribution to $\dot A$ is also a left multiplication of $A$, so its first-order contribution to row-space risk is zero. At a fixed state, changing a positive rate ratio cannot reverse this linear model's instantaneous population risk sign; finite horizons can still differ through later states.
+
+For the square model, the actual full-support parameter update instead gives
+\begin{equation}
+\dot B_{ck}=-4\eta_h g_kB_{ck}(W^\top G)_{ck}.
+\label{eq:squareupdate}
+\end{equation}
+There is generally no common left multiplier of $B$. In a bottleneck $C<d$, its encoder row space can therefore move. This does not imply that movement is always harmful or necessary for projection risk rebound. Linear factorization itself can produce substantial projection motion within its conserved encoder space.
+
+\subsection{Task-conditioned local interventions}
+For a full-row-rank representation matrix $X$, let $v=(XX^\top)^{-1}X\beta$ and $e=(I-P_X)\beta$. Differentiation of the least-squares residual gives
+\begin{equation}
+\dot\risk=-2v^\top\dot X e.
+\label{eq:drisk}
+\end{equation}
+Separating parameter groups yields $\dot\risk=\eta_h c_h+\eta_W c_W$, where $c_h=-\langle\nabla_h R,\nabla_h L\rangle$ and likewise for $W$. Opposite signs permit a positive critical ratio $r_*=-c_h/c_W$; equal nonzero signs exclude immediate reversal by positive rates. We calculate coefficients from effective maps and update geometry before executing branches. The rule uses known task direction $\beta$ and is an oracle mechanism test, not a label-free controller or a guarantee of long-horizon benefit.

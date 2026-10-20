@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-20",
+  "pages": 11,
+  "source_files": 9,
+  "citation_count": 8,
+  "unresolved_labels": [],
+  "duplicate_labels": [],
+  "missing_bibliography_keys": [],
+  "overfull_boxes": 0,
+  "undefined_reference_warnings": 0,
+  "figures": [
+    "empirical_subspaces.pdf",
+    "frozen_heads.pdf",
+    "intervention_boundary.pdf"
+  ],
+  "pdf_sha256": "c9dfaf06ea8e836083c9204b30a49b2953307d0d5ae3b3637dfce13b123f09f7",
+  "verification_scope": "Compilation, cross-reference checks, saved-summary statistical consistency, and visual review of all rendered pages. No new training or full certificate recomputation."
+}

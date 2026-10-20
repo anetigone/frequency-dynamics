@@ -1,0 +1,138 @@
+\section{Spatial Metric and Effective Updates}
+\label{app:metric}
+For image side length $n$, use orthonormal real cosine/sine basis functions $\sqrt{2/n^2}\cos(2\pi k\cdot x/n)$ and the corresponding sine functions. Circular correlation is divided by $\sqrt{n^2/2}$. The physical spatial kernel then has Euclidean coordinates $h_{ck,\cos},h_{ck,\sin}$, and
+\begin{equation}
+B_{ck}=g_k(h_{ck,\cos}^2+h_{ck,\sin}^2).
+\end{equation}
+This convention counts each independent conjugate pair once. The effective centered map is obtained by subtracting its distributional mean; empirical GUPA uses sample centering and probes include an intercept. Differentiating physical kernels gives Equation~\eqref{eq:squareupdate}, including its factor of four. Fourier SGD with a different normalization is not automatically the same algorithm.
+
+For a local kernel let $J_c=D_{h_c}B_{c:}$ and $T_c=J_cJ_c^\top$. Then, in column-vector notation,
+\begin{equation}
+\dot B_{c:}^{\top}=-\eta_h T_c(W^\top G)_{c:}^{\top}.
+\end{equation}
+For full support $T_c=\diag(4g_kB_{ck})$; local support introduces cross-frequency terms. These terms are retained in the experiments. Effective updates are parameter Jacobian Gram updates, not arbitrary effective-map optimization.
+
+\section{Details of the Certified Fixed-Gap Theorem}
+\label{app:certificate}
+\subsection{Energy-parameterized rational dynamics}
+Let $a=B^\top w$, $V=a^\top a$, $K_B=B^\top B+\diag(4g_k\sum_cB_{ck}w_c^2)$, and $H=a^\top K_Ba$. In effective time, Equation~\eqref{eq:zeta} gives $a'=K_Ba$ and $V'=2H$. Positivity implies $H>0$. In $\ell=\log(V/V_0)$ coordinates, the eight-dimensional vector field is
+\begin{align}
+F_{w_c}(x)&=\frac{V}{2H}\sum_k B_{ck}a_k,\\
+F_{B_{ck}}(x)&=\frac{V}{2H}4g_kB_{ck}w_ca_k,\\
+F_{g_k}(x)&=0.
+\label{eq:certfield}
+\end{align}
+Along exact solutions $dV/d\ell=V$, hence $V(\ell)=V_0e^\ell$. Although each initialization has its own $V_0$, the rational field contains no external $V_0$ parameter. This permits a common-section comparison across the box.
+
+\subsection{Outward-rounded trajectory enclosures}
+The certificate uses step $h=1/500$, 3,000 steps, and fixed-point endpoints with denominator $2^{180}$. The two sections are exactly steps 850 and 3,000. All proof decisions use integer outward rounding; floating point is used only for readable progress output. Any denominator containing zero causes failure.
+
+For each center-trajectory endpoint enclosure $X_n$, the verifier constructs a positive trajectory tube $T_n$ and checks strict Picard inclusion in the six dynamic coordinates:
+\begin{equation}
+X_n+[0,h]F(T_n)\subset\operatorname{int}(T_n).
+\end{equation}
+The two static coordinates retain their input intervals. A first-exit argument establishes existence and containment throughout the step. Truncated power-series arithmetic computes coefficients recursively,
+\begin{equation}
+c_0=x,\qquad c_{j+1}=\frac{[z^j]F(\sum_{k=0}^jc_kz^k)}{j+1}.
+\end{equation}
+The step endpoint satisfies the interval Taylor inclusion
+\begin{equation}
+x(\ell_n+h)\in\sum_{j=0}^{7}c_j(X_n)h^j+c_8(T_n)h^8.
+\end{equation}
+Thus the enclosure includes the eighth-order remainder, all arithmetic rounding, and the entire within-step trajectory. Checking only endpoints would not suffice.
+
+\subsection{Enclosing the continuous initialization box}
+Directly propagating an initial box can inflate intervals. Instead, enclose the center and control neighboring solutions in logarithmic coordinates $y=\log x$. Define $f_i(y)=F_i(e^y)e^{-y_i}$ and $J=D_yf$. For the initial relative half-width $\delta=10^{-5}$,
+\begin{equation}
+\norm{y(0)-\bar y(0)}_2\leq\sqrt8\frac{\delta}{1-\delta}<\frac3{99999}=E_0.
+\end{equation}
+For each step the verifier certifies
+\begin{equation}
+\lambda_{\max}\big((J+J^\top)/2\big)<m_n
+\label{eq:lognorm}
+\end{equation}
+throughout the inflated trajectory tube. It searches $m_n\in\{1/20,2/20,\ldots,80/20\}$ and sets, with upward rounding,
+\begin{equation}
+r_n=\frac{E_n}{1-m_nh},\qquad E_{n+1}=r_n<1/2.
+\end{equation}
+Since $e^{m_nh}<1/(1-m_nh)$, this bounds the whole step. The required tube is the componentwise product
+\begin{equation}
+\widehat T_n=T_n[1-r_n,(1-r_n)^{-1}].
+\end{equation}
+It contains exponentials of the log-error ball and the log-coordinate segments joining neighboring solutions. The derivative is evaluated without approximate logarithms:
+\begin{equation}
+J_{ij}=\frac{x_j}{x_i}\frac{\partial F_i}{\partial x_j}
+-\mathbf1_{i=j}\frac{F_i}{x_i}.
+\end{equation}
+The static $g$ rows are zero, but their influence on other rows remains included.
+
+To prove Equation~\eqref{eq:lognorm}, let $\mathscr S$ enclose the symmetric part of $J$, let $M$ be its symmetric fixed-point midpoint matrix, and let $e_n$ bound the maximum absolute row sum of interval deviations from $M$. Every real $S\in\mathscr S$ obeys $\norm{S-M}_2\leq e_n$. The verifier checks
+\begin{equation}
+(m_n-e_n)I-M\succ0
+\end{equation}
+by outward-rounded unpivoted $LDL^\top$ recursion with all eight pivots strictly positive. Failure of every candidate $m_n$ aborts verification. Integrating the symmetric-Jacobian bound along segments and using a first-exit argument closes the error tube. No approximate eigenvalue is accepted as a proof decision.
+
+\subsection{Risk bounds, constraints, and physical time}
+At a section, inflate $X_n$ by $[1-E_n,(1-E_n)^{-1}]$. For $a_1\in[A_-,A_+]$, $a_2\in[C_-,C_+]$ with positive endpoints, use
+\begin{equation}
+\risk\in\left[\frac{C_-^2}{A_+^2+C_-^2},
+\frac{C_+^2}{A_-^2+C_+^2}\right].
+\end{equation}
+Subtracting section and initialization intervals gives uniform bounds for each initialization, conservatively ignoring their correlations. Readable outward bounds are
+\begin{align}
+0.49997&\leq\risk(0)\leq0.50003,\\
+0.40844&\leq\risk(1.7)\leq0.40876,\\
+0.83666&\leq\risk(6)\leq0.83883.
+\end{align}
+The stronger gap constants quoted in the main text use the unrounded binary-rational endpoints, not subtraction of these rounded displays.
+
+The energy bound holds continuously, using $\bar V_0=0.0011829248$ and an exact rational series proof of $e^6<404$:
+\begin{equation}
+Q(\ell)\leq\frac{36}{25}(1+\delta)^4\bar V_0e^6<0.689.
+\end{equation}
+For $1\leq s\leq36/25$ and $Q\leq1$, $\Gamma_s(Q)\geq0.1$. Therefore
+\begin{equation}
+\frac{d\ell}{dt}=4\Gamma_s(Q)\frac HV>0,
+\qquad\frac{dL}{d\ell}=-\Gamma_s(sV)V<0.
+\end{equation}
+The compact positive tube has a uniform lower bound on $H$ and an upper bound on $V$, implying finite $dt/d\ell$ and finite physical reachability. This completes the computer-assisted proof of Theorem~\ref{thm:gap}, conditional on the explicitly checkable arithmetic and inclusion tests.
+
+\paragraph{A matched-function subfamily.}
+Fix $g=(1,2)$ at the center and scale $B_0=c^2\bar B$, $w_0=c^{-2}\bar w$ with $c\in[1-1/400000,1+1/400000]$. Rational endpoint checks give $c^2,c^{-2}\in[1-\delta,1+\delta]$. This whole family lies in the certified box and has the same $a_0=(0.02432,0.02432)^\top$ and $\risk(0)=1/2$. The full box itself does not match a single initial representation.
+
+\paragraph{Reproduction.}
+From the repository root, run \texttt{python -B} on \path{experiments/code/theory/verify.py} and \path{experiments/code/theory/check_arithmetic.py}, with assertions enabled. The verifier reconstructs the certificate from rational initialization without reading the stored certificate. The independent Fraction-based arithmetic check does not replace the ODE enclosure. The proof is not formalized in Lean or Coq.
+
+\section{Derivation of the Direction Threshold}
+Let $P=B^\top B$, $F_B=\diag(4g_k\sum_cB_{ck}w_c^2)$, and $K_B=P+F_B$. For the matched-function initialization in Section~\ref{sec:theory},
+\begin{equation}
+P_0=\begin{pmatrix}101/25&12/25\\12/25&1/5\end{pmatrix},\quad
+F_0=\diag(91/125,326/125).
+\end{equation}
+Scaling gives $K_B=c^4P_0+c^{-2}F_0$. With $a_*=19/50$ and $a_\perp=(-a_2,a_1)^\top$,
+\begin{align}
+N_0&=a_\perp^\top K_Ba=a_*^2c^{-2}(47-96c^6)/25,\\
+a_0^\top K_Ba_0&=a_*^2\big((26/5)c^4+(417/125)c^{-2}\big).
+\end{align}
+At equal positive coordinates, the derivative of $\risk=\sin^2\vartheta$ with respect to angle is one. Thus $d\risk/d\ell=N_0/(2a_0^\top K_Ba_0)$, which simplifies to Equation~\eqref{eq:threshold}. The threshold changes only the initial sign. The main fixed-gap theorem does not infer a long-time trajectory from this local calculation.
+
+More generally, any smooth radial objective $\Phi(V)$ with $-\Phi'(V)$ bounded below by a positive constant on the trajectory interval shares Equation~\eqref{eq:zeta} after a positive time change. The energy-parameterized paths are consequently independent of the particular radial loss on that interval. Anisotropic objectives do not generally have this scalar-factor property.
+
+\section{Finite-Label Probes and Reduced-Rank Fitting}
+Equation~\eqref{eq:risk} follows by minimizing $\sigma^2+\norm{\beta-A^\top v}^2$ over $v$. An invertible feature coordinate transformation preserves the feasible prediction space. For a full-column-rank finite design and an invertible encoder, unregularized affine OLS is similarly unchanged in exact arithmetic. Fewer labels alone do not prove encoder deterioration; minimum-norm conventions in underdetermined settings, regularization, or numerical truncation require separate analysis.
+
+For the frozen-encoder experiment, center and invertibly column-standardize the training feature matrix to obtain $X$, and center training one-hot targets to obtain $Y$. Write the numerical-rank SVD as $X=USV^\top$. Orthogonal decomposition gives
+\begin{equation}
+\norm{Y-XM}_F^2=\norm{(I-UU^\top)Y}_F^2
++\norm{U^\top Y-SV^\top M}_F^2.
+\end{equation}
+The best rank-$K$ approximation of $U^\top Y$ is its truncated SVD. Mapping back through $VS^{-1}$ gives a rank-$K$ linear feature projection and decoder; centering is absorbed in decoder bias. This globally minimizes training square error over rank-$K$ affine predictors, without using validation labels. It is not globally optimal for classification accuracy or for the CE training objective. The source implementation additionally refits an OLS decoder to the resulting projection, enabling an independent consistency check.
+
+\section{Experimental Scope and Reporting}
+Population suites contain 540 trajectories, complete empirical suites 180 primary trajectories, and random-stream repeats 40 additional trajectories. These counts are computational workloads. The texture inferential unit remains ten paired seeds. Repeated checkpoints, ten tasks, and future batch streams are correlated measurements. CIFAR fixed-budget comparison uses five paired seeds; capacity and frozen-head diagnostics use three development seeds, not new confirmation samples.
+
+The theoretical and population sections use exact known-distribution risks. Texture empirical training still evaluates those risks analytically rather than fitting them on test labels. Separate pilot finite-label OLS uses nested label counts 256, 1,024, and 8,192; it is not part of the proof. Natural-image OLS fits on the 45,000-image training split. Only the fixed-budget five-seed comparison uses the standard test set; the later capacity and frozen-head diagnostics use validation only.
+
+For interventions, predicted changes with absolute magnitude at most $10^{-9}$ are treated as numerically neutral and excluded from sign summaries. Positive-threshold existence and conditional threshold errors are reported separately. Early and late states cannot be pooled into a single reliability claim. Population-trained checkpoint branching is preliminary evidence; the final intervention table uses states reached by complete empirical training.
+
+The CIFAR supervised references use Adam, front/head learning rate $3\times10^{-4}$, classifier learning rate $10^{-3}$, and prescribed global gradient clipping at 1. Fixed initial feature standardization is used only in their classifier path. These choices preserve the represented function family but change optimization relative to unsupervised SGD. The local supervised stability tests triggered clipping on approximately 98--99\% of updates; those local counts do not independently certify clipping rates for server runs. Current server capacity and frozen-head evidence was imported as summaries; raw server checkpoints and optimization logs were not re-audited locally.

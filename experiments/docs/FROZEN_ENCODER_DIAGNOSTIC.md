@@ -76,3 +76,7 @@ python -B experiments/code/cifar/summarize_frozen_encoder.py
 实现检查见 [frozen_encoder_checks.json](../results/checks/frozen_encoder_checks.json)。
 
 本机真实数据完整稳定性检查：[frozen_encoder_full_stability.json](../results/checks/frozen_encoder_full_stability.json)。复用旧 CIFAR 五种子实验中的 seed 2 / r=1 初始和第 4000 步 encoder，各训练 head 4000 步，kernel 均逐元素不变、可训练参数均有限。它与新方案的默认 seed 0/1/12 六状态实验分开，不混入正式汇总。
+
+## 服务器汇总已收回
+
+2026-10-20：三个种子、六个固定 encoder 状态的汇总已同步为 summey.json，见 [结果解读](../results/cifar/frozen_encoder_heads/FROZEN_HEAD_REVIEW.md)。原 head 与完整 encoder 指标与此前 capacity 汇总逐种子一致。当前只根据汇总解读，不声称已独立核验服务器原始权重。
