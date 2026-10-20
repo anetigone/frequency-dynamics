@@ -7,3 +7,4 @@ venv/
 !/experiments/results/**/README.md
 !/experiments/results/theory/*
 /cifar-10-batches-py/
+*.zip
