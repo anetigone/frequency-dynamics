@@ -91,3 +91,39 @@ python -B experiments/run.py diagnose_dominant_direction experiments/results/cif
 ```
 
 覆盖高方差无关方向与低方差语义方向的区分、训练集独占 PCA、归一化一致性的尺度不变性、分量 alignment 可加性、灰度统计还原、完整合成 checkpoint 流程，以及配对增强的可重复性。
+
+## DC 响应消融：保持 checkpoint 不变，去掉滤波器空间均值
+
+同一个脚本新增 `--dc-ablation`，原主方向诊断默认行为保留。先在 DTD 做现有三个开发种子的初末状态：
+
+```bash
+python -B experiments/run.py diagnose_dominant_direction experiments/results/empirical/dtd_pilot \
+  --dc-ablation --steps 0 2000 --device cuda --feature-batch 128
+```
+
+输出默认改为 `dtd_pilot/dc_ablation/`。如果也做 CIFAR，使用同一选项及分叉对应步数：
+
+```bash
+python -B experiments/run.py diagnose_dominant_direction experiments/results/cifar/checkpoint_branches_development \
+  --dc-ablation --steps 0 1000 --device cuda --feature-batch 128
+```
+
+每个 checkpoint 都重新推断两个变体：`original` 与 `zero_dc`。后者仅在内存中计算 `kernel - kernel.mean((-2,-1), keepdim=True)`，head 完全相同，不对 kernel 补偿缩放，不改变输入预处理、增强、数据划分或原文件。两个变体重置到相同 view seed，使用逐样本相同的增强；PCA 和监督 OLS 分别只在各自训练集特征上拟合。这是已有模型的功能消融，不是新的无监督训练结果。
+
+此前的 PC1、类别分量、视图一致性、图像统计拟合表增加 `variant` 列，并新增：
+
+- `ablation_comparisons.csv`：同种子、同 checkpoint 的 `zero_dc - original` accuracy / MSE / 常数技能分数差。优先读 `component=all`，accuracy 差为小数，乘 100 才是百分点；MSE 差为负表示消融后更好。初始与末期都要看，避免把本来就存在的特征差异写成训练收益。每个变体自身重新拟合 PCA，因此不同变体的 PC1 / remainder 不是固定的同一子空间。
+- `kernel_statistics.csv`：滤波器空间和的最大绝对值、kernel 平方范数及相对原 kernel 的比例，检查 DC 去除量和范数变化。浮点下空间和允许有舍入残差，不引入哈希检查。
+- `view_objective.csv`：projection 两视图的 alignment、两项 uniformity、总 GUPA loss 和协方差全谱。分别在原训练集和验证集图像上算完整集合的 sample covariance，不能与原 mini-batch / 固定小 audit 的 loss 作逐值比较。
+
+loss 同时提供两种评价：`raw` 为实际输出；`original_train_clean_energy` 用一个仅由训练 clean 特征决定的标量，将两视图输出缩放至同 checkpoint 原模型的训练 clean 输出总方差，再计算同一公式。不更新任何参数。此标量只匹配总方差，不匹配协方差谱、方向、初始函数或训练动力学。若消融后 clean 方差为零，则保留 raw / 常数 probe，不伪造可匹配的输出尺度。
+
+判断顺序：先检查 DC 平方与 PC1 的关系、主方向方差占比是否降低，再看 full 类别 probe 与尺度归一化一致性是否保留或改善，最后结合 raw / 同能量 loss 分解。即使消融有效，也不能仅凭一次末期消融证明从头 DC-free 训练一定更好。
+
+本地合成检查：
+
+```powershell
+& H:/anaconda3/envs/py312/python.exe -B experiments/run.py check_dc_response_ablation
+```
+
+覆盖 DC 投影的幂等性与范数分解、逐图常数偏移不变性、GUPA 与原训练公式一致、配对原模型结果不变、同能量评价，以及纯 DC 模型被完全消除时的零秩/常数 probe。

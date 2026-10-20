@@ -126,6 +126,45 @@ def infer_features(data, kernel, device, batch, augment_fn=None, view_seed=0):
     return tuple(torch.cat(items).double() if items else None for items in [clean, first, second])
 
 
+def zero_dc_kernel(kernel):
+    """Remove each input-channel spatial DC response without changing the source tensor."""
+    return kernel-kernel.mean((-2, -1), keepdim=True)
+
+
+def view_objective(first, second):
+    """The saved experiment's GUPA formula on a fixed pair of views, in double precision."""
+    import torch
+    a, b = first.double(), second.double()
+    if len(a)<2:
+        raise ValueError('View covariance requires at least two images')
+    ac, bc = a-a.mean(0), b-b.mean(0)
+    covariance = (ac.T@ac+bc.T@bc)/(2*(len(a)-1))
+    shifted = torch.eye(a.shape[1], dtype=a.dtype)+covariance
+    alignment = .5*(a-b).square().sum(1).mean()
+    logdet = -.5*torch.linalg.slogdet(shifted)[1]
+    trace = -.5*torch.trace(torch.linalg.solve(shifted, covariance))
+    return dict(loss=float(alignment+logdet+trace), alignment=float(alignment),
+                uniformity_logdet=float(logdet), uniformity_trace=float(trace),
+                view_covariance_eigenvalues=torch.linalg.eigvalsh(covariance).flip(0).tolist())
+
+
+def ablation_comparisons(probes):
+    rows = []
+    original = {(r['job'], r['step'], r['representation'], r['component']): r
+                for r in probes if r['variant']=='original'}
+    for r in probes:
+        if r['variant']!='zero_dc':
+            continue
+        base = original[r['job'], r['step'], r['representation'], r['component']]
+        row = {k: r[k] for k in ['job', 'seed', 'branch', 'step', 'representation', 'component']}
+        for split in ['train', 'validation']:
+            for metric in ['accuracy', 'onehot_mse', 'constant_skill']:
+                key = split+'_'+metric
+                row[key+'_zero_dc_minus_original'] = r[key]-base[key] if r[key] is not None and base[key] is not None else None
+        rows.append(row)
+    return rows
+
+
 def run(args):
     import torch
     torch.set_num_threads(args.threads)
@@ -151,6 +190,8 @@ def run(args):
     else:
         from cifar_local import augment
     correlations, probes, consistency, pca_rows, evolution = [], [], [], [], []
+    kernel_rows, objectives = [], []
+    dc_ablation = getattr(args, 'dc_ablation', False)
     for job in protocol['jobs']:
         branch = job.get('name', job['id'])
         if args.seeds and job['seed'] not in args.seeds or args.branches and branch not in args.branches:
@@ -173,49 +214,76 @@ def run(args):
             kernel, weight = payload['model']['kernel'].to(args.device), payload['model']['weight'].double()
             if kernel.ndim != 4 or weight.ndim != 2 or weight.shape[1] != kernel.shape[0] or not bool(kernel.isfinite().all() and weight.isfinite().all()):
                 raise ValueError('Invalid model tensors')
-            features = infer_features(data, kernel, args.device, args.feature_batch, augment, args.view_seed)
-            for rep in ['encoder', 'projection']:
-                x, a, b = features if rep=='encoder' else tuple(t@weight.T for t in features)
-                if not all(bool(t.isfinite().all()) for t in [x, a, b]):
-                    raise ValueError('Nonfinite inferred features')
-                scores, basis, center, variance = pca_features(x, train)
-                if not len(variance):
-                    raise ValueError('Zero-rank representation')
-                if step==0:
-                    reference[rep] = (scores[:, 0].clone(), basis.clone(), center.clone(), variance.clone())
-                if step not in steps:
-                    continue
-                identity = dict(job=job['id'], seed=job['seed'], branch=branch, step=step, representation=rep)
-                correlations.extend(dict(**identity, **r) for r in nuisance_fits(markers, names, scores[:, 0], train, validation))
-                probes.extend(dict(**identity, **r) for r in probe_components(scores, labels, train, validation, classes))
-                va, vb = (a-center)@basis, (b-center)@basis
-                consistency.extend(dict(**identity, **r) for r in component_consistency(va, vb, variance, train, validation))
-                initial_score, initial_basis, initial_center, initial_variance = reference[rep]
-                initial_axes_scores = (x-initial_center)@initial_basis
-                for split_name, index in [('train', train), ('validation', validation)]:
-                    evolution.append(dict(**identity, split=split_name,
-                        initial_vs_current_pc1_score_pearson=pearson(initial_score[index], scores[index, 0]),
-                        current_variance_on_initial_pc1=float(initial_axes_scores[index, 0].var(unbiased=False)),
-                        current_total_variance=float(x[index].var(0, unbiased=False).sum()),
-                        initial_pc1_train_variance=float(initial_variance[0])))
-                pca_rows.append(dict(**identity, train_rank=len(variance), train_variance=variance.tolist(),
-                                     train_pc1_variance_share=float(variance[0]/variance.sum()),
-                                     train_mean=center.tolist(), pc1_loading=basis[:, 0].tolist()))
+            original_energy = None
+            variants = [('original', kernel)]
+            if dc_ablation:
+                variants.append(('zero_dc', zero_dc_kernel(kernel)))
+            for variant, active_kernel in variants:
+                identity_base = dict(job=job['id'], seed=job['seed'], branch=branch, step=step, variant=variant)
+                if step in steps and dc_ablation:
+                    original_norm = float(kernel.double().square().sum())
+                    kernel_rows.append(dict(**identity_base,
+                        max_abs_spatial_sum=float(active_kernel.double().sum((-2, -1)).abs().max()),
+                        squared_norm=float(active_kernel.double().square().sum()),
+                        squared_norm_ratio_to_original=float(active_kernel.double().square().sum())/original_norm if original_norm else None))
+                features = infer_features(data, active_kernel, args.device, args.feature_batch, augment, args.view_seed)
+                for rep in ['encoder', 'projection']:
+                    x, a, b = features if rep=='encoder' else tuple(t@weight.T for t in features)
+                    if not all(bool(t.isfinite().all()) for t in [x, a, b]):
+                        raise ValueError('Nonfinite inferred features')
+                    scores, basis, center, variance = pca_features(x, train)
+                    if step==0:
+                        reference[variant, rep] = (scores[:, 0].clone() if len(variance) else None, basis.clone(), center.clone(), variance.clone())
+                    if step not in steps:
+                        continue
+                    identity = dict(**identity_base, representation=rep)
+                    if len(variance):
+                        correlations.extend(dict(**identity, **r) for r in nuisance_fits(markers, names, scores[:, 0], train, validation))
+                    probes.extend(dict(**identity, **r) for r in probe_components(scores, labels, train, validation, classes))
+                    va, vb = (a-center)@basis, (b-center)@basis
+                    consistency.extend(dict(**identity, **r) for r in component_consistency(va, vb, variance, train, validation))
+                    initial_score, initial_basis, initial_center, initial_variance = reference[variant, rep]
+                    initial_axes_scores = (x-initial_center)@initial_basis
+                    for split_name, index in [('train', train), ('validation', validation)]:
+                        evolution.append(dict(**identity, split=split_name,
+                            initial_vs_current_pc1_score_pearson=pearson(initial_score[index], scores[index, 0]) if initial_score is not None and len(variance) else None,
+                            current_variance_on_initial_pc1=float(initial_axes_scores[index, 0].var(unbiased=False)) if len(initial_variance) else None,
+                            current_total_variance=float(x[index].var(0, unbiased=False).sum()),
+                            initial_pc1_train_variance=float(initial_variance[0]) if len(initial_variance) else None))
+                    pca_rows.append(dict(**identity, train_rank=len(variance), train_variance=variance.tolist(),
+                                         train_pc1_variance_share=float(variance[0]/variance.sum()) if len(variance) else None,
+                                         train_mean=center.tolist(), pc1_loading=basis[:, 0].tolist() if len(variance) else []))
+                    if rep=='projection' and dc_ablation:
+                        energy = float((x[train]-x[train].mean(0)).square().sum(1).mean())
+                        if variant=='original':
+                            original_energy = energy
+                        scales = [('raw', 1.)]
+                        if energy>0 and original_energy>0:
+                            scales.append(('original_train_clean_energy', math.sqrt(original_energy/energy)))
+                        for mode, scale in scales:
+                            for split_name, index in [('train', train), ('validation', validation)]:
+                                objectives.append(dict(**identity, split=split_name, scale_mode=mode,
+                                    output_scale=scale, clean_train_energy=energy*scale**2,
+                                    **view_objective(a[index]*scale, b[index]*scale)))
             print(f'Dominant-direction diagnosis: {job["id"]} step={step}', flush=True)
     if not pca_rows:
         raise ValueError('No checkpoints selected')
     return dict(dataset=dataset, source=str(args.suite.resolve()), view_seed=args.view_seed,
                 augmentation_device='cpu', feature_batch=args.feature_batch,
                 image_statistic_names=names, normalization=dict(mean=mean, std=std),
-                scope='Exploratory clean TRAIN PCA, original split, train-fitted OLS; one paired augmentation stream shared across checkpoints; no causal identification.',
+                scope='Exploratory clean TRAIN PCA, original split, train-fitted OLS; one paired augmentation stream shared across checkpoints. '+
+                      ('Post-hoc DC ablation changes the function and is not a matched-function training intervention.' if dc_ablation else 'No causal identification.'),
+                dc_ablation=dc_ablation,
                 nuisance_correlations=correlations, component_probes=probes,
-                view_consistency=consistency, pca=pca_rows, pc1_evolution=evolution)
+                view_consistency=consistency, pca=pca_rows, pc1_evolution=evolution,
+                kernel_statistics=kernel_rows, view_objective=objectives,
+                ablation_comparisons=ablation_comparisons(probes) if dc_ablation else [])
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('suite', type=Path)
-    parser.add_argument('--output', type=Path, help='Default: SUITE/dominant_direction; separate from previous diagnosis')
+    parser.add_argument('--output', type=Path, help='Default: SUITE/dominant_direction, or SUITE/dc_ablation with --dc-ablation')
     parser.add_argument('--data-root', type=Path)
     parser.add_argument('--branches', nargs='+', default=['baseline'])
     parser.add_argument('--seeds', nargs='+', type=int, default=[0, 1, 12])
@@ -224,22 +292,25 @@ def main():
     parser.add_argument('--threads', type=int, default=1)
     parser.add_argument('--feature-batch', type=int, default=128)
     parser.add_argument('--view-seed', type=int, default=20261023)
+    parser.add_argument('--dc-ablation', action='store_true', help='Compare original vs spatially zero-mean kernels with the same head and paired views')
     args = parser.parse_args()
     if min(args.threads, args.feature_batch)<1 or args.steps and min(args.steps)<0:
         parser.error('Positive threads/batch and nonnegative steps required')
-    args.output = args.output or args.suite/'dominant_direction'
+    args.output = args.output or args.suite/('dc_ablation' if args.dc_ablation else 'dominant_direction')
     if args.output.resolve()==args.suite.resolve():
         parser.error('Output must differ from source suite')
     result = run(args)
     serialized = json.dumps(result, indent=2, allow_nan=False)+'\n'
     args.output.mkdir(parents=True, exist_ok=True)
-    for name in ['nuisance_correlations', 'component_probes', 'view_consistency', 'pc1_evolution']:
+    for name in ['nuisance_correlations', 'component_probes', 'view_consistency', 'pc1_evolution',
+                 'kernel_statistics', 'view_objective', 'ablation_comparisons']:
         write_csv(args.output/f'{name}.csv', result[name])
     (args.output/'diagnostic.json').write_text(serialized, encoding='utf-8')
     lines = ['# Dominant-direction diagnosis', '', result['scope'], '',
-             '## Clean PCA', '', '| Job | Step | Representation | Rank | PC1 variance share |', '|---|---:|---|---:|---:|']
+             '## Clean PCA', '', '| Job | Step | Variant | Representation | Rank | PC1 variance share |', '|---|---:|---|---|---:|---:|']
     for r in result['pca']:
-        lines.append(f'| {r["job"]} | {r["step"]} | {r["representation"]} | {r["train_rank"]} | {r["train_pc1_variance_share"]:.6g} |')
+        share = format(r['train_pc1_variance_share'], '.6g') if r['train_pc1_variance_share'] is not None else 'NA'
+        lines.append(f'| {r["job"]} | {r["step"]} | {r["variant"]} | {r["representation"]} | {r["train_rank"]} | {share} |')
     lines += ['', '## Reading the outputs', '',
               '- nuisance_correlations.csv: every prespecified statistic is reported; combined and single-statistic LS are fitted on train only. Validation prediction R2 can be negative; Pearson squared is not out-of-sample prediction R2.',
               '- component_probes.csv: all, PC1, orthogonal remainder, and constant use the same train-label OLS rule. PCA is fitted without labels on clean train features, without column scaling. OLS subsequently standardizes its input columns for numerical conditioning.',
@@ -247,6 +318,18 @@ def main():
               '- pc1_evolution.csv: compare current PC1 scores with initialization, and current variance on the fixed initial PC1 loading. Each checkpoint also gets its own train PCA; no validation-fitted PCA or component selection.',
               '- Strong correlation with image energy does not establish a nuisance or causal shortcut; inspect class probes and view consistency together. Tail probes may generalize poorly.',
               '- One paired view stream is a descriptive diagnostic, not an independent augmentation replication. Keep --feature-batch and --view-seed fixed for direct comparisons.', '']
+    if args.dc_ablation:
+        lines += ['## DC ablation', '',
+                  '- zero_dc subtracts each kernel spatial mean in memory; head, source checkpoint and inputs are unchanged. No kernel norm renormalization or retraining.',
+                  '- Each variant fits its own train PCA and probes; component coordinates therefore differ. Full-representation paired differences are in ablation_comparisons.csv; train and validation metrics are both retained.',
+                  '- view_objective.csv contains projection GUPA terms on all fixed training/validation views, not the original mini-batch audit. Raw loss changes with scale. original_train_clean_energy rescales outputs by one train-only scalar to match the original checkpoint clean variance; it does not match covariance shape or initial functions.',
+                  '- kernel_statistics.csv records remaining spatial sums and kernel squared norm changes. Zero-rank ablated features yield constant probes and missing PC1 correlations rather than failure.', '']
+        lines += ['| Job | Step | Representation | Validation accuracy change pp | Validation MSE change |',
+                  '|---|---:|---|---:|---:|']
+        for r in result['ablation_comparisons']:
+            if r['component']=='all':
+                lines.append(f'| {r["job"]} | {r["step"]} | {r["representation"]} | {100*r["validation_accuracy_zero_dc_minus_original"]:+.4f} | {r["validation_onehot_mse_zero_dc_minus_original"]:+.8g} |')
+        lines.append('')
     (args.output/'findings.md').write_text('\n'.join(lines), encoding='utf-8')
     print(f'Outputs: {args.output.resolve()}')
 
