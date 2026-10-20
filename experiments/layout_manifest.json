@@ -258,7 +258,7 @@
     "cifar_capacity.py": {
       "original_sha256": null,
       "current_path": "code/cifar/cifar_capacity.py",
-      "current_sha256": "13dc08bf434fda35156be5b4149f38c8f3b2745bdb1588a84129bc95e34d9cdd"
+      "current_sha256": "dfc06ca9f4a5fe7733dd1d45d33d2514712bc493da79e89c268c04aac0fd12b7"
     },
     "summarize_cifar_capacity.py": {
       "original_sha256": null,
@@ -268,7 +268,7 @@
     "check_cifar_capacity.py": {
       "original_sha256": null,
       "current_path": "code/checks/check_cifar_capacity.py",
-      "current_sha256": "2c3c0a241600c2437b73fb7e7a90ff155f2ef82813346af806ecf218dfd0f27e"
+      "current_sha256": "3f6a8685ba3731698a601281c00dfe2d8b1c1e5a97f2e0b8b5fb7171b1ef4454"
     }
   },
   "result_groups": {

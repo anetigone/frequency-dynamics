@@ -6,7 +6,8 @@
 
 | 结果目录 / 文件 | 内容入口 |
 |---|---|
-| [cifar_supervised_fix_realdata.json](cifar_supervised_fix_realdata.json) | 新监督步长在真实训练数据上的六个短程稳定性检查 |
+| [cifar_supervised_full_4000_adam](cifar_supervised_full_4000_adam/README.md) | 新监督 Adam / 裁剪配置：六条本机 GPU 完整 4000 步验证 |
+| [cifar_supervised_fix_realdata.json](cifar_supervised_fix_realdata.json) | 历史 SGD 短程检查；随后服务器长程训练发散，不能作为稳定性保证 |
 | [cifar_capacity_checks.json](cifar_capacity_checks.json) | 容量诊断的合成数据实现检查；不代表 CIFAR 正式结果 |
 | [empirical_existing_population_comparison.json](empirical_existing_population_comparison.json) | 保存的证书 / 诊断 / 数值结果 |
 | [full_empirical_checks.json](full_empirical_checks.json) | 保存的证书 / 诊断 / 数值结果 |

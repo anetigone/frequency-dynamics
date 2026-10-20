@@ -2,7 +2,7 @@
 
 2026-10-19。用于区分当前浅层架构、压缩维数和无监督训练目标的限制。此阶段只作开发诊断，不将结果自动解释成自然图像机制确认。
 
-2026-10-20 修复：真实数据复现了初版监督 encoder / projection 在第 29 / 97 步的非有限 loss（seed 0，CPU、batch 256）。此前两步合成检查未覆盖这一不稳定性。仅将监督学习率从 0.01 / 0.05 降为 0.001 / 0.005；无监督优化规则保持原样。补充任务开始 / 完成日志、梯度检查、失败配置 / 步数诊断，以及旧目录内跳过已完成任务的续跑入口。不再以源码哈希作为训练或评估门槛。
+2026-10-20 第二次修复：初版监督 SGD 在短程测试通过后仍于服务器第 3397 步发散；此前 500 步检查不足以覆盖 4000 步训练。监督正对照改用 Adam、全局梯度范数裁剪 1.0，encoder / projection lr=0.0003、分类器 lr=0.001。无监督 SGD、随机初始化、数据和增强规则保持原样。不以源码哈希作为训练或评估门槛。
 
 ## 配置
 
@@ -42,7 +42,10 @@
 有监督组训练同一个卷积平方模型，并附加带 bias 的十类分类器。
 分类器输入按初始无标签校准样本的逐列均值 / 标准差标准化，这些统计量训练期间固定。
 这是可逆的线性数值缩放，不加入 encoder 的最终 OLS 评估。
-有监督优化使用独立 SGD：encoder / projection lr=0.001、分类器 lr=0.005、momentum=0.9，无 weight decay。
+有监督优化使用独立 Adam：encoder / projection lr=0.0003、分类器 lr=0.001，标准 beta=(0.9,0.999)，无 weight decay。
+每步在更新前对全部活跃监督参数的梯度作全局范数裁剪，阈值 1.0；记录裁剪前范数、是否触发、累计次数和全程最大 loss。该裁剪仅作用于监督正对照，不作用于无监督轨迹，也不改变所评估的模型函数族。
+旧 SGD 选项保留用于诊断，但不再是监督对照的默认配置；复现无裁剪的旧配置还需显式关闭裁剪并设置对应学习率。
+裁剪可能频繁触发，应报告实际比例，不能声称与原 SGD 轨迹等价。
 监督 encoder 组不更新 projection；监督 projection 组同时更新前层、projection 和分类器。
 该优化与无监督梯度尺度不匹配，目的是提供可达性能参照，不能作为同向量场的机制对照或理论容量上限。
 如果监督组表现差，仍需排查优化和训练预算，不能直接判定容量不足。
@@ -90,21 +93,24 @@ python -B experiments/run.py check_cifar_capacity
 
 实现回归检查：[检查记录](../results/checks/cifar_capacity_checks.json)。
 覆盖 11 个训练条件、初始化和随机流配对、监督两路径、真实 OLS / 绘图汇总、缺失能量截面、不完整实验拒绝和无源码校验的旧目录续跑。
-真实数据短程稳定性检查：[记录](../results/checks/cifar_supervised_fix_realdata.json)。新监督步长在 seed 0 两组各 500 步、seed 1/12 两组各 200 步保持有限；CPU、batch 256，未读取验证 / 测试指标。这不保证完整 4000 步或不同 GPU 上一定稳定，也不是新的容量结论。
+历史短程检查：[记录](../results/checks/cifar_supervised_fix_realdata.json)。该 SGD 配置后来在服务器第 3397 步发散，不作为完整稳定性的证据。
+当前配置已在本机 GPU 上完成三个开发种子各两组监督轨迹，六条均跑满 4000 步，最终参数全部有限。验证期间未读取验证 / 测试指标，见 [完整记录](../results/checks/cifar_supervised_full_4000_adam/README.md)。裁剪比例也已报告。
 
 ## 在旧目录直接续跑
 
 最后一条 `less_compressed_unsupervised_r10: 4000/4000` 之后接着执行同种子的 supervised_encoder；初版监督步长在真实数据上发散。
-替换服务器上的 `experiments/code/cifar/cifar_capacity.py` 后，直接再次执行原训练命令：
+替换服务器上的 `experiments/code/cifar/cifar_capacity.py` 后，使用下面的监督优化参数在原目录继续：
 
 ```bash
-python -B experiments/run.py cifar_capacity train
+python -B experiments/run.py cifar_capacity train \
+  --supervised-optimizer adam --supervised-grad-clip 1 \
+  --supervised-lr 0.0003 --classifier-lr 0.001
 ```
 
-如果原来用了自定义输出目录或其他训练参数，照原命令保留它们。默认输出目录不变。
+如果原来用了自定义输出目录或其他训练参数，保留这些参数，但将原命令显式指定的监督优化器 / 步长替换为上面的新配置。默认输出目录不变。
 
 - 有 `result.json` 的运行直接跳过，不重训或复制已有结果。
-- 没有 `result.json` 的失败 / 未完成运行，从相同随机初始化重新开始，使用新监督默认步长 0.001 / 0.005。
+- 没有 `result.json` 的失败 / 未完成运行，从相同随机初始化重新开始，使用新的监督 Adam / 梯度裁剪配置。
 - 不校验源码哈希，评估也不再检查源码哈希。
 - 仅比较任务列表、数据划分、步数、batch、无监督学习率、检查点和校准设置，避免误混不同实验配置。
 - 若已有成功的监督运行，不允许无记录地把它与不同监督学习率混作一组；当前 seed 0 监督首组失败的情况没有这一限制。
@@ -118,4 +124,4 @@ python -B experiments/run.py summarize_cifar_capacity
 ```
 
 发生数值错误时保存 `failure.json`（任务、步数、学习率、参数 / 梯度统计、近期 loss）和 `failure_state.pt`。
-失败状态只供诊断，不是可续训的优化器快照；失败任务不写成功 result.json，不使用裁剪或自动降步长掩盖失败。
+失败状态只供诊断，不是可续训的优化器快照；失败任务不写成功 result.json，非有限数值仍直接报错，不自动回滚或尝试其他学习率。监督裁剪是预先设定且记录的优化规则。

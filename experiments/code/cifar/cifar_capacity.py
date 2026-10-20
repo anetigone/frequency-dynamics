@@ -120,9 +120,14 @@ def make_optimizer(model, classifier, calibration, job, args):
     if job['objective'] == 'supervised_projection':
         parameters.append(model.weight)
     # Positive controls are feasibility references, not matched SSL dynamics.
-    return torch.optim.SGD([{'params': parameters, 'lr': args.supervised_lr},
-                            {'params': classifier.parameters(), 'lr': args.classifier_lr}],
-                           momentum=args.supervised_momentum)
+    groups = [{'params': parameters, 'lr': args.supervised_lr},
+              {'params': classifier.parameters(), 'lr': args.classifier_lr}]
+    if getattr(args, 'supervised_optimizer', 'adam') == 'adam':
+        optimizer = torch.optim.Adam(groups, weight_decay=0.)
+    else:
+        optimizer = torch.optim.SGD(groups, momentum=args.supervised_momentum)
+    optimizer.supervised_grad_clip = getattr(args, 'supervised_grad_clip', 1.)
+    return optimizer
 
 
 def update(model, classifier, standardizer, optimizer, x1, x2, targets, objective):
@@ -137,11 +142,25 @@ def update(model, classifier, standardizer, optimizer, x1, x2, targets, objectiv
             return classifier((z - mean) / std)
         loss = .5 * (F.cross_entropy(logits(x1), targets) + F.cross_entropy(logits(x2), targets))
     if not bool(torch.isfinite(loss)):
-        raise FloatingPointError('Nonfinite training loss; no clipping or silent recovery')
+        raise FloatingPointError('Nonfinite training loss; no automatic retry')
     loss.backward()
     active = list(model.parameters()) + ([] if classifier is None else list(classifier.parameters()))
     if any(p.grad is not None and not bool(p.grad.isfinite().all()) for p in active):
         raise FloatingPointError(f'Nonfinite gradients ({objective})')
+    optimizer.last_step_diagnostics = None
+    if objective != 'unsupervised':
+        limit = getattr(optimizer, 'supervised_grad_clip', 0.)
+        parameters = [p for p in active if p.grad is not None]
+        if limit > 0:
+            try:
+                norm = torch.nn.utils.clip_grad_norm_(parameters, limit, error_if_nonfinite=True)
+            except RuntimeError as error:
+                raise FloatingPointError(f'Nonfinite supervised gradient norm: {error}') from error
+        else:
+            norm = torch.linalg.vector_norm(torch.stack([p.grad.detach().double().norm() for p in parameters]))
+        optimizer.last_step_diagnostics = dict(gradient_norm_before_clip=float(norm),
+                                               gradient_clipped=bool(limit > 0 and float(norm) > limit),
+                                               gradient_clip_limit=limit)
     optimizer.step()
     if any(not bool(p.isfinite().all()) for p in active):
         raise FloatingPointError('Nonfinite parameters')
@@ -193,10 +212,13 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
         classifier, mean, std = supervised_head(model, job['objective'], calibration_x, job['seed'])
         standardizer = (mean, std)
     optimizer = make_optimizer(model, classifier, calibration, job, args)
+    print(f"Optimizer: {type(optimizer).__name__}; learning rates={[g['lr'] for g in optimizer.param_groups]}; "
+          f"supervised gradient clip={getattr(optimizer, 'supervised_grad_clip', None)}", flush=True)
     save_checkpoint(directory / 'step_0.pt', model, classifier, standardizer, job, 0)
     generator = torch.Generator(device=data.device).manual_seed(820000 + job['seed'])
     indices = train_indices.to(data.device)
     history, crossings = [], []
+    max_loss, clipped_updates, max_gradient_norm = -math.inf, 0, 0.
     batch_hash = hashlib.sha256()
     fixed_steps = sorted(set([0, *args.checkpoints, args.steps]))
     synchronize(data.device)
@@ -214,6 +236,11 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
         except FloatingPointError as error:
             failure_report(directory, model, classifier, standardizer, optimizer, job, step, error, history)
             raise FloatingPointError(f"{job['id']} failed at step {step}/{args.steps}: {error}; see {directory / 'failure.json'}") from error
+        max_loss = max(max_loss, loss)
+        diagnostics = optimizer.last_step_diagnostics
+        if diagnostics is not None:
+            clipped_updates += int(diagnostics['gradient_clipped'])
+            max_gradient_norm = max(max_gradient_norm, diagnostics['gradient_norm_before_clip'])
         if step % args.energy_every == 0 or step == args.steps:
             with torch.no_grad():
                 z = model(calibration_x)
@@ -223,7 +250,8 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
                 failure_report(directory, model, classifier, standardizer, optimizer, job, step, error, history)
                 raise FloatingPointError(f"{job['id']} failed at step {step}: {error}")
             ell = math.log(energy / calibration['initial_energy'])
-            history.append(dict(step=step, loss=loss, energy=energy, ell=ell))
+            history.append(dict(step=step, loss=loss, energy=energy, ell=ell,
+                                optimization=diagnostics))
             if job['objective'] == 'unsupervised':
                 for level in args.energy_levels:
                     if ell >= level and not any(row['target_ell'] == level for row in crossings):
@@ -236,6 +264,10 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
             print(f"{job['id']}: {step}/{args.steps}", flush=True)
     synchronize(data.device)
     result = dict(job=job, steps=args.steps, calibration=calibration, history=history,
+                  optimization=dict(optimizer=type(optimizer).__name__, learning_rates=[g['lr'] for g in optimizer.param_groups],
+                                    supervised_gradient_clip=getattr(optimizer, 'supervised_grad_clip', None),
+                                    clipped_updates=clipped_updates, max_gradient_norm_before_clip=max_gradient_norm,
+                                    max_training_loss=max_loss),
                   fixed_steps=fixed_steps, energy_checkpoints=crossings,
                   batch_index_sha256=batch_hash.hexdigest(),
                   augmentation_generator_final_sha256=hashlib.sha256(generator.get_state().cpu().numpy().tobytes()).hexdigest(),
@@ -310,7 +342,7 @@ def protocol_for(args, jobs, split):
                 energy='log total centered calibration variance relative to own initial value; proxy only, no cross-K equivalence claim',
                 initialization='C,K-specific equal Gram traces at r=1; weighted initial total mobility fixed across ratios within shape',
                 augmentation='reflect crop +/-4, horizontal flip, contrast .8..1.2, Gaussian .05; two shared views per update',
-                supervised='clean initial feature standardization fixed; CE on two augmented views; separate SGD momentum optimizer')
+                supervised='clean initial feature scaling fixed; CE on two views; explicit optimizer and gradient clipping, recorded per run')
 
 
 def prepare_protocol(args, jobs, split):
@@ -332,8 +364,9 @@ def prepare_protocol(args, jobs, split):
                 if result['job'] != job or result['steps'] != args.steps:
                     raise ValueError(f'Completed run configuration differs: {job["id"]}')
                 completed.append(job)
-        supervised_keys = ['supervised_lr', 'classifier_lr', 'supervised_momentum']
-        supervised_changed = any(previous['arguments'][key] != current['arguments'][key] for key in supervised_keys)
+        legacy_defaults = dict(supervised_optimizer='sgd', supervised_grad_clip=0.)
+        supervised_keys = ['supervised_lr', 'classifier_lr', 'supervised_momentum', *legacy_defaults]
+        supervised_changed = any(previous['arguments'].get(key, legacy_defaults.get(key)) != current['arguments'].get(key, legacy_defaults.get(key)) for key in supervised_keys)
         if supervised_changed and any(job['objective'] != 'unsupervised' for job in completed):
             raise ValueError('Completed supervised runs use different optimizer settings; preserve their original settings or use a separate output')
         if previous != current:
@@ -365,8 +398,10 @@ def main():
     parser.add_argument('--energy-every', type=int, default=10)
     parser.add_argument('--batch-size', type=int, default=256)
     parser.add_argument('--lr', type=float, default=.002)
-    parser.add_argument('--supervised-lr', type=float, default=.001)
-    parser.add_argument('--classifier-lr', type=float, default=.005)
+    parser.add_argument('--supervised-optimizer', choices=['adam', 'sgd'], default='adam')
+    parser.add_argument('--supervised-grad-clip', type=float, default=1., help='supervised-only gradient norm limit; 0 disables')
+    parser.add_argument('--supervised-lr', type=float, default=.0003)
+    parser.add_argument('--classifier-lr', type=float, default=.001)
     parser.add_argument('--supervised-momentum', type=float, default=.9)
     parser.add_argument('--trace-draws', type=int, default=16)
     parser.add_argument('--feature-batch', type=int, default=256)
@@ -378,6 +413,8 @@ def main():
         parser.error('Ratios, learning rates and energy levels must be positive and finite')
     if not 0 <= args.supervised_momentum < 1:
         parser.error('Momentum must be in [0,1)')
+    if not math.isfinite(args.supervised_grad_clip) or args.supervised_grad_clip < 0:
+        parser.error('Supervised gradient clipping must be finite and nonnegative')
     for values in [args.seeds, args.ratios, args.architectures, args.checkpoints, args.energy_levels]:
         if len(values) != len(set(values)):
             parser.error('Duplicate configuration entries are not allowed')

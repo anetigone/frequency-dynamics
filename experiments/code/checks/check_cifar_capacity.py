@@ -17,7 +17,7 @@ import torch
 
 from cifar_capacity import (ARCHITECTURES, evaluate_checkpoint, fit_probe, initialize,
                             make_jobs, protocol_for, train_job, write_json,
-                            prepare_protocol, make_optimizer, update)
+                            prepare_protocol, make_optimizer, update, supervised_head)
 from cifar_local import initialize as original_initialize
 
 
@@ -36,7 +36,7 @@ def main():
     assert calibration['matched_function_max_error'] < 1e-5
     assert abs(calibration['initial_energy'] - .01) < 1e-7
     assert abs(calibration['front_trace_after_estimate'] / calibration['head_trace_after'] - 1) < 1e-10
-    # New finite checks/logging must not change stable SSL updates .
+    # Supervised safeguards must not change stable SSL updates.
     legacy_path = EXPERIMENTS / 'archive' / 'cifar_capacity_before_supervised_fix_20261020.py'
     spec = importlib.util.spec_from_file_location('legacy_capacity', legacy_path)
     legacy = importlib.util.module_from_spec(spec); spec.loader.exec_module(legacy)
@@ -60,6 +60,18 @@ def main():
     second = fit_probe(features, changed, train, validation)
     assert first['train'] == second['train']
     assert first['training_feature_spectrum'] == second['training_feature_spectrum']
+    # A finite gradient spike is clipped before Adam updates; SSL never uses this rule.
+    guarded, guarded_calibration = initialize(0, 64, 8, cal, 2)
+    head, mean, std = supervised_head(guarded, 'supervised_encoder', cal, 0)
+    with torch.no_grad():
+        head.weight.mul_(100.)
+    settings = SimpleNamespace(supervised_optimizer='adam', supervised_grad_clip=1.,
+                               supervised_lr=.0003, classifier_lr=.001)
+    optimizer = make_optimizer(guarded, head, guarded_calibration, dict(objective='supervised_encoder'), settings)
+    update(guarded, head, (mean, std * .1), optimizer, data[:4], data[1:5], labels[:4], 'supervised_encoder')
+    assert optimizer.last_step_diagnostics['gradient_clipped']
+    norm = torch.stack([p.grad.detach().double().norm().square() for p in [*guarded.parameters(), *head.parameters()] if p.grad is not None]).sum().sqrt()
+    assert float(norm) <= 1.00001
     parent = (RESULTS / 'checks').resolve()
     assert parent.is_relative_to(EXPERIMENTS.resolve())
     with tempfile.TemporaryDirectory(prefix='capacity_check_', dir=parent) as temporary:
@@ -67,8 +79,9 @@ def main():
         assert directory.is_relative_to(parent)
         args = SimpleNamespace(phase='train', output=directory, suite='all', architectures=list(ARCHITECTURES),
                                seeds=[0], ratios=[.1, 1., 10.], steps=2, checkpoints=[1], energy_levels=[1e-8, 100.],
-                               energy_every=1, batch_size=4, lr=.002, supervised_lr=.001,
-                               classifier_lr=.005, supervised_momentum=.9, trace_draws=2,
+                               energy_every=1, batch_size=4, lr=.002, supervised_lr=.0003,
+                               classifier_lr=.001, supervised_momentum=.9,
+                               supervised_optimizer='adam', supervised_grad_clip=1., trace_draws=2,
                                feature_batch=16, device='cpu')
         jobs = make_jobs(args.seeds, args.suite, args.architectures, args.ratios)
         assert len(jobs) == 11 and len({j['id'] for j in jobs}) == 11
@@ -90,6 +103,12 @@ def main():
                 assert not torch.equal(initial['model']['weight'], final['model']['weight'])
             if job['objective'] != 'unsupervised':
                 assert 'trained_classifier' in fixed[-1]
+                assert run['optimization']['optimizer'] == 'Adam'
+                assert run['optimization']['supervised_gradient_clip'] == 1.
+                assert 0 <= run['optimization']['clipped_updates'] <= args.steps
+            else:
+                assert run['optimization']['optimizer'] == 'SGD'
+                assert run['optimization']['supervised_gradient_clip'] is None
         command = [sys.executable, '-B', str(EXPERIMENTS / 'run.py'), 'summarize_cifar_capacity', str(directory)]
         process = subprocess.run(command, capture_output=True, encoding='utf-8', errors='replace')
         assert process.returncode == 0, process.stderr
@@ -103,6 +122,8 @@ def main():
         previous['source_sha256'] = {'cifar_capacity.py': 'old-source-hash-is-not-validated'}
         previous['arguments']['supervised_lr'] = .01
         previous['arguments']['classifier_lr'] = .05
+        previous['arguments'].pop('supervised_optimizer')
+        previous['arguments'].pop('supervised_grad_clip')
         write_json(directory / 'protocol.json', previous)
         pending_supervised = []
         saved_ssl = {}
@@ -161,6 +182,8 @@ def main():
                   incomplete_suite_rejected=True, temporary_files_removed=True)
     result.update(old_directory_resume_without_source_hashes=True, completed_ssl_runs_skipped_unchanged=True, changed_training_config_rejected=True,
                   contextual_failure_report=True, legacy_ssl_updates_bitwise_identical=True)
+    result.update(supervised_adam_and_clipping_recorded=True, unsupervised_optimizer_unchanged=True)
+    result['supervised_gradient_spike_bounded_before_update'] = True
     write_json(RESULTS / 'checks' / 'cifar_capacity_checks.json', result)
     print(json.dumps(result, indent=2))
 
