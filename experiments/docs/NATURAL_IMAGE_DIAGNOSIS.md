@@ -56,3 +56,38 @@ DTD 默认读取 `experiments/data/dtd_hf/prepared_gray_64.pt`，沿用官方 pa
 ```
 
 检查覆盖共享缩放、非标量可逆重混合、独立特征空间、47 类均衡目标的精确 rank-8 训练 MSE 下界、两种已存评估结构，以及合成 checkpoint 的完整推断/闭式 head 分析。不下载数据、不训练真实数据。
+
+## 下一步：定位第一主方向
+
+新增独立入口 `diagnose_dominant_direction.py`。使用同一份已准备数据和 checkpoint，默认分析 baseline、种子 0/1/12、初始和最后固定 checkpoint。输出到 `SUITE/dominant_direction/`，不改写前一轮 `diagnosis/`。
+
+服务器执行：
+
+```bash
+python -B experiments/run.py diagnose_dominant_direction experiments/results/empirical/dtd_pilot \
+  --steps 0 2000 --device cuda --feature-batch 128
+
+# 如需对照 CIFAR，分叉 suite 的 step 0 是分叉起点
+python -B experiments/run.py diagnose_dominant_direction experiments/results/cifar/checkpoint_branches_development \
+  --steps 0 1000 --device cuda --feature-batch 128
+```
+
+脚本从训练集 clean 特征拟合 PCA，不先逐列标准化。encoder / projection 各自分析；PC1 的符号由绝对值最大 loading 的符号确定，不使用图像统计或类别标签选方向。没有新的数据划分或训练。只计算下列预先固定的诊断：
+
+- `nuisance_correlations.csv`：PC1 分数与原灰度像素均值、均值平方、RMS、均方、标准差、方差、水平/竖直相邻像素差的平均平方能量，以及网络标准化输入的均值平方/均方的关系。原灰度从保存的训练集归一化统计还原，不逐图标准化。逐项输出 train/validation Pearson；另在训练集分别拟合单指标和全部指标的仿射预测，在验证集报告相对训练目标均值的预测 R²。全部指标保留，不按验证效果筛选。强相关本身不证明该统计与任务无关。
+- `component_probes.csv`：full、PC1、其正交剩余空间、常数预测四组的训练/验证 OLS accuracy 与 one-hot MSE。PCA basis 固定自训练集；剩余部分直接用其余保留 PC 的坐标，避免减去 PC1 后引入数值虚假方向。小方差方向是否有类别信号，以及这些信号能否泛化，应同时看。
+- `view_consistency.csv`：沿用该数据集原增强函数，在所有已有训练/验证图像上各生成两个视图。输出 full / PC1 / remainder 的 `0.5*mean(||z1-z2||²)`、除以同 checkpoint 训练集 clean 总方差后的误差、逐 PC 训练方差白化后的平均误差，以及逐 PC 两视图 Pearson 均值。全局输出缩放不改变方差归一化结果；raw alignment 可按 PC1 和 remainder 相加。它与旧固定 audit 的图像集合、随机流不同，不作逐值复现比较。
+- `pc1_evolution.csv`：初始与当前 PC1 分数的相关性，以及当前特征在固定初始 PC1 loading 上的方差，避免只比较每个 checkpoint 自身的主方向占比。
+- `diagnostic.json`：完整数据，另存训练均值、PC1 loading、保留数值秩与全部 clean PC 方差；`findings.md` 提供读表说明。
+
+两视图使用原增强函数在 CPU 上生成，以 `--view-seed 20261023` 初始化；每个 checkpoint 重置生成器。因此在同样的样本顺序与 `--feature-batch` 下，checkpoint 和分支之间共用后续视图。它是一组描述性增强重复，不能当成独立多流确认。卷积可在 GPU 计算，PCA / OLS 使用 CPU double。无测试图片推断。
+
+优先解读：第一方向与图像能量的关系是否强、该方向是否有独立验证的类别信号、剩余空间的类别信号是否随训练改变，以及消除尺度后的视图一致性是否改善。不能仅凭一个最高相关系数就宣布找到捷径或根因。
+
+本地合成检查：
+
+```powershell
+& H:/anaconda3/envs/py312/python.exe -B experiments/run.py check_dominant_direction
+```
+
+覆盖高方差无关方向与低方差语义方向的区分、训练集独占 PCA、归一化一致性的尺度不变性、分量 alignment 可加性、灰度统计还原、完整合成 checkpoint 流程，以及配对增强的可重复性。
