@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from layout import EXPERIMENTS, RESULTS, source_path
+from layout import EXPERIMENTS, RESULTS
 
 import argparse
 import copy
@@ -139,8 +139,10 @@ def update(model, classifier, standardizer, optimizer, x1, x2, targets, objectiv
     if not bool(torch.isfinite(loss)):
         raise FloatingPointError('Nonfinite training loss; no clipping or silent recovery')
     loss.backward()
-    optimizer.step()
     active = list(model.parameters()) + ([] if classifier is None else list(classifier.parameters()))
+    if any(p.grad is not None and not bool(p.grad.isfinite().all()) for p in active):
+        raise FloatingPointError(f'Nonfinite gradients ({objective})')
+    optimizer.step()
     if any(not bool(p.isfinite().all()) for p in active):
         raise FloatingPointError('Nonfinite parameters')
     return float(loss.detach())
@@ -157,12 +159,34 @@ def synchronize(device):
         torch.cuda.synchronize(device)
 
 
+def failure_report(directory, model, classifier, standardizer, optimizer, job, step, error, history):
+    def stats(tensor):
+        tensor = tensor.detach()
+        def number(value):
+            result = float(value)
+            return result if math.isfinite(result) else None
+        return dict(all_finite=bool(tensor.isfinite().all()), max_abs=number(tensor.abs().max()),
+                    norm=number(tensor.double().norm()))
+    parameters = dict(model.named_parameters())
+    if classifier is not None:
+        parameters.update({f'classifier.{key}': value for key, value in classifier.named_parameters()})
+    report = dict(job=job, step=step, error=str(error), learning_rates=[g['lr'] for g in optimizer.param_groups],
+                  parameters={key: stats(value) for key, value in parameters.items()},
+                  gradients={key: stats(value.grad) for key, value in parameters.items() if value.grad is not None},
+                  recent_history=history[-10:],
+                  standardizer=None if standardizer is None else dict(mean=stats(standardizer[0]), std=stats(standardizer[1])),
+                  status='failed; not a completed run or resumable optimizer state')
+    write_json(directory / 'failure.json', report)
+    save_checkpoint(directory / 'failure_state.pt', model, classifier, standardizer, job, step)
+
+
 def train_job(job, args, data, labels, train_indices, calibration_x):
     directory = args.output / job['id']
     if (directory / 'result.json').exists():
         print(f"Already complete: {job['id']}", flush=True)
         return
     directory.mkdir(parents=True, exist_ok=True)
+    print(f"Starting {job['id']}: objective={job['objective']}, steps={args.steps}", flush=True)
     model, calibration = initialize(job['seed'], job['channels'], job['outputs'], calibration_x, args.trace_draws)
     classifier, standardizer = None, None
     if job['objective'] != 'unsupervised':
@@ -185,13 +209,19 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
         x1, x2 = augment(data[index], generator), augment(data[index], generator)
         # SSL never reads labels, even though its batches are shared with positive controls.
         target = None if classifier is None else labels[index.cpu()].to(data.device)
-        loss = update(model, classifier, standardizer, optimizer, x1, x2, target, job['objective'])
+        try:
+            loss = update(model, classifier, standardizer, optimizer, x1, x2, target, job['objective'])
+        except FloatingPointError as error:
+            failure_report(directory, model, classifier, standardizer, optimizer, job, step, error, history)
+            raise FloatingPointError(f"{job['id']} failed at step {step}/{args.steps}: {error}; see {directory / 'failure.json'}") from error
         if step % args.energy_every == 0 or step == args.steps:
             with torch.no_grad():
                 z = model(calibration_x)
                 energy = float((z - z.mean(0)).square().sum(1).mean())
             if not math.isfinite(energy) or energy <= 0:
-                raise FloatingPointError('Nonpositive/nonfinite calibration energy')
+                error = FloatingPointError('Nonpositive/nonfinite calibration energy')
+                failure_report(directory, model, classifier, standardizer, optimizer, job, step, error, history)
+                raise FloatingPointError(f"{job['id']} failed at step {step}: {error}")
             ell = math.log(energy / calibration['initial_energy'])
             history.append(dict(step=step, loss=loss, energy=energy, ell=ell))
             if job['objective'] == 'unsupervised':
@@ -213,6 +243,7 @@ def train_job(job, args, data, labels, train_indices, calibration_x):
                   peak_memory_GiB=torch.cuda.max_memory_allocated(data.device) / 2**30 if data.device.type == 'cuda' else None,
                   test_used=False)
     write_json(directory / 'result.json', result)
+    print(f"Completed {job['id']}; result.json saved", flush=True)
 
 
 def score_metrics(scores, targets):
@@ -271,11 +302,8 @@ def evaluate_checkpoint(path, data, labels, train, validation, feature_batch=256
 
 
 def protocol_for(args, jobs, split):
-    filenames = ['cifar_capacity.py', 'cifar_local.py', 'square_images.py', 'audit_cifar.py']
-    sources = {name: hashlib.sha256(source_path(name).read_bytes()).hexdigest() for name in filenames}
-    sources['layout.py'] = hashlib.sha256((EXPERIMENTS / 'layout.py').read_bytes()).hexdigest()
     return dict(arguments={k: str(v.resolve()) if isinstance(v, Path) else v for k, v in vars(args).items() if k != 'phase'},
-                jobs=jobs, split=split, source_sha256=sources,
+                jobs=jobs, split=split, source_validation=False,
                 torch_version=str(torch.__version__), device_name=torch.cuda.get_device_name(args.device) if torch.device(args.device).type == 'cuda' else 'cpu',
                 test_used=False, scope='development diagnosis; supervised references are not capacity bounds',
                 matching='same initial function only within architecture/seed; same batch/augmentation stream across jobs for each seed',
@@ -283,6 +311,44 @@ def protocol_for(args, jobs, split):
                 initialization='C,K-specific equal Gram traces at r=1; weighted initial total mobility fixed across ratios within shape',
                 augmentation='reflect crop +/-4, horizontal flip, contrast .8..1.2, Gaussian .05; two shared views per update',
                 supervised='clean initial feature standardization fixed; CE on two augmented views; separate SGD momentum optimizer')
+
+
+def prepare_protocol(args, jobs, split):
+    """Resume in place: skip completed jobs, restart incomplete jobs, no source hashes."""
+    current = protocol_for(args, jobs, split)
+    lock = args.output / 'protocol.json'
+    if lock.exists():
+        previous = json.loads(lock.read_text(encoding='utf-8'))
+        if previous['jobs'] != jobs or previous['split'] != split:
+            raise ValueError('Existing jobs or data split differ; keep the original training arguments')
+        for name in ['steps', 'checkpoints', 'energy_levels', 'energy_every', 'batch_size', 'lr', 'trace_draws']:
+            if previous['arguments'][name] != current['arguments'][name]:
+                raise ValueError(f'Existing training configuration differs: {name}; keep the original value')
+        completed = []
+        for job in jobs:
+            path = args.output / job['id'] / 'result.json'
+            if path.exists():
+                result = json.loads(path.read_text(encoding='utf-8'))
+                if result['job'] != job or result['steps'] != args.steps:
+                    raise ValueError(f'Completed run configuration differs: {job["id"]}')
+                completed.append(job)
+        supervised_keys = ['supervised_lr', 'classifier_lr', 'supervised_momentum']
+        supervised_changed = any(previous['arguments'][key] != current['arguments'][key] for key in supervised_keys)
+        if supervised_changed and any(job['objective'] != 'unsupervised' for job in completed):
+            raise ValueError('Completed supervised runs use different optimizer settings; preserve their original settings or use a separate output')
+        if previous != current:
+            snapshot = args.output / 'protocol_before_resume.json'
+            if not snapshot.exists():
+                snapshot.write_bytes(lock.read_bytes())
+            events_path = args.output / 'resume_events.json'
+            events = json.loads(events_path.read_text(encoding='utf-8')) if events_path.exists() else []
+            events.append(dict(completed_runs_kept=[job['id'] for job in completed],
+                               previous_arguments=previous['arguments'], current_arguments=current['arguments'],
+                               source_validation=False, incomplete_runs='restart from initialization'))
+            write_json(events_path, events)
+            print(f'Resuming existing directory; keeping {len(completed)} completed runs; no source-hash validation', flush=True)
+    write_json(lock, current)
+    return current
 
 
 def main():
@@ -299,8 +365,8 @@ def main():
     parser.add_argument('--energy-every', type=int, default=10)
     parser.add_argument('--batch-size', type=int, default=256)
     parser.add_argument('--lr', type=float, default=.002)
-    parser.add_argument('--supervised-lr', type=float, default=.01)
-    parser.add_argument('--classifier-lr', type=float, default=.05)
+    parser.add_argument('--supervised-lr', type=float, default=.001)
+    parser.add_argument('--classifier-lr', type=float, default=.005)
     parser.add_argument('--supervised-momentum', type=float, default=.9)
     parser.add_argument('--trace-draws', type=int, default=16)
     parser.add_argument('--feature-batch', type=int, default=256)
@@ -327,10 +393,6 @@ def main():
         parser.error('CUDA unavailable; use --device cpu for implementation checks')
     if args.phase == 'evaluate':
         protocol = json.loads((args.output / 'protocol.json').read_text(encoding='utf-8'))
-        for name, expected in protocol['source_sha256'].items():
-            path = EXPERIMENTS / name if name == 'layout.py' else source_path(name)
-            if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-                raise ValueError(f'Evaluation source differs from locked training protocol: {name}')
         pending = [j['id'] for j in protocol['jobs'] if not (args.output / j['id'] / 'result.json').exists()]
         if pending:
             raise ValueError(f'{len(pending)} runs incomplete; evaluate only after the planned suite finishes')
@@ -351,11 +413,7 @@ def main():
             print(f"Evaluated {job['id']}", flush=True)
         return
     data, labels, train, validation, split = load_data(EXPERIMENTS.parent, args.device)
-    protocol = protocol_for(args, jobs, split)
-    lock = args.output / 'protocol.json'
-    if lock.exists() and json.loads(lock.read_text(encoding='utf-8')) != protocol:
-        raise ValueError('Locked diagnostic protocol differs; choose a new output directory')
-    write_json(lock, protocol)
+    prepare_protocol(args, jobs, split)
     generator = torch.Generator().manual_seed(20261096)
     calibration_indices = train[torch.randperm(len(train), generator=generator)[:256]]
     calibration_x = data[calibration_indices.to(data.device)]

@@ -2,7 +2,7 @@
 
 五配对种子、三配比、各 4000 更新的有限预算比较；共同能量下 projection 差异不稳定。
 
-后续 [容量诊断代码与协议](../../docs/CIFAR_CAPACITY_DIAGNOSTICS.md)已就绪，目前没有新增的 CIFAR 容量诊断训练结果。
+后续 [容量诊断代码与协议](../../docs/CIFAR_CAPACITY_DIAGNOSTICS.md)已就绪，开发训练在进行；当前索引尚不包含完整的容量诊断结论。监督数值稳定性与恢复检查位于 checks 分组。
 
 [实验总导航](../../README.md)
 

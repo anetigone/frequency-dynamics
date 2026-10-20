@@ -13,7 +13,7 @@
 
 共享图像模型与目标位于 [code/shared/square_images.py](code/shared/square_images.py)。数据原件保留在仓库根目录的 `cifar-10-batches-py/`。
 
-新增 [CIFAR 容量诊断](docs/CIFAR_CAPACITY_DIAGNOSTICS.md)：原架构两种监督对照、C=256 / K=8 的宽度比较和 C=64 / K=32 的压缩比较。代码与合成检查就绪，正式训练尚未启动；`python -B experiments/run.py cifar_capacity` 默认只预览。
+新增 [CIFAR 容量诊断](docs/CIFAR_CAPACITY_DIAGNOSTICS.md)：原架构两种监督对照、C=256 / K=8 的宽度比较和 C=64 / K=32 的压缩比较。开发训练已开始，初版监督步长发散已复现并修正，恢复命令见协议；`python -B experiments/run.py cifar_capacity` 默认只预览。
 
 ## 常用入口
 

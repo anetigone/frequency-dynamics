@@ -1,6 +1,8 @@
-# CIFAR-10 容量诊断协议（代码就绪，正式实验未启动）
+# CIFAR-10 容量诊断协议（开发阶段）
 
 2026-10-19。用于区分当前浅层架构、压缩维数和无监督训练目标的限制。此阶段只作开发诊断，不将结果自动解释成自然图像机制确认。
+
+2026-10-20 修复：真实数据复现了初版监督 encoder / projection 在第 29 / 97 步的非有限 loss（seed 0，CPU、batch 256）。此前两步合成检查未覆盖这一不稳定性。仅将监督学习率从 0.01 / 0.05 降为 0.001 / 0.005；无监督优化规则保持原样。补充任务开始 / 完成日志、梯度检查、失败配置 / 步数诊断，以及旧目录内跳过已完成任务的续跑入口。不再以源码哈希作为训练或评估门槛。
 
 ## 配置
 
@@ -40,7 +42,7 @@
 有监督组训练同一个卷积平方模型，并附加带 bias 的十类分类器。
 分类器输入按初始无标签校准样本的逐列均值 / 标准差标准化，这些统计量训练期间固定。
 这是可逆的线性数值缩放，不加入 encoder 的最终 OLS 评估。
-有监督优化使用独立 SGD：encoder / projection lr=0.01、分类器 lr=0.05、momentum=0.9，无 weight decay。
+有监督优化使用独立 SGD：encoder / projection lr=0.001、分类器 lr=0.005、momentum=0.9，无 weight decay。
 监督 encoder 组不更新 projection；监督 projection 组同时更新前层、projection 和分类器。
 该优化与无监督梯度尺度不匹配，目的是提供可达性能参照，不能作为同向量场的机制对照或理论容量上限。
 如果监督组表现差，仍需排查优化和训练预算，不能直接判定容量不足。
@@ -55,7 +57,8 @@
 - 有监督组：另外评估训练得到的分类器在 clean 训练 / 验证集上的 CE 和准确率，与 OLS 结果分开。
 - 汇总：逐种子值、相对初始化变化、同架构配比差、固定步数架构差、共同能量缺失种子与超调；三个种子仅报告描述性均值和样本标准差。
 
-初始状态、训练参数和代码哈希写入 protocol.json。不同配置 / 源码不能接写到同一锁定目录。
+初始状态和训练参数写入 protocol.json。不校验源码哈希；相同数据划分、任务列表和无监督配置可以在原目录接着运行。
+监督初版的源码已原样保存为 [历史源码](../archive/cifar_capacity_before_supervised_fix_20261020.py)。
 已完成运行和数值评估可以跳过复用；未完成运行从相同初态重跑，不声称恢复优化器中途状态。
 数值评估与 NumPy / Matplotlib 汇总分别启动进程，沿用现有 OpenMP 隔离方式。
 
@@ -67,7 +70,7 @@
 # 默认只预览，不读取图像或开始训练
 python -B experiments/run.py cifar_capacity plan
 
-# 全部 33 条开发轨迹；本次未执行
+# 全部 33 条开发轨迹
 python -B experiments/run.py cifar_capacity train
 python -B experiments/run.py cifar_capacity evaluate
 python -B experiments/run.py summarize_cifar_capacity
@@ -85,8 +88,34 @@ python -B experiments/run.py check_cifar_capacity
 汇总生成 `summary.json`、`findings.md` 和无监督组的 `capacity_validation.png`。
 有监督单独组没有无监督曲线，故不生成该图。
 
-当前只完成合成数据检查：[检查记录](../results/checks/cifar_capacity_checks.json)。
-覆盖 11 个训练条件、初始化和随机流配对、监督两路径、真实 OLS / 绘图汇总、缺失能量截面与不完整实验拒绝。
-CPU 实现检查通过不代表已经验证真实 CIFAR 优化步长、GPU 吞吐或得到新的容量结论。
+实现回归检查：[检查记录](../results/checks/cifar_capacity_checks.json)。
+覆盖 11 个训练条件、初始化和随机流配对、监督两路径、真实 OLS / 绘图汇总、缺失能量截面、不完整实验拒绝和无源码校验的旧目录续跑。
+真实数据短程稳定性检查：[记录](../results/checks/cifar_supervised_fix_realdata.json)。新监督步长在 seed 0 两组各 500 步、seed 1/12 两组各 200 步保持有限；CPU、batch 256，未读取验证 / 测试指标。这不保证完整 4000 步或不同 GPU 上一定稳定，也不是新的容量结论。
 
-[实验导航](../README.md) · [此前 CIFAR 结果](../results/cifar/README.md)
+## 在旧目录直接续跑
+
+最后一条 `less_compressed_unsupervised_r10: 4000/4000` 之后接着执行同种子的 supervised_encoder；初版监督步长在真实数据上发散。
+替换服务器上的 `experiments/code/cifar/cifar_capacity.py` 后，直接再次执行原训练命令：
+
+```bash
+python -B experiments/run.py cifar_capacity train
+```
+
+如果原来用了自定义输出目录或其他训练参数，照原命令保留它们。默认输出目录不变。
+
+- 有 `result.json` 的运行直接跳过，不重训或复制已有结果。
+- 没有 `result.json` 的失败 / 未完成运行，从相同随机初始化重新开始，使用新监督默认步长 0.001 / 0.005。
+- 不校验源码哈希，评估也不再检查源码哈希。
+- 仅比较任务列表、数据划分、步数、batch、无监督学习率、检查点和校准设置，避免误混不同实验配置。
+- 若已有成功的监督运行，不允许无记录地把它与不同监督学习率混作一组；当前 seed 0 监督首组失败的情况没有这一限制。
+- 首次接写会保留 `protocol_before_resume.json`；`resume_events.json` 记录保留的已完成任务与参数变化，`protocol.json` 记录当前设置。
+
+训练完成后仍使用原目录：
+
+```bash
+python -B experiments/run.py cifar_capacity evaluate
+python -B experiments/run.py summarize_cifar_capacity
+```
+
+发生数值错误时保存 `failure.json`（任务、步数、学习率、参数 / 梯度统计、近期 loss）和 `failure_state.pt`。
+失败状态只供诊断，不是可续训的优化器快照；失败任务不写成功 result.json，不使用裁剪或自动降步长掩盖失败。
