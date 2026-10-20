@@ -60,6 +60,17 @@ python -B experiments/run.py diagnose_dominant_direction experiments/results/emp
   --steps 0 2000 --device cuda --feature-batch 128
 ```
 
+这两条命令在保存完整 result/evaluation/checkpoint 和 prepared 图片的服务器上执行。第一条输出 `dtd_dc_free/diagnosis/`，只读已有 JSON；第二条输出 `dtd_dc_free/dominant_direction/`，读取已有图片和 checkpoint。此处不要加 `--dc-ablation`：需要诊断实际 DC-free 训练状态，而非再次消融。
+
+按以下顺序读：
+
+1. **约束是否保持。** `diagnosis/audit_history.csv` 中的 `kernel_max_abs_spatial_mean` 覆盖原审计时点；`dominant_direction/kernel_statistics.csv` 的 `max_abs_spatial_mean` / `max_abs_spatial_sum` 从选中 checkpoint 张量独立计算。允许浮点舍入残差，均值与系数和相差 kernel 面积这个尺度。
+2. **目标为何降低。** `diagnosis/audit_history.csv` 比较 alignment、两项 uniformity、clean energy、top1_variance_share 和完整 view 谱随时间的变化；`probes.csv` 看 clean 特征谱和相对初始化的训练/验证误差。一个方向放大与多个方向共同增长应分开解释。
+3. **是否换了主导统计。** `dominant_direction/nuisance_correlations.csv` 比较初末的 DC 平方、方差、梯度能量等预设指标在验证集上的预测 R²。只看相关性不判定因果，也不要跨种子平均可能翻号的带符号 Pearson 来衡量关联强度。
+4. **剩余方向有没有学好。** `component_probes.csv` 同看 all / pc1 / remainder 的训练、验证 MSE 与 accuracy；`view_consistency.csv` 同看 alignment_over_clean_train_variance 和 clean_whitened_alignment_per_dimension。若改善只出现在全表示的方差加权指标，不能声称所有方向都更好。
+
+本地若仍只有 summary，第一条只能给已有聚合指标的 fallback，第二条无法完成 checkpoint 分析。回传服务器上两个输出目录的 `diagnostic.json` 即可进一步集中分析。
+
 ## 本地合成检查
 
 ```powershell

@@ -220,10 +220,11 @@ def run(args):
                 variants.append(('zero_dc', zero_dc_kernel(kernel)))
             for variant, active_kernel in variants:
                 identity_base = dict(job=job['id'], seed=job['seed'], branch=branch, step=step, variant=variant)
-                if step in steps and dc_ablation:
+                if step in steps:
                     original_norm = float(kernel.double().square().sum())
                     kernel_rows.append(dict(**identity_base,
                         max_abs_spatial_sum=float(active_kernel.double().sum((-2, -1)).abs().max()),
+                        max_abs_spatial_mean=float(active_kernel.double().mean((-2, -1)).abs().max()),
                         squared_norm=float(active_kernel.double().square().sum()),
                         squared_norm_ratio_to_original=float(active_kernel.double().square().sum())/original_norm if original_norm else None))
                 features = infer_features(data, active_kernel, args.device, args.feature_batch, augment, args.view_seed)
@@ -269,6 +270,7 @@ def run(args):
     if not pca_rows:
         raise ValueError('No checkpoints selected')
     return dict(dataset=dataset, source=str(args.suite.resolve()), view_seed=args.view_seed,
+                kernel_constraint=protocol.get('kernel_constraint', 'unconstrained'),
                 augmentation_device='cpu', feature_batch=args.feature_batch,
                 image_statistic_names=names, normalization=dict(mean=mean, std=std),
                 scope='Exploratory clean TRAIN PCA, original split, train-fitted OLS; one paired augmentation stream shared across checkpoints. '+
@@ -311,6 +313,12 @@ def main():
     for r in result['pca']:
         share = format(r['train_pc1_variance_share'], '.6g') if r['train_pc1_variance_share'] is not None else 'NA'
         lines.append(f'| {r["job"]} | {r["step"]} | {r["variant"]} | {r["representation"]} | {r["train_rank"]} | {share} |')
+    lines += ['', '## Kernel constraint', '',
+              f'Expected source constraint: {result["kernel_constraint"]}. Values below are read from actual checkpoint tensors.', '',
+              '| Job | Step | Variant | Max absolute spatial mean | Max absolute spatial sum |',
+              '|---|---:|---|---:|---:|']
+    for r in result['kernel_statistics']:
+        lines.append(f'| {r["job"]} | {r["step"]} | {r["variant"]} | {r["max_abs_spatial_mean"]:.6g} | {r["max_abs_spatial_sum"]:.6g} |')
     lines += ['', '## Reading the outputs', '',
               '- nuisance_correlations.csv: every prespecified statistic is reported; combined and single-statistic LS are fitted on train only. Validation prediction R2 can be negative; Pearson squared is not out-of-sample prediction R2.',
               '- component_probes.csv: all, PC1, orthogonal remainder, and constant use the same train-label OLS rule. PCA is fitted without labels on clean train features, without column scaling. OLS subsequently standardizes its input columns for numerical conditioning.',

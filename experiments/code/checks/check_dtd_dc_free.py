@@ -110,6 +110,20 @@ def main():
             assert all('train_onehot_mse_minus_initial' in r and 'onehot_mse_minus_initial' in r for r in summary['fixed_steps'])
             probes, history, issues = saved_records(args.output, 47, None, None)
             assert len(probes)==6 and len(history)==7 and not issues
+            assert all(r['kernel_max_abs_spatial_mean']<1e-8 for r in history)
+            # Reuse the dominant-direction reader on actual constrained checkpoint files.
+            import diagnose_dominant_direction as dominant
+            diagnostic_args = SimpleNamespace(suite=args.output, data_root=args.data_root,
+                branches=['baseline'], seeds=[0], steps=[0, 6], device='cpu', threads=1,
+                feature_batch=32, view_seed=20261023, dc_ablation=False)
+            with patch.object(dominant, 'load_images', return_value=(data, labels, train, validation)):
+                diagnosis = dominant.run(diagnostic_args)
+            assert diagnosis['kernel_constraint']=='spatial_zero_mean'
+            assert len(diagnosis['pca'])==4 and len(diagnosis['kernel_statistics'])==2
+            assert all(r['variant']=='original' and r['max_abs_spatial_mean']<1e-8
+                       for r in diagnosis['kernel_statistics'])
+            assert diagnosis['ablation_comparisons']==[]
+            json.dumps(diagnosis, allow_nan=False)
             # A DC-free invocation cannot silently adopt an existing unconstrained initialization.
             identity_path = args.output/'initializations'/'seed_0.pt'
             initialization = torch.load(identity_path, weights_only=True)
