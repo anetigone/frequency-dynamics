@@ -80,6 +80,70 @@ def select_samples(samples_path, metadata_path):
     return [dict(**by_name[name], split=split) for split in ['train', 'val'] for name in info['splits'][split]]
 
 
+def image_metadata(root, rows, offline=False):
+    """Use pinned remote LFS content hashes, never infer them from cache filenames."""
+    from huggingface_hub import HfApi
+    destination = Path(root) / 'image_metadata.json'
+    if destination.exists():
+        saved = json.loads(destination.read_text(encoding='utf-8'))
+        index = saved['index']
+        canonical = json.dumps(index, sort_keys=True, separators=(',', ':')).encode()
+        if hashlib.sha256(canonical).hexdigest() != saved['sha256']:
+            raise ValueError('DTD cached remote image metadata checksum mismatch')
+    else:
+        if offline:
+            raise FileNotFoundError('DTD image metadata is not cached; rerun dtd_pilot download once before prepare')
+        info = HfApi(headers=DOWNLOAD_HEADERS).dataset_info(REPO, revision=REVISION, files_metadata=True)
+        if info.sha != REVISION:
+            raise ValueError('DTD remote image metadata revision mismatch')
+        siblings = {s.rfilename: s for s in info.siblings}
+        expected = {}
+        for row in rows:
+            sibling = siblings[row['path']]
+            lfs = sibling.lfs
+            if lfs is None:
+                raise ValueError(f'DTD image is missing remote LFS metadata: {row["path"]}')
+            digest = lfs['sha256'] if isinstance(lfs, dict) else lfs.sha256
+            expected[row['path']] = dict(sha256=digest, bytes=sibling.size)
+        index = dict(repo_id=REPO, revision=REVISION, partition_sha256=PARTITION_SHA256, images=expected)
+        canonical = json.dumps(index, sort_keys=True, separators=(',', ':')).encode()
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary = destination.with_suffix('.json.tmp')
+        temporary.write_text(json.dumps(dict(index=index, sha256=hashlib.sha256(canonical).hexdigest()), indent=2) + '\n', encoding='utf-8')
+        temporary.replace(destination)
+    if index['repo_id'] != REPO or index['revision'] != REVISION or index['partition_sha256'] != PARTITION_SHA256:
+        raise ValueError('DTD cached remote image metadata provenance mismatch')
+    if set(index['images']) != {r['path'] for r in rows}:
+        raise ValueError('DTD remote image metadata differs from selected train/validation images')
+    for name, expected in index['images'].items():
+        digest = expected['sha256']
+        if len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest) or not isinstance(expected['bytes'], int) or expected['bytes'] <= 0:
+            raise ValueError(f'Invalid DTD remote image metadata: {name}')
+    return index['images']
+
+
+def verify_image(path, filename, expected, cache, offline=False):
+    from huggingface_hub import hf_hub_download
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f'DTD image not cached: {filename}; rerun download')
+    digest, size = sha256(path), path.stat().st_size
+    if digest != expected['sha256'] or size != expected['bytes']:
+        if not offline:
+            print(f'DTD image content mismatch, re-downloading only {filename}: '
+                  f'actual_sha256={digest}, expected_sha256={expected["sha256"]}, '
+                  f'actual_bytes={size}, expected_bytes={expected["bytes"]}', flush=True)
+            path = Path(hf_hub_download(repo_id=REPO, repo_type='dataset', revision=REVISION,
+                        filename=filename, cache_dir=cache, force_download=True, headers=DOWNLOAD_HEADERS))
+            digest, size = sha256(path), path.stat().st_size
+        if digest != expected['sha256'] or size != expected['bytes']:
+            raise ValueError(f'DTD image content checksum mismatch: {filename}; '
+                             f'actual_sha256={digest}, expected_sha256={expected["sha256"]}; '
+                             f'actual_bytes={size}, expected_bytes={expected["bytes"]}. '
+                             'Do not train on this file; online download retries only this image once.')
+    return digest, size
+
+
 def download(root, workers=8, offline=False):
     from huggingface_hub import hf_hub_download, snapshot_download
     root = Path(root)
@@ -93,6 +157,7 @@ def download(root, workers=8, offline=False):
             raise ValueError(f'DTD metadata checksum mismatch: {filename}')
         metadata_paths[filename] = path
     rows = select_samples(metadata_paths['samples.json'], metadata_paths['metadata.json'])
+    expected_images = image_metadata(root, rows, offline=offline)
     for attempt in range(3):
         try:
             snapshot = Path(snapshot_download(repo_id=REPO, repo_type='dataset', revision=REVISION,
@@ -106,14 +171,8 @@ def download(root, workers=8, offline=False):
     manifest_rows = []
     for row in rows:
         path = snapshot / row['path']
-        if not path.is_file():
-            raise FileNotFoundError(f'DTD image not cached: {row["path"]}; rerun download')
-        digest = sha256(path)
-        # HF resolves LFS JPEGs to SHA-256-named blobs when symlinks are available.
-        blob = path.resolve().name
-        if len(blob) == 64 and all(c in '0123456789abcdef' for c in blob) and digest != blob:
-            raise ValueError(f'DTD cached blob checksum mismatch: {row["path"]}')
-        manifest_rows.append(dict(**row, sha256=digest, bytes=path.stat().st_size))
+        digest, size = verify_image(path, row['path'], expected_images[row['path']], cache, offline=offline)
+        manifest_rows.append(dict(**row, sha256=digest, bytes=size))
     manifest = dict(repo_id=REPO, revision=REVISION, metadata_sha256=FILES,
                     partition=1, partition_sha256=PARTITION_SHA256, images=manifest_rows, test_downloaded=False)
     destination = root / 'download_manifest.json'

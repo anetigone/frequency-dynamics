@@ -16,6 +16,8 @@
 
 本地缓存默认位于 `experiments/data/dtd_hf/`，已加入 Git 忽略。HF native cache 支持复用与恢复未完成下载；失败时可重复同一 download 命令。镜像 commit、元数据校验、每图摘要和正式划分均记录。数据准备后的 tensor 另存 SHA-256 校验。
 
+图片校验使用固定 commit 的远端 LFS SHA-256 和文件大小，记录于本地 `image_metadata.json`，不从缓存文件名推断内容哈希。若某张图片的真实内容不符，在线 download 只强制重下这一张一次并重新校验；仍失败则报告期望/实际哈希与大小并停止。prepare 离线运行，不下载或跳过坏图。旧缓存更新代码后先重跑一次 download，以获取这份远端校验元数据，无需清空已下载图片。
+
 下载请求显式设置 `Accept-Encoding: identity`，覆盖 metadata、Hub API 和图片请求，避免某些环境中新版 httpx2 与旧 Brotli 后端的 `process() takes no keyword arguments` 解压兼容错误。仍使用原 HF 缓存及续传，不需卸载或替换服务器依赖；更新代码后重跑 download 即可。
 
 ## 安装与命令
