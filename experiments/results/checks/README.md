@@ -6,6 +6,7 @@
 
 | 结果目录 / 文件 | 内容入口 |
 |---|---|
+| [cifar_capacity_checks.json](cifar_capacity_checks.json) | 容量诊断的合成数据实现检查；不代表 CIFAR 正式结果 |
 | [empirical_existing_population_comparison.json](empirical_existing_population_comparison.json) | 保存的证书 / 诊断 / 数值结果 |
 | [full_empirical_checks.json](full_empirical_checks.json) | 保存的证书 / 诊断 / 数值结果 |
 | [local_closeout_audit.json](local_closeout_audit.json) | 保存的证书 / 诊断 / 数值结果 |

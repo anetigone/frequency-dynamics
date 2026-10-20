@@ -4,6 +4,7 @@
 
 | 脚本 | 用途 |
 |---|---|
+| [check_cifar_capacity.py](check_cifar_capacity.py) | 合成数据核验容量诊断的校准、配对、监督路径和 OLS / 汇总。 |
 | [audit_layout.py](audit_layout.py) | Check moved payloads, source provenance, Python syntax and local Markdown links. |
 | [audit_local_closeout.py](audit_local_closeout.py) | Audit saved local experiment completeness and locked source hashes. |
 | [check_full_empirical.py](check_full_empirical.py) | Finite-batch fast pixel-parameter loss/gradient vs actual image network. |

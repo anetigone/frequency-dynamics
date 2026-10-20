@@ -254,6 +254,21 @@
       "original_sha256": null,
       "current_path": "code/checks/audit_layout.py",
       "current_sha256": "6c8d8e0448ad1d4e507c0e4a02068eb7c4f3f12d3658ccca98a416a53931bca4"
+    },
+    "cifar_capacity.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/cifar_capacity.py",
+      "current_sha256": "90386fa645bd0a5e14cae898a071b039883459d988142b12705e4de9c5c9bdff"
+    },
+    "summarize_cifar_capacity.py": {
+      "original_sha256": null,
+      "current_path": "code/cifar/summarize_cifar_capacity.py",
+      "current_sha256": "5769d9777413426607c81434ec5cc61787904ea069032b21403627e9ef267f52"
+    },
+    "check_cifar_capacity.py": {
+      "original_sha256": null,
+      "current_path": "code/checks/check_cifar_capacity.py",
+      "current_sha256": "4b6c5ff390ba8f7581ce633b956749e55c7fcdebb6db0f8f123c5ed36e46a7cf"
     }
   },
   "result_groups": {
