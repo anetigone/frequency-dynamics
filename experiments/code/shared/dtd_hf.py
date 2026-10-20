@@ -7,6 +7,10 @@ from pathlib import Path, PurePosixPath
 
 REPO = 'Voxel51/Describable-Textures-Dataset'
 REVISION = 'e850d7c773fa71940567cb53da4270b89fb3737a'
+# Some server environments pair a newer httpx2 decoder with an older Brotli
+# backend whose process() cannot accept output_buffer_limit. Request raw HTTP
+# bodies for metadata, API listings and JPEGs; preserve native HF cache/resume.
+DOWNLOAD_HEADERS = {'Accept-Encoding': 'identity'}
 FILES = {
     'samples.json': 'dad9a5b90b84e7d36df15412728b443ec0b17e68380f90f08bcec0c19cff10f7',
     'metadata.json': 'a5e93253031647f11caf7ad4ff3399fd089cf80bea41c4dd886c9b3823294390',
@@ -83,7 +87,8 @@ def download(root, workers=8, offline=False):
     metadata_paths = {}
     for filename, expected in FILES.items():
         path = Path(hf_hub_download(repo_id=REPO, repo_type='dataset', revision=REVISION,
-                    filename=filename, cache_dir=cache, local_files_only=offline))
+                    filename=filename, cache_dir=cache, local_files_only=offline,
+                    headers=DOWNLOAD_HEADERS))
         if sha256(path) != expected:
             raise ValueError(f'DTD metadata checksum mismatch: {filename}')
         metadata_paths[filename] = path
@@ -92,7 +97,7 @@ def download(root, workers=8, offline=False):
         try:
             snapshot = Path(snapshot_download(repo_id=REPO, repo_type='dataset', revision=REVISION,
                 cache_dir=cache, allow_patterns=[r['path'] for r in rows], max_workers=workers,
-                local_files_only=offline))
+                local_files_only=offline, headers=DOWNLOAD_HEADERS))
             break
         except Exception:
             if offline or attempt == 2:

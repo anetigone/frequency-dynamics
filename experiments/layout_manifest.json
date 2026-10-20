@@ -303,7 +303,7 @@
     "dtd_hf.py": {
       "original_sha256": null,
       "current_path": "code/shared/dtd_hf.py",
-      "current_sha256": "84f6507ac5cc8ed8797a2ccc6f926f6e329f8254bde2a54604bfcbae5a906a37"
+      "current_sha256": "8be340664e7ef98e46593e1afc70a5cf8b97a38691bb70bf481af7ac41b78c8e"
     },
     "dtd_pilot.py": {
       "original_sha256": null,
@@ -313,7 +313,7 @@
     "check_dtd_pilot.py": {
       "original_sha256": null,
       "current_path": "code/checks/check_dtd_pilot.py",
-      "current_sha256": "b5887b9866f57c920458142e39f73553514732cf454cbe0b8654c4d5825d3227"
+      "current_sha256": "76ad9def54a4dfa7d02c1bc005ff10f2ac82f3a8225946197b26d91a8b7a76c4"
     }
   },
   "result_groups": {

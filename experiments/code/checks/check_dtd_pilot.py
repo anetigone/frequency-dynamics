@@ -49,11 +49,13 @@ def main():
         def fake_hub(**kwargs):
             assert kwargs['repo_id'] == dtd_hf.REPO and kwargs['revision'] == dtd_hf.REVISION
             assert kwargs['repo_type'] == 'dataset'
+            assert kwargs['headers']['Accept-Encoding'] == 'identity'
             calls.append(kwargs)
             return paths[kwargs['filename']]
         def fake_snapshot(**kwargs):
             assert kwargs['repo_id'] == dtd_hf.REPO and kwargs['revision'] == dtd_hf.REVISION
             assert kwargs['repo_type'] == 'dataset' and set(kwargs['allow_patterns']) == set(selected_paths)
+            assert kwargs['headers']['Accept-Encoding'] == 'identity'
             snapshot_calls.append(kwargs)
             return snapshot
         # All bytes are generated locally; the patched download function never accesses the network.
@@ -119,7 +121,8 @@ def main():
                 raise AssertionError('Incompatible 47-class order accepted')
     write_json(parent / 'dtd_pilot_checks.json', dict(status='passed', device='cpu',
         real_dtd_downloaded=False, real_dtd_training=False,
-        checks=['pinned HF metadata/snapshot API mocks and train/validation-only JPEG download', 'offline prepare and cache reuse',
+        checks=['pinned HF metadata/snapshot API mocks and train/validation-only JPEG download',
+                'identity content encoding on metadata and snapshot requests', 'offline prepare and cache reuse',
                 'official partition 1 image names and 47-class per-split counts', 'training-only image normalization',
                 '47-class probe and validation-label isolation', 'deterministic resolution-aware augmentation',
                 'three-ratio pilot train/evaluate/summarize', 'five-branch checkpoint fork train/evaluate/summarize',

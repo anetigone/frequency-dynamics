@@ -16,6 +16,8 @@
 
 本地缓存默认位于 `experiments/data/dtd_hf/`，已加入 Git 忽略。HF native cache 支持复用与恢复未完成下载；失败时可重复同一 download 命令。镜像 commit、元数据校验、每图摘要和正式划分均记录。数据准备后的 tensor 另存 SHA-256 校验。
 
+下载请求显式设置 `Accept-Encoding: identity`，覆盖 metadata、Hub API 和图片请求，避免某些环境中新版 httpx2 与旧 Brotli 后端的 `process() takes no keyword arguments` 解压兼容错误。仍使用原 HF 缓存及续传，不需卸载或替换服务器依赖；更新代码后重跑 download 即可。
+
 ## 安装与命令
 
 现有环境已有 PyTorch、torchvision、NumPy 的前提下，额外只需：
