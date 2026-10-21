@@ -1,6 +1,6 @@
-\section{Saved Error Decomposition and a Fixed Feasibility Screen}
+\section{Prediction Error Decomposition and a Fixed Feasibility Screen}
 \label{supp:stochastic-checks}
-This section reports analyses of existing records. It adds no training, future branches, or revised source predictions. These descriptive calculations do not instantiate the strict conditions of Proposition~\ref{prop:stoch-prefix}.
+This section decomposes prediction errors across eight independent future streams and evaluates a conservative stochastic envelope at one development state. The calculations are descriptive and do not instantiate the strict conditions of Proposition~\ref{prop:stoch-prefix}.
 
 \subsection{Eight-stream prediction errors}
 For a fixed source, task, ratio, representation, and horizon, let $p$ be the frozen prediction and $y_i$, $1\le i\le8$, its saved future changes. The exact identity is
@@ -33,4 +33,4 @@ At $H=8$, even $v=0$ gives radius $3.84554733$. For the finite-$\lambda$ boundar
 \end{equation}
 The largest frozen source centers over the specified prefixes have absolute magnitude only $5.45943\,10^{-5}$ for the encoder and $3.48344\,10^{-5}$ for the projection. Thus these particular $c=1$ envelopes cannot exclude zero even after optimistically setting calibration uncertainty, future variance, mean drift, finite-step error, and tube penalties to zero. The frozen slope is merely the stipulated idealized center; it has not been independently established as the exact finite-step conditional mean.
 
-The saved eight-stream variances are descriptive plugin values, not variance upper confidence bounds. A deterministic increment could instead permit $c=0$; a proved tighter local range or conditional moment-generating-function bound could also change the result. The screen therefore rejects this global-range instantiation, not all possible stochastic certificates or actual predictability. It gives a reason to stop the present numerical instantiation without adding calibration batches, training, or future streams. No strict stochastic window is claimed.
+The eight-stream variances are descriptive plugin values, not variance upper confidence bounds. A deterministic increment could instead permit $c=0$; a proved tighter local range or conditional moment-generating-function bound could also change the result. The screen rejects this global-range instantiation: its envelope is too wide relative to the source centers to yield a strict stochastic window.

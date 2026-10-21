@@ -71,10 +71,10 @@ The increasing clock is justified by an energy barrier, not assumed from the rad
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/analytic_bottleneck_family.pdf}
-\caption{Exact risk paths in Theorem~\ref{thm:bottleneck-family}, three task directions with $z=0$. Encoder and projection risks coincide here. The same two comparison states improve and then exceed the initial risk for the entire task family. These curves evaluate the closed formula; no model is trained or numerically integrated to draw them.}
+\caption{Exact risk paths from Equation~\eqref{eq:analytic-risks} in Theorem~\ref{thm:bottleneck-family}, three task directions with $z=0$. Encoder and projection risks coincide here. The same two comparison states improve and then exceed the initial risk for the entire task family.}
 \label{fig:analytic-family}
 \end{figure}
 
-The task family contains an open cone and covers a specified $\pm5\%$ covariance range. This anisotropy range keeps covariance axes aligned with filter sums/differences and uses covariance-relative augmentation and balanced whitened initialization. Physical initial filters change with the covariance to keep that whitened balance. The covariance range does not jointly relax those initialization conditions; the next theorem treats initialization perturbations separately with data fixed. Neither result gives a random-initialization probability. The symmetric family also supplies an exclusion case for rate competition: unequal rates alone do not force different ordered subspace paths. This does not equate risk at common energy or update budget, since the energy along that path depends on the rates. Section~\ref{supp:core-proofs} proves the formulas, energy barrier, and reachability.
+The task family contains an open cone and covers a specified $\pm5\%$ covariance range. This anisotropy range keeps covariance axes aligned with filter sums/differences and uses covariance-relative augmentation and balanced whitened initialization. Physical initial filters change with the covariance to keep that whitened balance. The next theorem separately relaxes initialization with data fixed. Within the symmetric family, rate changes preserve the ordered subspace path while changing speed and energy, so comparisons at common energy or update budget can still differ. Section~\ref{supp:core-proofs} proves the formulas, energy barrier, and reachability.
 
 \input{sections/asymmetric_stability}
