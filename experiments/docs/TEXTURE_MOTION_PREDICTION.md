@@ -72,26 +72,28 @@
 
 ## 使用
 
-本机 Python 固定为 `H:/anaconda3/envs/py312/python.exe`。下面是后续实际运行命令；写代码这一轮只运行了 `--self-check` 和 `--dry-run`，未启动这些真实 checkpoint 分叉。
+在仓库根目录使用已配置好依赖的 `python`，统一通过 `experiments/run.py` 入口运行。下面是实际分叉与汇总命令；轻量检查不启动真实 checkpoint 分叉。
 
-```powershell
+```bash
 # 查看固定状态及文件存在情况；不加载 checkpoint，不生成训练数据。
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/texture_motion_prediction.py --phase development --dry-run
+python -B experiments/run.py texture_motion_prediction --phase development --dry-run
 
 # 少量开发状态：可据此调整经验设置，调整时另用输出目录保留旧结果。
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/texture_motion_prediction.py --phase development --output experiments/results/empirical/task_motion_development
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/summarize_texture_motion.py experiments/results/empirical/task_motion_development
+python -B experiments/run.py texture_motion_prediction --phase development --output experiments/results/empirical/task_motion_development
+python -B experiments/run.py summarize_texture_motion experiments/results/empirical/task_motion_development
 
 # 确定设置后固定使用该 JSON。验证阶段不自动调参，也不重写开发设置。
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/texture_motion_prediction.py --phase validation --settings experiments/results/empirical/task_motion_development/prediction_settings.json --output experiments/results/empirical/task_motion_validation
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/summarize_texture_motion.py experiments/results/empirical/task_motion_validation
+python -B experiments/run.py texture_motion_prediction --phase validation --settings experiments/results/empirical/task_motion_development/prediction_settings.json --output experiments/results/empirical/task_motion_validation
+python -B experiments/run.py summarize_texture_motion experiments/results/empirical/task_motion_validation
 ```
+
+默认来源按结果名查找：开发为 `full_sgd_development_v2`，验证为 `full_sgd_main`。兼容当前分组目录、历史开发归档目录和旧版直接位于 `experiments/results/` 下的同名目录；若找到多个同名结果，使用 `--source` 明确选择。服务器上的 checkpoint 放在其它位置时，也通过 `--source` 传入实际目录，不需要修改代码。整个来源目录缺失时，`--dry-run` 仍列出全部计划状态及 `checkpoint_exists=false`；实际运行记录 `missing_checkpoint`，汇总保留这些状态的分母。运行前应先确认 dry-run 中的来源与文件存在情况。
 
 `summary.json`/`coverage.csv` 给全部状态的覆盖与条件误差；`state_metrics.csv` 保留各状态和任务家族；`geometry_by_state.csv` 保留所有状态的几何误差；`task_predictions.csv`/`task_outcomes.csv` 保留逐任务结果；`geometry_metrics.csv` 保留逐流几何；`windows.csv` 对比预测和验证前缀。源状态的原始预测与经验系数保存在每状态 `predictions.json`，不会由汇总程序重拟合。
 
 轻量检查可单独执行，不读取真实 checkpoint：
 
-```powershell
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/texture_motion_prediction.py --self-check
-& H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/summarize_texture_motion.py --self-check
+```bash
+python -B experiments/run.py texture_motion_prediction --self-check
+python -B experiments/run.py summarize_texture_motion --self-check
 ```

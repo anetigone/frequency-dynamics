@@ -538,7 +538,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=SEEDS, default="development")
     parser.add_argument("--settings", type=Path, help="Validation requires a development-selected JSON settings file")
-    parser.add_argument("--source", type=Path, help="Override checkpoint directory; selection remains fixed")
+    parser.add_argument("--source", type=Path, help="Override checkpoint directory (required for a custom location); selection remains fixed")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--dry-run", action="store_true", help="List settings/checkpoint presence; no calibration/SGD")
     parser.add_argument("--self-check", action="store_true", help="Tiny synthetic algebra checks only")
@@ -552,7 +552,12 @@ def main():
         parser.error("validation requires --settings selected on development states")
     settings = json.loads(args.settings.read_text(encoding="utf-8")) if args.settings else copy.deepcopy(DEFAULTS)
     validate_settings(settings)
-    source = args.source or result_path("full_sgd_development_v2" if args.phase == "development" else "full_sgd_main")
+    source_name = "full_sgd_development_v2" if args.phase == "development" else "full_sgd_main"
+    source_default = RESULTS/("archive/development" if args.phase == "development" else "empirical")/source_name
+    try:
+        source = args.source if args.source is not None else result_path(source_name, default=source_default)
+    except KeyError as error:
+        parser.error(f"{error}; use --source to select the checkpoint directory")
     output = args.output or RESULTS/"empirical"/f"task_motion_{args.phase}"
     planned = [{"seed": seed, "mode": mode, "step": step,
                 "checkpoint_exists": (source/f"seed_{seed}_{mode}_r1_stream0"/f"checkpoint_{step}.pt").is_file()}
