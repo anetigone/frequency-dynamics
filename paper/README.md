@@ -1,6 +1,8 @@
 # Paper draft
 
-2026-10-20。英文首稿，研究定位为有限时间风险认证与受控机制分析。使用通用双栏 LaTeX，尚未套用目标年份的正式 CVPR 模板或压缩到投稿页数。
+2026-10-21 理论冲刺修订稿。主线改为局部二阶矩中的任务相关子空间运动、可解析的真实编码器瓶颈回升族，以及有限幅度和有效窗口。使用通用双栏 LaTeX，尚未套用目标年份的正式 CVPR 模板或压缩到投稿页数。
+
+本轮结论与成败边界见 [THEORY_SPRINT_20261021.md](THEORY_SPRINT_20261021.md)。新增推导包括结构化 ±5% 协方差范围内的统一风险间隔、线性近守恒、两块竞争判据和已有轨迹上的起点区间预测。没有新增真实数据训练；CIFAR/DTD 主文压缩为一张边界表，原详细诊断保存在附录。
 
 - `main.tex`：编译入口；正文按主题放在 `sections/`。
 - `output/pdf/main.pdf`：可阅读的完整初稿，包括参考文献和证明附录。
@@ -19,4 +21,4 @@ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=output/pdf ma
 pdflatex -interaction=nonstopmode -halt-on-error -output-directory=output/pdf main.tex
 ```
 
-稿件保留晚期干预预测退化、线性模型的经验稳定漂移，以及 CIFAR 等能量结果不充分等限制。监督低秩 head 是诊断参照，不是无需标签的干预方法。未改动原有理论、训练代码和实验结果。
+稿件保留晚期干预预测退化、线性模型的经验稳定漂移，以及 CIFAR 等能量结果不充分等限制。监督低秩 head 是诊断参照，不是无需标签的干预方法。旧证书、训练代码与实验结果均保留；本轮只增加理论推导、闭式/区间检查和对应的新结果文件。

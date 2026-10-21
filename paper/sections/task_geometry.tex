@@ -1,0 +1,134 @@
+\section{Task-Relevant Motion in Local Moment Space}
+\label{sec:task-geometry}
+\subsection{An exact bridge beyond independent frequencies}
+For valid patches $p_u(x)\in\R^p$, define
+\begin{equation}
+ M(x)=|U|^{-1}\sum_u p_u(x)p_u(x)^\top.
+\end{equation}
+Squaring and GAP give $r_c(x)=h_c^\top M(x)h_c$ for every input. Let $\phi=\operatorname{svec}(M-\E M)$, where symmetric vectorization preserves the Frobenius inner product. Write its covariance on its support as $\Sigma_\phi=U\Lambda U^\top$, $\Lambda\succ0$, and set
+\begin{align}
+ u&=\Lambda^{-1/2}U^\top\phi,\qquad \E uu^\top=I,\\
+ B_{c:}&=\operatorname{svec}(h_ch_c^\top)^\top U\Lambda^{1/2},\qquad A=WB.
+\end{align}
+Thus the centered encoder and projection are exactly $Bu$ and $Au$. Gaussianity and independent frequency powers are unnecessary for this identity. They remain useful for explicit dynamics and exact moment calculations.
+
+For any centered multi-output label $Y$ with finite second moment, put $C_Y=\E[uY^\top]$ and $T=C_YC_Y^\top$. Population affine least squares gives
+\begin{equation}
+ R(A)=\tr\operatorname{Cov}(Y)-\tr(P_AT).
+ \label{eq:general-task-risk}
+\end{equation}
+This standard regression identity includes coordinate, band-energy, and centered one-hot tasks without assuming that labels are linear functions of $u$. It describes linear readability, not all task information or finite-sample probe generalization. Below, moment-space training formulas assume augmented moments are supported on the same clean covariance support. If augmentation introduces clean-null directions, training must retain those additional coordinates; clean whitening alone does not determine its gradient.
+
+\subsection{Data anisotropy and parameter mobility are separate sources}
+Assume the representation matrix under discussion has full row rank on the interval. Write $P=P_A$, $Q=I-P$. For an effective update $Z$, its projector tangent is
+\begin{equation}
+ \mathcal D_A[Z]=A^\dagger ZQ+QZ^\top(A^\dagger)^\top.
+ \label{eq:projector-tangent}
+\end{equation}
+Only $ZQ$ can change its row space. If $G=\nabla_A L$, ordinary parameter training induces
+\begin{equation}
+ \dot A=-\eta_h\mathcal M_h[G]-\eta_WGB^\top B,
+ \label{eq:mobility-split}
+\end{equation}
+where $\mathcal M_h=J_hJ_h^*$ and $J_h=D_h(WB)$. Total gradient size and feature energy do not determine either projector tangent.
+
+There is a concrete near-isotropy version of linear conservation. Decompose $G=HA+E$ and let $A=WV$ be a linear factorization. Then
+\begin{equation}
+ \dot V(I-P_V)=-\eta_VW^\top E(I-P_V).
+ \label{eq:linear-leakage}
+\end{equation}
+For GUPA let $S=sI+\Delta S$, $D=d_0I+\Delta D$, and
+\begin{equation}
+ K=(I+ASA^\top)^{-1}+(I+ASA^\top)^{-2}.
+\end{equation}
+Its exact gradient is $G=AD-KAS$, so one may take
+\begin{align}
+ H&=d_0I-sK,\qquad E=A\Delta D-KA\Delta S,\\
+ \norm E_F&\le\norm A_F(\norm{\Delta D}_2+2\norm{\Delta S}_2).
+ \label{eq:gupa-residual}
+\end{align}
+The isotropic term cannot move the encoder row space; the residual can have a systematic finite-data component. Under exact isotropy this conservation also holds for ordinary discrete gradient descent whenever the front matrix retains its rank, since each update is a left multiplication.
+
+For the square encoder, let $J_c=D_{h_c}B_{c:}^\top$, $T_c=J_cJ_c^\top=\tau_c I+\mathcal E_c$, and $U_0=W^\top HW$. With $Q_B=I-P_B$, its exact exterior velocity is
+\begin{equation}
+ (\dot BQ_B)_{c:}=-\eta_h\big[(U_0B)_{c:}\mathcal E_c
+ +(W^\top E)_{c:}T_c\big]Q_B.
+ \label{eq:square-leakage}
+\end{equation}
+This separates parameter-mobility anisotropy from objective/data anisotropy. A square parameterization does not automatically move its encoder space: scalar channel mobilities $T_c=\tau_cI$ and $E=0$ exclude that motion. Conversely, anisotropic channel mobilities can move it even when $E=0$. Appendix~\ref{app:task-geometry} gives a two-filter criterion: for isotropic Gaussian patches and linearly independent filters, motion occurs exactly when filter correlation and objective/head cross coupling are both nonzero.
+
+\input{sections/bottleneck_family}
+
+\subsection{How much motion can matter to a task?}
+Let $P_0,P_1$ be equal-rank projectors, $Q_0=I-P_0$, and define
+\begin{equation}
+ a_0=\norm{Q_0TP_0}_F,\qquad d_{01}=\norm{P_1-P_0}_F/\sqrt2.
+\end{equation}
+The task cross block $a_0$ and the subspace displacement constrain risk jointly:
+\begin{equation}
+ |R(P_1)-R(P_0)|\le2a_0d_{01}
+ +\operatorname{osc}(T)d_{01}^2,
+ \label{eq:finite-motion-bound}
+\end{equation}
+where $\operatorname{osc}(T)=\lambda_{\max}(T)-\lambda_{\min}(T)$. This follows from the exact row/normal block decomposition in Appendix~\ref{app:task-geometry}, rather than a fitted local slope. In particular, $a_0=0$ excludes a first-order change, but can permit a one-sided quadratic change. If the row block of $T$ has eigenvalues at least $\delta>0$ above those of the normal block and $a_0=0$, every departure raises risk by at least $\delta d_{01}^2$.
+
+For a parameter path with cumulative update budget
+\begin{equation}
+ b=\int(\norm{\dot h}_F+\norm{\dot W}_F)\,dt,
+\end{equation}
+suppose a containing region has $\sigma_{\min}(A)\ge\sigma>0$ and $\norm{DA[v]}_F\le J\norm v$. Then $d_{01}\le Jb/\sigma$, and Equation~\eqref{eq:finite-motion-bound} holds with this upper bound for every rate schedule in the region. A sharper bound uses $\int\norm{A^\dagger\dot A(I-P_A)}_Fdt$. For the linear encoder, Equation~\eqref{eq:linear-leakage} bounds that integral by
+\begin{equation}
+ \int\eta_V\norm{V^\dagger W^\top}_2
+              \norm{E(I-P_V)}_F\,dt.
+\end{equation}
+This is a quantitative near-conservation statement. Constants inferred from future states give an a posteriori bound; source-fixed region bounds give a forward guarantee. None of these quantities is controlled by spectral concentration alone.
+
+\subsection{Competition, duration, and an error budget}
+Let $D_h,D_W$ be the two unit-rate projector tangents at a common state. A structural criterion is available before selecting a task: if either tangent vanishes, or if $D_W=\lambda D_h$ for some $\lambda>0$, no PSD task matrix admits opposing contributions. Otherwise an open family of rank-one tasks does admit competition. This is an if-and-only-if statement; its proof uses the off-diagonal block structure of projector tangents (Appendix~\ref{app:task-geometry}). It does not put a given class-label task in that family.
+
+To specify an actual update budget, normalize the negative block gradients to unit directions $u_h,u_W$ and write
+\begin{equation}
+ \frac{d\theta}{db}=\alpha u_h+(1-\alpha)u_W.
+\end{equation}
+The sum of block path speeds is one. Fixed $\alpha$ generally requires a state-dependent physical rate ratio. On a source-centered ball of radius $\rho$, assume $\norm{\nabla R}\le G_R$, $\norm{\nabla^2R}\le H_R$, and $\operatorname{Lip}(u_g)\le K$. Put $L_q=H_R+G_RK$ and $q_g=\langle\nabla R_0,u_{g,0}\rangle$. For every allocation schedule and $b\le\rho$,
+\begin{align}
+ b\min_g q_g-\tfrac12L_qb^2
+ &\le R(b)-R_0\nonumber\\
+ &\le b\max_g q_g+\tfrac12L_qb^2.
+ \label{eq:budget-envelope}
+\end{align}
+For fixed allocations with initial slopes at least $m$ and at most $-m$, both signs persist up to $b\le\min\{\rho,m/(2L_q)\}$; each change has magnitude at least $mb/2$. Any two schedules differ in risk by at most $b|q_h-q_W|+L_qb^2$.
+
+With Euler steps of size at most $\delta_{\max}$ and normalized direction error at most $\varepsilon$, the usable margin becomes
+\begin{equation}
+ m_{\rm eff}=m-G_R\varepsilon
+ -\tfrac12H_R(1+\varepsilon)^2\delta_{\max}.
+ \label{eq:margin-budget}
+\end{equation}
+If it is nonpositive, this certificate supplies no sign guarantee. If it is positive, a sufficient cumulative window is
+\begin{equation}
+ b\le\min\left\{\frac\rho{1+\varepsilon},
+ \frac{m_{\rm eff}}{L_q(1+\varepsilon)}\right\},
+\end{equation}
+with signed change at least $m_{\rm eff}b/2$. These are explicit sufficient bounds, not predictions that CIFAR errors are small. Appendix~\ref{app:task-geometry} supplies source-computable derivative constants and distinguishes this path budget from a fixed sum of learning rates. The generic Taylor bound is a connecting tool; its nonvacuity must be checked separately.
+
+\subsection{A nonempty forward window on existing trajectories}
+\label{sec:origin-windows}
+We test nonvacuity on three stored matched-function trajectories of the original two-frequency model. All start with $A_0=(0.02432,0.02432)$; the $c=1$ source is exactly the center of Theorem~\ref{thm:gap}. Source-only interval arithmetic bounds the physical vector field, risk acceleration, and first hitting time of $\ell=0.02$. It then opens the saved trajectory CSV for validation, without integrating a new trajectory. Table~\ref{tab:origin-windows} gives conservative outward display bounds.
+
+\begin{table}[t]
+\centering\small
+\caption{Finite changes at the first common energy section $\ell=0.02$. Predictions use the source state only. Future entries are pre-existing numerical trajectories, not independent trials.}
+\label{tab:origin-windows}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{rcr}
+\toprule
+Scale $c$&Certified $R(\ell)-R(0)$&Saved change\\\midrule
+$1/2$&$[0.003179,0.007176]$&$0.005326$\\
+$1$&$[-0.003110,-0.001259]$&$-0.002280$\\
+$3/2$&$[-0.010741,-0.002101]$&$-0.006647$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The source bounds certify nonzero changes with opposite signs at the same initial function and common progress section; the first two have risk separation greater than $0.00443$. All saved hitting times and risks fall within their predicted intervals. The physical windows also contain five saved future records, all inside the amplitude envelopes. This is a retrospective check of a forward certificate, not a newly preregistered experiment. It supplies a finite-window counterpart to the local threshold on this construction family, not an independent validation of every general moment-space bound or a natural-image prediction. Appendix~\ref{app:origin-windows} gives the boxes, failed shorter energy-clock bounds, and the separate fixed-rate-sum comparison.
