@@ -1,0 +1,253 @@
+\begin{abstract}
+An improving pretraining objective need not improve an independent task's linear readability. We study when this discrepancy comes from changes to the encoder itself. For convolution, squaring, and global pooling, local second moments give an exact feature dictionary. A linear encoder conserves its row space under an isotropic objective, while a square encoder can move through correlated filters and head coupling. We solve an actual joint parameter gradient flow with a genuine encoder bottleneck. A prespecified task cone uniformly improves and then exceeds its initial unregularized population risk, for both encoder and projection. A quantitative stability theorem retains positive gaps when all six initialization coordinates vary independently in an explicit neighborhood. Angular and imbalance equations establish first arrival at common geometric sections, preserved rank, and decreasing pretraining loss. Controlled textures support the exterior-motion mechanism and useful early predictions on independent future streams, with sparse encoder coverage and a late-stage boundary. General task-coupling bounds are explanatory tools; stochastic extensions remain conditional. The result is local and constructive, without a random-initialization typicality or natural-image accuracy claim.
+\end{abstract}
+
+\section{Introduction}
+\label{main:introduction}
+Pretraining optimizes one objective, while a later task reads the resulting representation. A decreasing objective can coexist with worse task performance, but that observation alone does not identify a mechanism. Output rescaling, a regularized probe, compression by a head, and movement of the encoder's prediction space can produce different apparent effects. We isolate the last mechanism using optimal, unregularized population linear risk. Its invariance to invertible feature rescaling makes a risk increase evidence about task readability rather than feature magnitude.
+
+Our model is convolution followed by squaring, global average pooling, and a linear projection. Its centered outputs are linear functions of a local second-moment dictionary for every input distribution. Standard population regression then evaluates a task against a representation subspace. The dynamical question is which actual parameter updates leave that subspace and how the moving space intersects task directions.
+
+The core result concerns a genuine encoder bottleneck: one projected output, two encoder channels, and three independent quadratic statistics. Correlated filters create exterior encoder motion even when the objective is isotropic. An explicit solution shows a quadratic direction approaching a task cone and then moving past it. The same two geometric sections improve and subsequently exceed the initial risks for the entire cone. Both encoder and projection have fixed positive gaps while their ranks stay constant and pretraining loss decreases.
+
+The solvable trajectory has a reflection symmetry, but rebound does not require exact symmetric initialization. At one fixed configuration with nonzero augmentation, all four filter coordinates and both head entries may vary independently in an explicit box. Angular and imbalance equations control the task projectors through a directional progress clock. We prove first arrival, bounded parameters, preserved ranks, and finite physical time. The neighborhood is small; it establishes a region outside the invariant family without asserting typicality under random initialization.
+
+Controlled textures separate encoder movement from head selection. A source-calibrated protocol freezes predictions before independent future updates, giving substantial early gains, especially after projection, and exposing sparse encoder windows and late degradation. This supports a limited predictive domain. It does not explain every late failure or transfer the constructive theorem to arbitrary visual tasks.
+
+The contribution combines exterior encoder motion, task-family rebound under actual joint training, and quantitative initialization stability. Task-coupling bounds are interpretation tools. Rate comparisons, an earlier projection certificate, stochastic windows, and detailed diagnostics are supplementary.
+
+\section{Related Work and Scope}
+\label{main:related}
+\paragraph{Optimization geometry.}
+Kunin et al.~\cite{kunin2024rich} solve supervised two-layer linear dynamics and show how layer imbalance and learning rates change feature learning, including matched initial functions. Their rotating trajectories also make nonmonotonic readability of a separately chosen task plausible; we do not claim the general possibility as new. Our result fixes an unsupervised moment objective and square parameterization, and proves task-uniform finite gaps and initialization stability in an encoder bottleneck.
+
+\paragraph{Projection and task selection.}
+Gui et al.~\cite{gui2023projection} characterize expansion and shrinkage with a fixed encoder. Xue et al.~\cite{xue2024benefits} analyze feature weighting and information differences across nonlinear heads. Our core risk increase occurs in the encoder's own best linear prediction space, with rank unchanged. Torralba and Weiss~\cite{torralba2026theory} study the same broad convolution--nonlinearity--pooling architecture and GUPA objective, including initialization and recognition degradation. Neither the architecture nor qualitative degradation observation is our novelty claim.
+
+\paragraph{Nonlinearity and collapse.}
+Jing et al.~\cite{jing2022collapse} study dimensional collapse in linear contrastive training; Tian~\cite{tian2023nonlinearity} analyzes nonlinear contrastive dynamics. Here the encoder reorients at preserved rank. Our scoped claim is the stated construction and stability guarantee, rather than priority over every nonmonotonic learning phenomenon. Supplement Sec.~\ref{supp:literature} compares assumptions, training dynamics, and risk objects.
+
+\paragraph{Geometric overshoot and quadratic dynamics.}
+Yang, Saxe, and Latham~\cite{yang2026abstraction} prove finite-time overshoot and residence-time results for abstraction alignment. Their minimal theory assumes an instantaneously ridge-optimal readout; its transfer metric differs from the best population OLS risk used here. Thus neither nonmonotonic geometry nor duration alone is our claim. Neural quadratic forms~\cite{liu2026nqf} provide moment closure and exact Riccati dynamics, while Yang~\cite{yang2026spectral} analyzes teacher-dependent quadratic loss histories and identifiability. These establish close dynamical tools. Our independently read task risk and jointly trained head require a distinct metric: absorbing a positive head into a quadratic filter preserves its function but generally changes Euclidean training.
+
+\section{Task Geometry and Exterior Encoder Motion}
+\label{main:geometry}
+\subsection{Moment dictionary and task risk}
+For valid image patches $p_u(x)\in\R^p$, define
+\begin{align}
+ M(x)&=|U|^{-1}\sum_u p_u(x)p_u(x)^\top,\nonumber\\
+ r_c(x)&=h_c^\top M(x)h_c.
+\end{align}
+Let $\phi=\operatorname{svec}(M-\E M)$, using isometric symmetric vectorization. Write its covariance on its support as $U\Lambda U^\top$, $\Lambda\succ0$. Then
+\begin{align}
+ u&=\Lambda^{-1/2}U^\top\phi,\qquad \E uu^\top=I,\\
+ B_{c:}&=\operatorname{svec}(h_ch_c^\top)^\top U\Lambda^{1/2},\qquad A=WB.
+ \label{main:moment-map}
+\end{align}
+The centered encoder and projection are exactly $Bu$ and $Au$, without Gaussian or independent-frequency assumptions. Augmentation-only covariance directions must also be retained when computing training gradients.
+
+For centered labels $Y$ with finite second moment, set $C_Y=\E[uY^\top]$ and $T=C_YC_Y^\top$. Standard affine least squares gives
+\begin{equation}
+ R(A)=\tr\operatorname{Cov}(Y)-\tr(P_AT),\qquad P_A=A^\dagger A.
+ \label{main:task-risk}
+\end{equation}
+For $Y=\beta^\top u$ and $\norm\beta=1$, this is $1-\beta^\top P_A\beta$; encoder risk substitutes $B$. Labels need not be linear in $u$ for the general identity. This is linear readability, not all task information or finite-sample probe generalization.
+
+This distinction separates two mechanisms. Since $A=WB$, $\row A\subseteq\row B$: a head may fail to select a readable encoder direction. In contrast, a change in $P_B$ changes which linear functions of the fixed moment dictionary the encoder can predict. Neither effect requires a change in rank. Indeed, for a complete orthonormal set of unit coordinate tasks,
+\begin{equation}
+ \sum_{j=1}^{d}R_{e_j}(B)=d-\operatorname{rank}(B).
+\end{equation}
+At fixed rank, training redistributes a readability budget among directions. The central question is whether actual filter updates rotate that budget away from an independently specified task, rather than merely alter the weights of accessible features.
+
+\subsection{Objective and actual parameter metric}
+For view covariance $\Sigma=ASA^\top$ and view-difference moment $D$, use GUPA~\cite{torralba2026theory} directly:
+\begin{align}
+ L(A)={}&\tfrac12\tr(ADA^\top)-\tfrac12\log\det(I+\Sigma)\nonumber\\
+ &-\tfrac12\tr\big((I+\Sigma)^{-1}\Sigma\big).
+ \label{main:gupa}
+\end{align}
+The quadratic embeddings are not Gaussian, and no exact InfoNCE equivalence is assumed. For isotropic view moments $S=sI$, $D=2(s-1)I$ and one output, $L=\Phi(V)$, $V=\norm A^2$. Independent Gaussian view noise of relative power $\eta$ gives $s=(1+\eta)^2$ and
+\begin{equation}
+ \Phi(V)=(s-1)V-\tfrac12\log(1+sV)-\frac{sV}{2(1+sV)}.
+\end{equation}
+We train Euclidean filters and head rather than optimizing $A$ freely. For $G=\nabla_AL$ and $J_h=D_h(WB)$,
+\begin{equation}
+ \dot A=-\eta_hJ_hJ_h^*[G]-\eta_WGB^\top B.
+ \label{main:parameter-mobility}
+\end{equation}
+Its exterior component determines whether the representation space changes.
+
+\subsection{A concrete motion criterion}
+At fixed full row rank, $P=P_A$ satisfies
+\begin{equation}
+ \dot P=A^\dagger\dot A(I-P)+(I-P)\dot A^\top(A^\dagger)^\top.
+\end{equation}
+Large gradient or growing energy alone does not ensure task change. For a linear factorization $A=WV$ and $G=HA+E$,
+\begin{equation}
+ \dot V(I-P_V)=-\eta_VW^\top E(I-P_V).
+ \label{main:linear-normal}
+\end{equation}
+The isotropic part $HA$ preserves the encoder space; residual anisotropy can move it. Exact isotropic conservation also holds for ordinary discrete gradient descent when $V$ retains rank, since each update left multiplies $V$.
+
+For GUPA this residual is explicit. Write $S=sI+\Delta S$, $D=d_0I+\Delta D$, and
+\begin{equation}
+ K_A=(I+ASA^\top)^{-1}+(I+ASA^\top)^{-2}.
+\end{equation}
+Then $G=AD-K_AAS$ gives $H=d_0I-sK_A$ and $E=A\Delta D-K_AA\Delta S$, with
+\begin{equation}
+ \norm E_F\le\norm A_F(\norm{\Delta D}_2+2\norm{\Delta S}_2).
+\end{equation}
+Together with Equation~\eqref{main:linear-normal}, this identifies an objective-moment source of linear drift. A near-isotropic training distribution need not give exact conservation, even if the architecture is linear.
+
+For square filters, write $H_c=h_ch_c^\top$ and $\mathcal S=\operatorname{span}\{H_c\}$. With isotropic Gaussian patches, $B_{c:}=\sqrt2\operatorname{svec}(H_c)^\top$. If $G=HA$ with symmetric $H$, put $K_0=W^\top HW$. Exterior updates are determined by
+\begin{equation}
+ \Pi_{\mathcal S^\perp}\sum_j(K_0)_{cj}(H_cH_j+H_jH_c).
+\end{equation}
+Thus parameter mobility can move the encoder even with isotropic objective moments. For two linearly independent filters, let $\rho_h=h_1^\top h_2$, $Q_B=I-P_B$, and
+$n=Q_B\operatorname{svec}(h_1h_2^\top+h_2h_1^\top)$. Then
+\begin{equation}
+ \dot BQ_B=-4\sqrt2\eta_h(K_0)_{12}\rho_h(1,1)^\top n^\top.
+ \label{main:two-filter-normal}
+\end{equation}
+Because $n\ne0$, the encoder moves exactly when correlation and objective/head coupling are both nonzero. Orthogonal filters exclude motion. This equivalence is specific to two independent channels: additional channels may span a cross quadratic or cancel its contribution. The supplement gives the mobility derivation and near-isotropy bounds.
+
+The algebra shows why squaring changes the conclusion. A filter update creates the cross statistic $h_ch_j^\top+h_jh_c^\top$, multiplied by $h_c^\top h_j$. With two independent filters, that statistic is outside the span of their two squares; with orthogonal filters its coefficient vanishes. This is a condition on the current filters and head, rather than on nonlinearity alone.
+
+The same calculation distinguishes motion from its task effect. Put $p=B^\dagger(1,1)^\top$ and $v=-4\sqrt2\eta_h(K_0)_{12}\rho_hp$. Equation~\eqref{main:two-filter-normal} yields
+\begin{equation}
+ \dot P_B=vn^\top+nv^\top,\qquad v\perp n.
+\end{equation}
+When $v\ne0$, the unit tasks $\beta_\pm=(v/\norm v\pm n/\norm n)/\sqrt2$ have opposing risk derivatives of magnitude $\norm v\norm n$. A task along $n$ instead has zero first derivative. Thus even a single nonzero exterior update can improve one task, hurt another, and be first-order invisible to a third. This local observation motivates the finite-amplitude task-family theorem below; it does not itself establish a persistent risk change.
+
+\section{Encoder Rebound and Quantitative Stability}
+\label{main:rebound}
+\input{sections/bottleneck_family}
+
+\section{Which Motion Changes a Task?}
+\label{main:task-coupling}
+For equal-rank projectors $P_0,P_1$, put $Q_0=I-P_0$, $a_0=\norm{Q_0TP_0}_F$, and $d=\norm{P_1-P_0}_F/\sqrt2$. Exact row/normal block decomposition gives
+\begin{equation}
+ |R(P_1)-R(P_0)|\le2a_0d+\operatorname{osc}(T)d^2.
+ \label{main:finite-task-bound}
+\end{equation}
+Small displacement and weak task cross coupling separately limit risk amplitude. A zero cross block removes the first-order term, not all finite effects.
+
+To see what the bound retains, define
+\begin{align}
+ U_1&=P_0(I-P_1)P_0,\quad V_1=Q_0P_1Q_0,\nonumber\\
+ Z_1&=Q_0P_1P_0.
+\end{align}
+The exact risk difference is
+\begin{align}
+ \Delta R={}&\tr(P_0TP_0U_1)-\tr(Q_0TQ_0V_1)\nonumber\\
+ &-2\tr(P_0TQ_0Z_1).
+ \label{main:finite-block-identity}
+\end{align}
+Both $U_1,V_1$ are PSD with trace $d^2$, while $\norm{Z_1}_F\le d$. The cross term couples the direction of motion to the task; the two diagonal terms account for finite leakage out of and into the initial space. Bounding them gives Equation~\eqref{main:finite-task-bound}. A displacement-only bound discards the cross term's orientation, and therefore assigns the same budget to tasks with very different responses.
+
+There are also exclusion cases. If $T$ is a scalar multiple of the identity, risk is constant at fixed rank. If $P_0TQ_0=0$ and the smallest eigenvalue of the task's row block exceeds the largest eigenvalue of its normal block by $\delta>0$, Equation~\eqref{main:finite-block-identity} gives $\Delta R\ge\delta d^2$. Every departure then worsens this task; initial improvement is impossible. These checks clarify why encoder motion alone cannot predict a rebound curve.
+
+Second-order leakage matters for stochastic updates too. At a fixed current $P$, if the fixed task satisfies $T=\lambda P$ with $\lambda>0$, then exactly
+\begin{equation}
+ R(P')-R(P)=\lambda\norm{P'-P}_F^2/2.
+ \label{main:second-order-leakage}
+\end{equation}
+An unbiased parameter update can therefore increase expected task risk. This is a conditional single-step identity: fixed $T$ generally ceases to equal $\lambda P_k$ after movement. It is not a long-time deterioration theorem.
+
+For an exact finite update, condition on the training history $\mathcal F_k$ and write
+\begin{align}
+ \Delta P_k&=\mu_k+\Xi_k,\quad \mu_k=\E[\Delta P_k\mid\mathcal F_k],\nonumber\\
+ Z_k&=-\tr(T\Xi_k),\quad \E[Z_k\mid\mathcal F_k]=0.
+\end{align}
+The relevant conditional noise variance is $\operatorname{Var}(\tr(T\Xi_k)\mid\mathcal F_k)$, which can be small even when geometric noise is large. However, the conditional mean $\mu_k$ is not generally the projector differential of the mean parameter update. Finite-step curvature contributes to the mean as well as to random fluctuations, including the leakage above. A frozen source predictor must separately account for estimating its source mean, the change of conditional means along training, and replacing finite increments with tangents. These terms cannot all be treated as zero-mean SGD noise.
+
+The supplement develops rate-competition criteria and deterministic windows, plus a conditional stochastic extension separating source calibration, predictable drift, step curvature, and centered task variance. The predictor already uses task-projected errors; the extension changes how centered fluctuations accumulate. Its strict support/tail and variance-confidence assumptions are not supplied by empirical quantiles. One fixed development-state screen fails for the available conservative range bound. We retain the conditional theorem without claiming a strict stochastic instance.
+
+\section{Controlled Texture Evidence and Boundaries}
+\label{main:experiments}
+\paragraph{Model and protocol.}
+Periodic $32\times32$ textures contain 16 independent non-DC power coordinates: four directions, two radial bands, and two frequency pairs per group. The encoder has eight square channels, global pooling, and one or two head outputs. Full-support and $11\times11$ local kernels retain actual spatial constraints. Ten fixed unit-variance tasks comprise two coordinates and eight direction/band sums. Population task risks are evaluated analytically at empirical checkpoints, avoiding fitted-probe error. Pretraining uses no task labels. Linear factors and frozen fronts are controls in the same power dictionary.
+
+We retain the existing suites without adding training. Independent mobility-trace calibration preserves matched initial functions and normalizes initial mobility, but does not equate directions. Confirmation uses ten paired seeds, 2--11; checkpoints, tasks, ratios, and streams are repeated measurements within a seed. Complete empirical training uses 32,768 unlabeled images, batch size 256, and 4,000 updates. Full configurations, numerical checks, and historical comparisons are supplementary.
+
+\paragraph{Encoder movement and head selection.}
+At common population section $\ell=\log(V/V_0)=3$, independently calibrated unit-ratio square encoders move, while linear encoder distance is approximately $10^{-14}$ and both projections move (Table~\ref{main:movement}). Here $V=\norm A_F^2$. Ranks stay eight and $K$; frozen fronts do not move. The square effect is reorientation, without dimensional collapse.
+\begin{table}[t]
+\centering\small
+\caption{Population projector displacement at common $\ell=3$, unit rate ratio, ten paired seeds. Linear encoder conservation coexists with projection selection.}
+\label{main:movement}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrr}
+\toprule
+&\multicolumn{2}{c}{Encoder}&\multicolumn{2}{c}{Projection}\\
+Setting&Square&Linear&Square&Linear\\\midrule
+$K=1$, full&0.3064&$1.15\,10^{-14}$&0.5161&0.6087\\
+$K=2$, full&0.4499&$1.23\,10^{-14}$&0.5597&0.5319\\
+$K=1$, local&0.3786&$1.26\,10^{-14}$&0.5572&0.6196\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Under empirical training, square encoder displacement is $0.13692$ (full) and $0.17740$ (local) at common $\ell=1.5$ and unit ratio. Linear displacement is also nonzero, $0.00666$ and $0.00920$. Finite-data conditional gradients need not satisfy ideal isotropy. This does not refute conservation under its stated assumptions or identify every source of empirical drift.
+
+Figure~\ref{main:empirical-motion} retains all three ratios for the full-support setting. These comparisons use a common energy section, so they do not assert different ordered paths within the special symmetric family. In these higher-channel empirical models, square encoder motion is larger than the linear control at each ratio. At unit ratio, the empirical/population encoder projector distances are $0.00713$ (full) and $0.00850$ (local), much smaller than the respective movements from initialization. This is evidence for the population mechanism over this training budget, without identifying the exact source of every finite-data deviation.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/empirical_subspaces.pdf}
+\caption{Encoder movement under complete empirical training, full-support kernels at common $\ell=1.5$, ten paired seeds. Error bars are descriptive paired-seed bootstrap intervals from saved summaries. Linear empirical motion is nonzero; square motion is substantially larger. No additional training is used for this figure.}
+\label{main:empirical-motion}
+\end{figure}
+
+\paragraph{Frozen source and independent future streams.}
+Development uses seeds 0--1 at updates 500 and 2,000 (12 model states). Validation uses seeds 2--11 at updates 500, 2,000, and 3,500 (90 states), held out from tuning this protocol, not every earlier analysis. Each source uses 16 fit batches, 32 error batches, and four eight-step probes. Predictions are frozen before eight independent future streams, with paired randomness across ratios $0.1,1,10$. Every planned state completed without rank failures. Predefined tasks and source-constructed competitors are reported separately.
+
+Frozen source tangents predict task change and projector motion. Inflated task-error quantiles give empirical intervals. Failed windows remain in denominators. Usable windows stop at eight steps by declared calibration support; zero coverage beyond eight is an abstention policy, not proof that later prediction is impossible.
+
+Three questions are kept separate. Geometry compares the predicted projector tangent with the future displacement. Task prediction pairs that tangent with each prespecified task matrix. A direction window additionally requires the signed cumulative prediction to exceed its empirical error budget and the practical-change threshold at every prefix. A good geometric cosine is therefore useful but insufficient: the task pairing can be weak, and uncertainty can be large relative to the resulting risk change.
+\begin{table}[t]
+\centering\small
+\caption{Eight-step square-projection predictions. Each stage has 240 slots: ten seeds, three ratios, eight predefined bands. MAE/zero compares against zero change. Direction windows require every prefix; validation checks all eight future streams.}
+\label{main:prediction}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{rrrrr}
+\toprule
+Step&Motion cosine&MAE/zero&\multicolumn{2}{c}{Windows / 240}\\
+&&&Predicted&Validated\\\midrule
+500&0.979&0.149&91&90\\
+2,000&0.125&1.211&0&0\\
+3,500&0.112&1.230&0&0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Early projection MAE improves for every validation seed. Encoder coverage is narrower: nine of all 720 band slots admit eight-step windows, all early, and all pass the sampled-prefix check. Constructed tasks give six encoder and eleven projection windows out of 90 each; local competition does not ensure persistence. Frozen-front projection forecasts also improve, so predictability alone does not isolate the square mechanism.
+
+Task direction helps beyond total movement. Across the square-projection band slots at eight steps, the absolute source-slope ranking has mean task-order agreement $0.857$, versus $0.5$ for a displacement-only baseline that ties tasks at the same state and ratio. The task cross-block ranking gives $0.798$. These are descriptive ordering scores, not direction guarantees: a task can remain more sensitive than another after the frozen mean direction has become inaccurate. The late-stage MAE ratios in Table~\ref{main:prediction} expose that distinction.
+
+Coverage must also be read with interval width. Pooled over these square-projection band slots, the mean eight-step interval width is $0.00491$, while the mean absolute realized change is $0.000305$. Their ratio is about 16. Such intervals can cover observations while carrying little useful sign information, which is why the table reports non-abstaining prefix windows as well as prediction error. The empirically validated windows are sampled-stream results; quantile inflation does not supply a probability guarantee over every future SGD stream.
+
+Eight-stream error decomposition retains mean offset and dispersion. At eight steps, sample-corrected squared mean-offset estimates contribute $35.6\%$, $31.8\%$, and $52.0\%$ of projection MSE across stages; encoder values are $31.4\%$, $30.6\%$, and $39.2\%$. Negative cell estimates remain untruncated. These noisy descriptive quantities cannot uniquely attribute late failure to calibration, drift, or noise. Full decompositions and failed windows are supplementary.
+
+\paragraph{Natural images delimit transfer.}
+Table~\ref{main:natural} retains boundary evidence. The CIFAR encoder--head gap largely exists before training; a supervised low-rank readout recovers available class information without establishing training-induced encoder loss. Suppressing a dominant DTD statistic does not recover class gains. These experiments do not validate the constructive rebound theorem.
+\begin{table}[t]
+\centering\small
+\caption{Natural-image boundary: validation OLS accuracy (\%), initialization $\to$ final budget, three development seeds. CIFAR readouts share encoders; supervised rank-8 fitting uses training labels. DTD uses official partition 1.}
+\label{main:natural}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrr}
+\toprule
+Dataset&Representation&Initial&Final\\\midrule
+CIFAR&Encoder&36.31&36.04\\
+&Original eight-dimensional head&23.49&23.71\\
+&Supervised rank-8 readout&35.75&35.59\\\midrule
+DTD&Encoder&8.65&8.51\\
+&Zero-DC encoder&8.78&8.56\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+The core theorem concerns encoder risk under actual unsupervised square-parameter training. Finite gaps persist outside symmetry in a small independent initialization box, at common geometric sections rather than common physical times. Data and augmentation assumptions are specified; the covariance interval and symmetry-breaking neighborhood are separate results. We make no random-initialization typicality or universal rate-selection claim. Regression, projector identities, and classical concentration tools support this mechanism rather than constitute independent novelty claims. Empirical evidence establishes useful early geometry and a late boundary, without explaining every failure or weak semantic transfer.
+
+The construction also clarifies which comparisons carry the claim. Evaluating only the projected output would combine encoder loss with a head's failure to select readable statistics. Evaluating a regularized or finite-sample probe would introduce additional scale and estimation effects. Here the encoder's own optimal population risk worsens at preserved rank, and the perturbed trajectories are compared with their own sources. Conversely, the moment identity by itself supplies neither a natural-image training law nor a useful stochastic window. Those require additional distributional control and measured task coupling. The present combination establishes a local training mechanism, tests its geometric implications beyond the analytic family, and retains the limits of that evidence.

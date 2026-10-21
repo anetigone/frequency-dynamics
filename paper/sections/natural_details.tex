@@ -72,8 +72,8 @@ Together these observations are consistent with preferential amplification of ex
 \subsection{Local risk reversal exists but has limited persistence}
 We directly test two-block competition using the CIFAR $r=1$ checkpoints at updates 0, 1,000, and 4,000 for the same three development seeds. Each state has three paired future streams, giving 27 state--stream combinations, not 27 independent samples. Let $R$ denote validation one-hot MSE after refitting training-set affine OLS. With source mobility $m$, base rate $\eta$, and block training gradients $g_h,g_W$, define
 \begin{align}
- A&=\langle\nabla_h R,-\eta m g_h\rangle,\qquad
- B=\langle\nabla_W R,-\eta m g_W\rangle,\nonumber\\
+ A&=\langle\nabla_h R,-\eta m g_h\rangle,\nonumber\\
+ B&=\langle\nabla_W R,-\eta m g_W\rangle,\nonumber\\
  \Delta R(r,s)&\approx \frac{2s}{1+r}(A+rB).
  \label{eq:natural-local}
 \end{align}

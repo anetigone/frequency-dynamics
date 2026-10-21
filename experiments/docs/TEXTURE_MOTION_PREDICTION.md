@@ -1,6 +1,8 @@
-# 固定起点的纹理几何、任务和窗口预测
+# 固定起点的合成受控纹理几何、任务和窗口预测
 
-本轮代码只从已有完整经验训练 checkpoint 分叉，不重新预训练，不增加数据集、模型、任务划分或数据哈希。当前默认面向全支撑、d=16、C=8、K=1 的既有 checkpoint；局部核可显式传入对应 `--source`，但应另用输出目录报告。
+本轮代码只从已有合成受控纹理的完整经验训练 checkpoint 分叉，不重新预训练，不增加数据集、模型、任务划分或数据哈希。当前默认面向全支撑、d=16、C=8、K=1 的既有 checkpoint；局部核可显式传入对应 `--source`，但应另用输出目录报告。
+
+这里的 `full_sgd_development_v2` / `full_sgd_main` 是合成纹理实验，不是 DTD。选择它们是为了先检验既有频带任务、有效映射行空间几何与解析总体线性风险的多步预测。DTD 的 NaturalSquare checkpoint、47 类仿射 OLS 验证风险和样本空间几何需要单独适配，不能通过 `--source` 换成 DTD 目录运行本脚本；本轮结果也不能作为 DTD 类别泛化的证据。合成实验在本机运行，DTD checkpoint 分析在保有其权重与 prepared 图片的服务器运行。
 
 ## 固定状态与任务
 
@@ -97,3 +99,9 @@ python -B experiments/run.py summarize_texture_motion experiments/results/empiri
 python -B experiments/run.py texture_motion_prediction --self-check
 python -B experiments/run.py summarize_texture_motion --self-check
 ```
+
+## 本机运行结果（2026-10-21）
+
+已完成默认 12 个开发状态和 90 个验证状态，全部状态成功，无缺失。验证直接使用开发保存的原始默认设置，没有调参。详见[开发结果](../results/empirical/task_motion_development/findings.md)与[验证结果](../results/empirical/task_motion_validation/findings.md)，原始预测、未来流结果和各项 CSV 保存在各自结果目录。
+
+验证集的平方模型 projection、预设频带任务、H=8：斜率预测的变化幅度排序准确率为 0.857，跨块幅度预测为 0.798，位移基线为 0.500；预测 MAE 为 2.29e-4，零变化基线为 3.05e-4。但非空经验方向窗口覆盖率仅为 12.64%，区间平均宽度为 4.91e-3。平方模型 encoder 的 MAE 反而略差于零变化基线，H=8 的几何位移方向余弦也只有约 0.37（encoder）和 0.41（projection）。因此当前结果支持部分任务排序信息，几何方向预测和窗口覆盖仍弱，不能概括为所有表示都预测准确，更不是严格概率证书或 DTD 验证结果。

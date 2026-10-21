@@ -1,0 +1,47 @@
+\subsection{Task-directed stochastic windows and abstention}
+\label{sec:task-stochastic}
+For stochastic training, a source tangent must compete with both mean error and centered fluctuation. Fix a source $\vartheta_0$, task $T$, rate ratio, and horizon $H$ before the independent mean/variance calibration. Write the actual finite-batch update as
+\begin{equation}
+ \vartheta_{j+1}=\vartheta_j+\delta_jF(\vartheta_j,\zeta_j).
+ \label{eq:stoch-update}
+\end{equation}
+Here $\zeta_j$ contains an entire batch and its augmentations. In particular, the expectation of the sample-centered GUPA gradient need not equal its population gradient. We predict the specified batch algorithm, without replacing its random moments by population moments.
+
+Let $P=P_j$, $Q=I-P$, $P'=P_{j+1}$, $K_j=QP'P$, and $s_j=\norm{P'-P}_F/\sqrt2$. At unchanged rank, exact projector geometry gives
+\begin{align}
+ D_j:=R_{j+1}-R_j&=-2\langle QTP,K_j\rangle_F+B_j^{(2)},\\
+ |B_j^{(2)}|&\le\omega s_j^2,\qquad \omega=\operatorname{osc}(T).
+ \label{eq:stoch-cross-leakage}
+\end{align}
+Thus $D_j=\E_jD_j+\xi_j$ has a scalar martingale error. Its conditional variance satisfies
+\begin{equation}
+ \sqrt{\operatorname{Var}_j(D_j)}
+ \le2\sqrt{\operatorname{Var}_j\langle QTP,K_j\rangle_F}
+       +\omega\sqrt{\E_js_j^4}.
+ \label{eq:stoch-task-variance}
+\end{equation}
+Task-cross norm alone does not identify this variance: the orientation of random normal motion matters. If $QTP=0$, first-order noise vanishes but quadratic leakage remains. For example, when $T=\lambda P$, $D_j=\lambda s_j^2$ exactly; unbiased parameter noise can increase expected task risk. Appendix~\ref{app:task-stochastic} also gives two tasks with identical cross norms and geometric displacement but different exact finite-step variances.
+
+Set $q(\vartheta,\zeta)=\langle\nabla R,F\rangle$ and $b_n=\sum_{j<n}\delta_j$. Independent source batches estimate its mean by $\widehat q_0$, with a confidence error $a$ and a variance upper confidence bound. This differs from using an observed absolute-error quantile as a uniform noise bound.
+\begin{proposition}[Finite-prefix stochastic envelope]
+\label{prop:stoch-prefix}
+Assume fresh whole batches with the calibration law, a rank-preserving parameter ball of radius $\rho$, and uniform bounds
+\begin{align}
+ \norm F&\le M,&\operatorname{Lip}(F)&\le K_F,\nonumber\\
+ \norm{\nabla R}&\le G_R,&\norm{D^2R}&\le H_R.
+\end{align}
+If $Mb_H\le\rho$, put $L_q=H_RM+G_RK_F$. With total failure probability at most $\varepsilon_{\rm cal}+\varepsilon_f$, all $1\le n\le H$ satisfy
+\begin{align}
+ |R_n-R_0-b_n\widehat q_0|\le{}&a b_n
+ +\tfrac12L_qM\big(b_n^2-\sum_{j<n}\delta_j^2\big)\nonumber\\
+ &+\tfrac12H_RM^2\sum_{j<n}\delta_j^2
+ +\mathcal B_{\varepsilon_f}(\overline V_n).
+ \label{eq:stoch-four-errors}
+\end{align}
+Here $\overline V_n$ bounds the accumulated conditional variance of the centered task slopes $\delta_jq_j$; $\mathcal B$ is the simultaneous scalar boundary specified in the appendix.
+\end{proposition}
+The four terms are source calibration, state drift, step curvature, and centered random fluctuation. The nominal clock $b_n$ is not parameter path length; $Mb_H\le\rho$ supplies that conversion. The appendix provides computable source variance confidence bounds and an exact finite-step alternative that retains quadratic noise inside the variance.
+
+Issue a direction only when the resulting interval excludes zero, or a specified practical risk threshold. A useful prefix may follow a burn-in period; that certifies the selected later prefixes, not a sign at every earlier prefix. Simultaneous interval coverage holds from prefix one, including abstaining prefixes. A claim of one sign throughout $1{:}H$ requires every corresponding interval to exclude zero.
+
+The existing texture predictor already projects its calibration errors into each task direction. Its empirical radius accumulates $H$ times an absolute task-error quantile. The proposed refinement separates source mean error from centered variance and accumulates the latter through $\overline V_n$; probability concentration itself is classical~\cite{freedman1975tail,howard2020timeuniform}. Current saved quantiles do not instantiate the required upper confidence and support bounds. The eight-stream decomposition contains substantial mean-offset and dispersion contributions, and no nonempty strict stochastic window is established here.

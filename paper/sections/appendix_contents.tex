@@ -1,0 +1,35 @@
+% The appendix shares the main document's bibliography and internal links.
+% Keep physical page numbers continuous; prefix all reset counters and anchors.
+\maketitlesupplementary
+\setcounter{section}{0}
+\setcounter{theorem}{0}
+\setcounter{equation}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thetheorem}{S\arabic{theorem}}
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\theHsection}{supp.\arabic{section}}
+\renewcommand{\theHtheorem}{supp.\arabic{theorem}}
+\renewcommand{\theHequation}{supp.\arabic{equation}}
+\renewcommand{\theHfigure}{supp.\arabic{figure}}
+\renewcommand{\theHtable}{supp.\arabic{table}}
+
+\input{sections/supplement_core_proofs}
+\input{sections/supplement_literature}
+\input{sections/setup}
+\input{sections/supplement_geometry}
+\input{sections/theory}
+\input{sections/supplement_geometry_proofs}
+\input{sections/appendix}
+\input{sections/textures}
+\input{sections/cifar}
+\input{sections/natural_details}
+
+\section{Stochastic Prediction Framework}
+\label{supp:stochastic-framework}
+\input{sections/task_stochastic}
+\input{sections/task_stochastic_proofs}
+\input{sections/supplement_stochastic_checks}

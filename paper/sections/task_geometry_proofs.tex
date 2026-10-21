@@ -1,5 +1,6 @@
 \section{Proofs and Constants for Task-Relevant Motion}
 \label{app:task-geometry}
+\label{supp:core-proofs}
 \subsection{Regression, mobility, and near-conservation}
 Centering absorbs the affine intercept. Since $\E uu^\top=I$, minimizing over a decoder $D_Y$ gives
 \begin{align}
@@ -157,6 +158,8 @@ This strict barrier closes a first-exit argument for the descending regime. In p
 The covariance interval is an explicit structured anisotropic family. It preserves the alignment and initialization conditions of the theorem. It does not supply a bound for arbitrary perturbations away from this invariant manifold. Similarly, the rate independence of the ordered subspace path is an exclusion result within this family, not a proof that rate bifurcation persists under symmetry breaking.
 
 As an implementation check, \path{experiments/code/theory/analytic_bottleneck_check.py} evaluates 216 closed-form states, compares SVD risks on 25 tasks per state, and differentiates the Gaussian physical quadratic-moment objective in $h,W$ for 648 state/noise combinations. The maximum risk and parameter-velocity discrepancies are about $1.25\times10^{-15}$ and $1.44\times10^{-15}$. The checks include rotated covariance axes, preserve ranks two/one, and satisfy the uniform gaps. They do not replace the analytic proof or constitute random-initialization evidence. No trajectory is trained or integrated.
+
+\input{sections/asymmetric_stability_proof}
 
 \subsection{Origin-only interval windows on stored trajectories}
 \label{app:origin-windows}

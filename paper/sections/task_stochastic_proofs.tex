@@ -1,0 +1,123 @@
+\section{Stochastic Task Geometry and Simultaneous Prefix Bounds}
+\label{app:task-stochastic}
+We condition on the source, task, fixed rate ratio, and past training history. Future batches are independent of source calibration and have the same whole-batch law. Write $\E_j,\operatorname{Var}_j$ for conditioning before update $j$. All parameter bounds below use one fixed norm and its dual. They concern the population best-linear-probe risk, not finite-sample OLS generalization.
+
+\subsection{Exact finite-step geometry and task variance}
+For equal-rank $P,P'$, put $Q=I-P$, $X=P(I-P')P$, $Y=QP'Q$, and $K=QP'P$. Then $X,Y\succeq0$, $\tr X=\tr Y=s^2$, and $\norm K_F\le s$, where $s=\norm{P'-P}_F/\sqrt2$. Direct expansion yields
+\begin{equation}
+ D=-2\langle QTP,K\rangle_F
+      +\tr(T_{PP}X)-\tr(T_{QQ}Y).
+\end{equation}
+Subtracting $\lambda_{\min}(T)I$ leaves the difference unchanged, so the last two terms together have absolute value at most $\omega s^2$. Centering this identity and applying the $L^2$ triangle inequality proves Equation~\eqref{eq:stoch-task-variance}. Its cross variance is
+\begin{equation}
+ \operatorname{vec}(QTP)^\top
+ \operatorname{Cov}_j(\operatorname{vec}K)
+ \operatorname{vec}(QTP).
+\end{equation}
+No independence between cross motion and leakage is assumed. If $QTP=0$, the conditional variance is at most $\omega^2\E_js^4$. If the row task spectrum exceeds its normal spectrum by $\gamma>0$, $D\ge\gamma s^2$ pathwise. In particular $T=\lambda P$ gives $D=\lambda s^2$ exactly.
+
+For a small parameter step, let $N=Q(DA[F])^\top(A^\dagger)^\top$. Then $s^2=\delta^2\norm N_F^2+O(\delta^3)$ on a smooth compact full-rank tube. For $T=\lambda P$ this gives
+\begin{align}
+ \E_jD=\lambda\delta^2\big[\norm{\E_jN}_F^2
+ +\tr\operatorname{Cov}_j(\operatorname{vec}N)\big]+O(\delta^3).
+\end{align}
+Thus a centered normal gradient can produce a positive quadratic mean risk change. The exact identity, rather than this expansion, is used in the finite-step theorem below.
+
+\subsection{Independent source mean and variance calibration}
+Let $X_i$ be a scalar statistic from $N_c$ independent whole batches at the fixed source, with a justified range $|X_i|\le B$. The statistic can be the actual batch slope $q_0$ or the actual finite-step change $D_0$. Set $\widehat m=N_c^{-1}\sum_iX_i$ and $\widehat m_2=N_c^{-1}\sum_iX_i^2$. Hoeffding bounds give, with failure probability at most $\varepsilon_\mu+\varepsilon_v$,
+\begin{align}
+ |\E X-\widehat m|&\le a=B\sqrt{2\log(2/\varepsilon_\mu)/N_c},\\
+ U_2&=\min\{B^2,\widehat m_2+B^2\sqrt{\log(1/\varepsilon_v)/(2N_c)}\},\\
+ \operatorname{Var}(X)&\le\overline\sigma_0^2
+ =\max\{0,U_2-(|\widehat m|-a)_+^2\}.
+ \label{eq:stoch-source-calibration}
+\end{align}
+The two events need not be independent. Their confidence budget is $\varepsilon_{\rm cal}=\varepsilon_\mu+\varepsilon_v$. The range $B$ is a support bound, not the largest calibration observation. A sample variance or empirical percentile alone is not a variance upper confidence bound. In sample-centered GUPA each observation here is computed with the actual batch inverse and centering; $\E\widehat g$ need not equal $\nabla L_{\rm pop}$.
+
+\subsection{A simultaneous scalar boundary}
+For martingale differences $\xi_j$ with $|\xi_j|\le c$, let $V_n=\sum_{j<n}\E_j\xi_j^2\le\overline V_n$. For $0<\lambda<3/c$, the bounded-increment exponential series gives
+\begin{equation}
+ \E_j e^{\lambda\xi_j}
+ \le\exp\{\lambda^2\E_j\xi_j^2/[2(1-\lambda c/3)]\}.
+\end{equation}
+The corresponding exponential process is a nonnegative supermartingale. Fix a finite grid $\mathcal L$ of $J_\lambda$ such values using calibration only. Ville's inequality and a union over signs and grid points give simultaneous coverage with failure probability $\varepsilon_f$ for
+\begin{align}
+ |\sum_{j<n}\xi_j|&\le\mathcal B_{\varepsilon_f}(\overline V_n),\quad 1\le n\le H,\\
+ \mathcal B_{\varepsilon_f}(v)&=\min_{\lambda\in\mathcal L}
+ \left\{\frac{x}{\lambda}+\frac{\lambda v}{2(1-\lambda c/3)}\right\},\\
+ x&=\log(2J_\lambda/\varepsilon_f).
+ \label{eq:stoch-lambda-boundary}
+\end{align}
+Set the boundary to zero when $c=0$. The grid may depend on independent calibration; the proof conditions on it. This is the standard Bernstein--Freedman supermartingale construction~\cite{freedman1975tail,howard2020timeuniform}, not a new concentration inequality. Predictable random variance upper bounds are permitted by this construction. Directly substituting a random variance into a fixed-time square-root tail bound would require an additional valid boundary argument.
+
+\subsection{Proof and explicit constants for the tangent envelope}
+Assume on the source ball that $\sigma_{\min}(A)\ge\sigma>0$, $\norm{DA}\le J$, and the bounds in Proposition~\ref{prop:stoch-prefix} hold for every batch. Let $b_HM\le\rho$ and $a_N=JM/\sigma$. Every realized parameter path remains in the ball. Define
+\begin{equation}
+ \alpha_0=\norm{(I-P_0)TP_0}_F,\qquad
+ Q_j=2a_N(\alpha_0+\sqrt2\omega a_Nb_j).
+\end{equation}
+Integrating the projector derivative gives $\norm{P_j-P_0}_F/\sqrt2\le a_Nb_j$. Subtracting the spectral midpoint of $T$ proves
+\begin{equation}
+ \norm{(I-P_j)TP_j}_F\le\alpha_0+\omega\norm{P_j-P_0}_F.
+\end{equation}
+Hence $|q_j|\le Q_j$. Moreover $q(\vartheta,\zeta)=\langle\nabla R,F\rangle$ is $L_q=H_RM+G_RK_F$-Lipschitz uniformly in the batch. Calibrate $q_0$ by Equation~\eqref{eq:stoch-source-calibration} with $B=Q_0$, producing $\widehat q_0,a,\overline\sigma_{q,0}$. Coupling source and displaced statistics with the same batch gives
+\begin{align}
+ |\E_jq_j-\E q_0|&\le L_qMb_j,\\
+ \sqrt{\operatorname{Var}_j(q_j)}&\le\overline\sigma_{q,0}+L_qMb_j.
+\end{align}
+The second line uses contraction of centering in $L^2$, with no extra factor two. For $\xi_j=\delta_j(q_j-\E_jq_j)$, valid constants are
+\begin{align}
+ \overline v_j&=\delta_j^2\min\{(\overline\sigma_{q,0}+L_qMb_j)^2,Q_j^2\},\\
+ \overline V_n&=\sum_{j<n}\overline v_j,\qquad
+ c=2\max_{j<H}\delta_jQ_j.
+ \label{eq:stoch-tangent-variance}
+\end{align}
+Taylor's theorem bounds each step residual by $H_RM^2\delta_j^2/2$. Summing source calibration, mean drift, this residual, and the scalar martingale proves Equation~\eqref{eq:stoch-four-errors}, using $\sum_{j<n}\delta_jb_j=(b_n^2-\sum_{j<n}\delta_j^2)/2$. Conditional on good calibration, future failure is at most $\varepsilon_f$; adding calibration failure proves the stated probability. The risk and Jacobian bounds can be obtained from a source-fixed rank tube as in Appendix~\ref{app:task-geometry}.
+
+The ratio is already included in $F$: fixed sum of learning rates does not imply fixed realized path length. If both blocks use the same batch, their paired task-slope covariance must be retained:
+\begin{align}
+ \operatorname{Var}(a_hq_h+a_Wq_W)
+ ={}&a_h^2\operatorname{Var}(q_h)+a_W^2\operatorname{Var}(q_W)\nonumber\\
+ &+2a_ha_W\operatorname{Cov}(q_h,q_W).
+\end{align}
+No automatic inverse-batch-size variance law is assumed for the nonlinear batch objective.
+
+\subsection{An exact finite-step alternative}
+For constant step $\delta$, define $D(\vartheta,\zeta)=R(\vartheta+\delta F)-R(\vartheta)$ and assume $M\delta H\le\rho$. Differentiation on the reachable pre-step ball gives
+\begin{equation}
+ \operatorname{Lip}(D)\le L_D=\delta(H_RM+G_RK_F).
+\end{equation}
+Indeed, its derivative is $\nabla R(\vartheta+\delta F)-\nabla R(\vartheta)+\delta DF^\top\nabla R(\vartheta+\delta F)$. Equation~\eqref{eq:stoch-cross-leakage} gives the source and future range bounds
+\begin{equation}
+ B_j=2(\alpha_0+\sqrt2\omega a_N\delta j)a_N\delta
+          +\omega(a_N\delta)^2.
+\end{equation}
+Independently calibrate the \emph{actual} $D_0$ with $B=B_0$, obtaining $\widehat m,a_D,\overline\sigma_{D,0}$. Set
+\begin{align}
+ \overline v_j&=\min\{(\overline\sigma_{D,0}+L_DM\delta j)^2,B_j^2\},\\
+ \overline V_n&=\sum_{j<n}\overline v_j,\qquad c=2\max_{j<H}B_j.
+\end{align}
+The same mean-drift and standard-deviation coupling arguments give, with failure at most $\varepsilon_{\rm cal}+\varepsilon_f$,
+\begin{equation}
+ |R_n-R_0-n\widehat m|
+ \le n a_D+L_DM\delta\frac{n(n-1)}2
+           +\mathcal B_{\varepsilon_f}(\overline V_n)
+ \label{eq:stoch-exact-step-envelope}
+\end{equation}
+for every $1\le n\le H$. Here finite-step curvature is included in its true conditional mean and variance, rather than discarded into a pathwise remainder. If $\alpha_0=0$, source increments are bounded at order $\delta^2$, so their variance is bounded at order $\delta^4$. This is a geometric improvement, not an assumption of unbiased risk increments.
+
+\subsection{Two tasks with equal geometric bounds but unequal noise}
+Let $P=e_1e_1^\top$ in $\R^3$ and take one random rank-one update with row
+\begin{align}
+ v&=e_1+\delta me_2+\delta\sigma\varepsilon e_3,\nonumber\\
+ D&=1+\delta^2(m^2+\sigma^2),\qquad P'=vv^\top/D,
+\end{align}
+where $m,\sigma>0$ and $\varepsilon=\pm1$ equally likely. Its displacement $s^2=\delta^2(m^2+\sigma^2)/D$ is deterministic. Tasks $\beta_2=(e_1+e_2)/\sqrt2$ and $\beta_3=(e_1+e_3)/\sqrt2$ have identical initial risk $1/2$ and task-cross norm $1/2$, but exactly
+\begin{align}
+ \Delta R_{\beta_2}&=(-\delta m+\delta^2\sigma^2/2)/D,\\
+ \Delta R_{\beta_3}&=(-\delta\sigma\varepsilon+\delta^2m^2/2)/D.
+\end{align}
+Their variances are zero and $\delta^2\sigma^2/D^2$, respectively. The first task improves deterministically for $\delta<2m/\sigma^2$; the second has equally likely signs for $\delta<2\sigma/m^2$, despite a positive second-order mean. This is an exact finite-projector example, not a new architecture-training theorem or typicality result.
+
+\paragraph{Scope and abstention.}
+All-prefix coverage allows a later useful interval after initial abstention. It does not establish a sign at earlier prefixes. Multiple source/task/rate choices need simultaneous error allocation or fresh calibration after selection. Unknown $T$ or estimated whitening requires additional confidence bounds; neither is supplied by finite OLS validation error. Without-replacement training needs control of its changing conditional batch law. Gaussian inputs or augmentations are unbounded, so observed calibration maxima cannot establish $M$ or bounded increments. A proved conditional moment-generating-function bound, or an analytic finite-horizon tail bound with a stopped/coupled bounded process and its failure probability, is required. Silently conditioning on future small batches can change their means and is invalid. The current task-projected empirical quantiles establish none of these strict stochastic windows.

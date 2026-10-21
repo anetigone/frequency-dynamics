@@ -1,0 +1,125 @@
+\section{Proofs and Constants for Task-Relevant Motion}
+\label{app:task-geometry}
+\subsection{Regression, mobility, and near-conservation}
+Centering absorbs the affine intercept. Since $\E uu^\top=I$, minimizing over a decoder $D_Y$ gives
+\begin{align}
+ \E\norm{Y-D_YAu}^2={}&\tr\operatorname{Cov}(Y)-\norm{C_Y}_F^2\\
+ &+\norm{D_YA-C_Y^\top}_F^2.\nonumber
+\end{align}
+Orthogonal projection onto $\row A$ proves Equation~\eqref{eq:general-task-risk}, including rank-deficient $A$. The differential formulas additionally require constant rank; the explicit bounds below use full row rank and a positive singular-value lower bound. Whitening the covariance support is exact, but estimating it from finite images is a separate statistical problem.
+
+For a full-row-rank $A$, differentiating $P_A=A^\dagger A$ gives Equation~\eqref{eq:projector-tangent}. The two summands are adjoint off-diagonal blocks, whence
+\begin{equation}
+ \norm{\dot P_A}_F=\sqrt2\norm{A^\dagger\dot A(I-P_A)}_F.
+\end{equation}
+The head Jacobian is $\delta W\mapsto\delta WB$, with Gram action $G\mapsto GB^\top B$. A channel Jacobian has Gram $T_c$, so $\dot B_{c:}=-\eta_h(W^\top G)_{c:}T_c$. These facts prove Equation~\eqref{eq:mobility-split}. Substituting $G=HWB+E$ and $T_c=\tau_cI+\mathcal E_c$, then multiplying by $Q_B$, eliminates the row-space term $\tau_c(U_0B)_{c:}$ and proves Equation~\eqref{eq:square-leakage}.
+
+For linear $V$, $\dot V=-\eta_VW^\top HWV-\eta_VW^\top E$ proves Equation~\eqref{eq:linear-leakage}. Combining its exterior part with the projector identity yields the stated integral near-conservation bound. When $E=0$, the continuous flow is invertible left multiplication on every finite bounded interval. In ordinary discrete gradient descent each step also left multiplies $V$; retaining its rank suffices for the same row space. Finite step size alone cannot produce drift under the exact isotropic gradient and rank preservation.
+
+Differentiating GUPA with respect to $ASA^\top$ gives $G=AD-KAS$. Since $ASA^\top\succeq0$, $\norm K_2\le2$. Splitting $S,D$ into scalar and residual terms proves Equation~\eqref{eq:gupa-residual}. This is conditional on a common clean/augmented moment support, as specified in the main text; it does not discard view-only coordinates.
+
+\subsection{The finite displacement bound}
+Put $P=P_0$, $Q=I-P$, and define
+\begin{equation}
+ F=P(I-P_1)P,\quad E=QP_1Q,\quad K_1=QP_1P.
+\end{equation}
+The first two matrices are PSD. Equal ranks imply
+\begin{equation}
+ \tr F=\tr E=d_{01}^2,\qquad \norm{K_1}_F\le d_{01}.
+\end{equation}
+For example, principal angles give $d_{01}^2=\sum_i\sin^2\theta_i$ and $\norm{K_1}_F^2=\sum_i\sin^2\theta_i\cos^2\theta_i$. Exact block expansion gives
+\begin{align}
+ R(P_1)-R(P)={}&\tr(FPTP)-\tr(EQTQ)\\
+ &-2\tr(K_1PTQ).\nonumber
+ \label{eq:exact-leakage}
+\end{align}
+Subtracting $\lambda_{\min}(T)I$ leaves the risk difference and task cross block unchanged. Each diagonal trace is then in $[0,\operatorname{osc}(T)d_{01}^2]$, so their difference has absolute value at most the upper endpoint. Cauchy--Schwarz bounds the cross term by $2a_0d_{01}$, proving Equation~\eqref{eq:finite-motion-bound}. If $QTP=0$ and the restricted row/normal spectra have separation $\delta$, the same equality gives the one-sided bound $\delta d_{01}^2$.
+
+Along a full-rank path, integrate the projector derivative to obtain
+\begin{align}
+ d_{01}&\le\int\norm{A^\dagger\dot A(I-P_A)}_Fdt\nonumber\\
+ &\le\frac J\sigma\int(\norm{\dot h}_F+\norm{\dot W}_F)dt.
+\end{align}
+This proves the finite update-budget bound. An invertible rescaling of representation coordinates leaves the risk fixed; a small singular value nevertheless makes a parameter-based sufficient bound more conservative. It does not itself prove information loss.
+
+\subsection{The complete two-block competition criterion}
+Let $U,N$ be orthonormal bases of the current row and normal spaces. Every projector tangent has the form
+\begin{equation}
+ D_g=UK_g^\top N^\top+NK_gU^\top.
+\end{equation}
+For $\beta=Ux+Ny$, $\beta^\top D_g\beta=2y^\top K_gx$. Thus absence of competition for every rank-one task is equivalent to
+\begin{equation}
+ (y^\top K_hx)(y^\top K_Wx)\ge0\quad\text{for all }x,y.
+\end{equation}
+For fixed $x$ with $K_hx\ne0$, this requires $K_Wx=\lambda(x)K_hx$ with $\lambda(x)\ge0$: two noncollinear linear functionals admit opposite signs. If $z\in\ker K_h$, apply the same argument to $x+tz$ for every real $t$. A whole line cannot stay on one nonnegative ray unless $K_Wz=0$. Hence $K_W=F_0K_h$ for a linear map $F_0$ on $\operatorname{im}K_h$. Every vector of that image is its eigenvector with a nonnegative eigenvalue. Linearity applied to two independent vectors and their sum makes that eigenvalue constant. Thus $K_W=\lambda K_h$, with $\lambda>0$ if both tangents are nonzero. The zero-block cases and the converse are immediate. Positive proportionality also excludes competition for every PSD multi-output $T$.
+
+Strict competition holds on an explicit task neighborhood. If a unit task $\beta_0$ has opposing contributions with minimum magnitude $m>0$ and $d=\max_g\norm{D_g}_2$, every unit task with $\norm{\beta-\beta_0}\le m/(4d)$ retains both signs with margin at least $m/2$, since
+\begin{equation}
+ |\beta^\top D_g\beta-\beta_0^\top D_g\beta_0|
+ \le2d\norm{\beta-\beta_0}.
+\end{equation}
+This states which task directions can compete at a fixed state, not the probability that a prescribed label task competes along random training.
+
+\subsection{Budget windows, finite steps, and explicit constants}
+For unit negative block directions, $\norm{d\theta/db}\le1$. On the ball in the main text, each $\langle\nabla R,u_g\rangle$ is $L_q$-Lipschitz. Consequently its deviation from its source value at budget $s$ is at most $L_qs$. Integrating a convex combination proves Equation~\eqref{eq:budget-envelope}. For a constant allocation $\alpha$, the sharper form is
+\begin{equation}
+ |R_\alpha(b)-R_0-b[\alpha q_h+(1-\alpha)q_W]|
+ \le\tfrac12L_qb^2.
+\end{equation}
+Subtracting two such bounds proves the comparison bound. Source slopes separated from zero by $m$ retain their signs with margin $m/2$ over the displayed half-window. For $q_h=-a<0<q_W=c$, both blocks can be active: allocations $\alpha_*/2$ and $(1+\alpha_*)/2$, where $\alpha_*=c/(a+c)$, have opposite slopes with margin at least $\min(a,c)/2$.
+
+For perturbed Euler updates $\theta_{j+1}=\theta_j+\delta_j(F_\alpha(\theta_j)+e_j)$, $\norm{e_j}\le\varepsilon$, and $b=\sum_j\delta_j$, assume $(1+\varepsilon)b\le\rho$. Taylor's theorem gives
+\begin{align}
+ |R_N-R_0-bq_\alpha|\le{}&\tfrac12L_q(1+\varepsilon)b^2
+ +G_R\varepsilon b\\
+ &+\tfrac12H_R(1+\varepsilon)^2\sum_j\delta_j^2.\nonumber
+\end{align}
+The three terms bound state drift, direction error, and step curvature. Using $\sum\delta_j^2\le\delta_{\max}b$ proves Equation~\eqref{eq:margin-budget} and its cumulative window. The perturbed process uses a nominal budget; its actual path length may differ. If raw block-gradient error is $\delta_g$ and its true norm is at least $\mu_g>0$, normalized-direction error is at most $2\delta_g/\mu_g$. Thus a single batch does not automatically establish a useful uniform $\varepsilon$.
+
+Here are fully explicit sufficient constants for the local square map. Let $k_\phi=\norm{U\Lambda^{1/2}}_2$, and on a radius-$\rho$ parameter ball take $H_f=\norm{h_0}_F+\rho$ and $W_f=\norm{W_0}_2+\rho$. Valid bounds are
+\begin{align}
+ J&=k_\phi\sqrt{H_f^4+4W_f^2H_f^2},\\
+ H_A&=2k_\phi(H_f+W_f),\qquad a=k_\phi W_fH_f^2.
+\end{align}
+They bound $DA$, $D^2A$, and $\norm A_F$, respectively. A sufficient rank bound is $\sigma=\sigma_{\min}(A_0)-J\rho>0$. One may use
+\begin{align}
+ G_R&=2\norm T_FJ/\sigma,\\
+ H_R&=6\norm T_FJ^2/\sigma^2+2\norm T_FH_A/\sigma.
+\end{align}
+For verification, $\nabla_AR=-2(A^\dagger)^\top T(I-P_A)$,
+\begin{equation}
+ DA^\dagger[Z]=-A^\dagger ZA^\dagger
+ +(I-P_A)Z^\top(AA^\top)^{-1},
+\end{equation}
+so $\norm{DA^\dagger[Z]}_2\le2\norm Z_F/\sigma^2$ and $\norm{DP_A[Z]}_2\le\norm Z_F/\sigma$. Differentiation and composition give the displayed risk bounds.
+
+For GUPA put $s_f=\norm S_2$, $d_f=\norm D_2$, $v_f=d_f+2s_f$. The inverse resolvent bound yields
+\begin{equation}
+ \norm{DG[Z]}_F\le(v_f+6s_f^2a^2)\norm Z_F.
+\end{equation}
+Hence $H_L=(v_f+6s_f^2a^2)J^2+av_fH_A$ bounds the parameter-loss Hessian. If $\mu_g=\norm{g_g(\theta_0)}-H_L\rho>0$ for both blocks, take $K=H_L/\min_g\mu_g$. These constants require source moments and a specified region, rather than future fitting; they can be very conservative. They have not been shown useful for natural images.
+
+For constant physical rates, ordinary gradient flow has budget allocation $\alpha(\theta)=\eta_h\norm{g_h}/(\eta_h\norm{g_h}+\eta_W\norm{g_W})$, which generally varies with state. Alternatively use clock $d\tau_{\rm rate}=(\eta_h+\eta_W)dt$ and raw negative block fields. If their norms are bounded by $M$ and Lipschitz constants by $K_f$, a corresponding Taylor remainder is $\tfrac12(H_RM+G_RK_f)M\tau_{\rm rate}^2$. A sum of rates is not a parameter path-length budget.
+
+\subsection{Origin-only interval windows on stored trajectories}
+\label{app:origin-windows}
+The executable \path{experiments/code/theory/task_motion_check.py} uses the existing fixed-point interval and Taylor-jet arithmetic, but integrates no new trajectory. At each rational source state it constructs a positive forward parameter box $D$. Strictly positive vector-field components exclude exit through lower faces. If $M_i$ bounds the upper component speed, $0.9\min_i(D_i^{\rm upper}-x_{0,i}^{\rm upper})/M_i$ is a valid conservative box lifetime. Fixed spectral powers are not dynamic coordinates. All rational denominators are bounded away from zero on the box.
+
+Taylor jets on the whole box enclose the Lie second derivative $D(DR\,F)F$ by $[q_-,q_+]$; this includes vector-field acceleration, not just the risk Hessian. If $[d_-,d_+]$ encloses the source derivative, then
+\begin{equation}
+ d_-t+\tfrac12q_-t^2\le R(t)-R_0
+ \le d_+t+\tfrac12q_+t^2.
+\end{equation}
+The chosen duration is the smaller of the box lifetime and half the ratio of the initial slope margin to the second-derivative bound. Integer endpoint checks verify the entire box inclusion and the half-margin inequality after rounding the candidate time downward. Four predetermined relative box widths, $1/100,1/20,1/10,1/5$, are compared using source constants only; the saved trajectory file is opened after all predictions are computed.
+
+The three scales $c=1/2,1,3/2$ use the primary certificate center from Theorem~\ref{thm:gap}, transformed by $W\mapsto c^{-2}W$, $B\mapsto c^2B$. They share $A_0=(0.02432,0.02432)$ and initial risk $1/2$. Their certified physical windows exceed $0.06629,0.09112,0.03072$, respectively. Each contains saved future records; all five records satisfy the predicted amplitude envelopes. These are correlated deterministic trajectory records, not independent statistical trials.
+
+On the same physical boxes the code encloses $0<v_-\le\dot\ell\le v_+$. A first hit of $\ell_*=1/50$ is guaranteed before the box expires when $\ell_*/v_-\le\tau$. Its time lies in $[\ell_*/v_+,\ell_*/v_-]$; substituting this interval into the preceding risk enclosure gives the common-energy predictions in Table~\ref{tab:origin-windows}. Direct differentiation in the energy clock is more conservative: its certified windows are only about $0.01289,0.01081,0.02101$, and only the last directly covers one saved energy increment. The physical-box hitting-time argument is what certifies the common section for all three.
+
+Mapping the scaled states back to the common original parameters gives rates $(c^{-2},c^4)$. After normalizing their sum to one, the three rate pairs are $(64/65,1/65)$, $(1/2,1/2)$, and $(64/793,729/793)$. At common elapsed time $1/10$, source-only risk-change enclosures are conservatively
+\begin{align}
+ c=1/2:&\quad[0.004267,0.004917],\nonumber\\
+ c=1:&\quad[-0.002753,-0.002162],\\
+ c=3/2:&\quad[-0.009328,-0.007343].\nonumber
+\end{align}
+This is a finite split with the same initialization and rate sum. It does not equalize actual parameter path length. The common-energy comparison independently excludes a pure speed explanation. All interval constants and prediction rules precede reading the saved future values; the analysis itself is retrospective, not a new preregistered experiment. The CSV curves are floating-point numerical evidence, not newly certified integrations. The source-only certificates, rather than those curves, establish the displayed forward intervals. No natural-image or stochastic-gradient window is certified here.

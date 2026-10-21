@@ -112,6 +112,8 @@ If it is nonpositive, this certificate supplies no sign guarantee. If it is posi
 \end{equation}
 with signed change at least $m_{\rm eff}b/2$. These are explicit sufficient bounds, not predictions that CIFAR errors are small. Appendix~\ref{app:task-geometry} supplies source-computable derivative constants and distinguishes this path budget from a fixed sum of learning rates. The generic Taylor bound is a connecting tool; its nonvacuity must be checked separately.
 
+\input{sections/task_stochastic}
+
 \subsection{A nonempty forward window on existing trajectories}
 \label{sec:origin-windows}
 We test nonvacuity on three stored matched-function trajectories of the original two-frequency model. All start with $A_0=(0.02432,0.02432)$; the $c=1$ source is exactly the center of Theorem~\ref{thm:gap}. Source-only interval arithmetic bounds the physical vector field, risk acceleration, and first hitting time of $\ell=0.02$. It then opens the saved trajectory CSV for validation, without integrating a new trajectory. Table~\ref{tab:origin-windows} gives conservative outward display bounds.

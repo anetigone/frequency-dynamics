@@ -105,10 +105,10 @@ From the repository root, run \texttt{python -B} on \path{experiments/code/theor
 
 \section{Derivation of the Direction Threshold}
 Let $P=B^\top B$, $F_B=\diag(4g_k\sum_cB_{ck}w_c^2)$, and $K_B=P+F_B$. For the matched-function initialization in Section~\ref{sec:theory},
-\begin{equation}
-P_0=\begin{pmatrix}101/25&12/25\\12/25&1/5\end{pmatrix},\quad
-F_0=\diag(91/125,326/125).
-\end{equation}
+\begin{align}
+P_0&=\begin{pmatrix}101/25&12/25\\12/25&1/5\end{pmatrix},\nonumber\\
+F_0&=\diag(91/125,326/125).
+\end{align}
 Scaling gives $K_B=c^4P_0+c^{-2}F_0$. With $a_*=19/50$ and $a_\perp=(-a_2,a_1)^\top$,
 \begin{align}
 N_0&=a_\perp^\top K_Ba=a_*^2c^{-2}(47-96c^6)/25,\\
@@ -124,10 +124,10 @@ The threshold representative and certificate center are related by uniform physi
 Equation~\eqref{eq:risk} follows by minimizing $\sigma^2+\norm{\beta-A^\top v}^2$ over $v$. An invertible feature coordinate transformation preserves the feasible prediction space. For a full-column-rank finite design and an invertible encoder, unregularized affine OLS is similarly unchanged in exact arithmetic. Fewer labels alone do not prove encoder deterioration; minimum-norm conventions in underdetermined settings, regularization, or numerical truncation require separate analysis.
 
 For the frozen-encoder experiment, center and invertibly column-standardize the training feature matrix to obtain $X$, and center training one-hot targets to obtain $Y$. Write the numerical-rank SVD as $X=USV^\top$. Orthogonal decomposition gives
-\begin{equation}
-\norm{Y-XM}_F^2=\norm{(I-UU^\top)Y}_F^2
-+\norm{U^\top Y-SV^\top M}_F^2.
-\end{equation}
+\begin{align}
+\norm{Y-XM}_F^2={}&\norm{(I-UU^\top)Y}_F^2\nonumber\\
+&+\norm{U^\top Y-SV^\top M}_F^2.
+\end{align}
 The best rank-$K$ approximation of $U^\top Y$ is its truncated SVD. Mapping back through $VS^{-1}$ gives a rank-$K$ linear feature projection and decoder; centering is absorbed in decoder bias. This globally minimizes training square error over rank-$K$ affine predictors, without using validation labels. It is not globally optimal for classification accuracy or for the CE training objective. The source implementation additionally refits an OLS decoder to the resulting projection, enabling an independent consistency check.
 
 \section{Experimental Scope and Reporting}

@@ -1,0 +1,54 @@
+{
+  "scope": "Closed-state identity and differentiation checks, no trajectories",
+  "states_checked": 81,
+  "maximum_absolute_discrepancies": {
+    "physical_gradient": 2.0816681711721685e-17,
+    "polar_field": 6.830473686658678e-18,
+    "channel_invariant": 8.673617379884035e-19,
+    "encoder_projector_formula": 5.551115123125783e-16,
+    "projection_projector_formula": 3.3306690738754696e-16,
+    "transverse_linearization": 0.0
+  },
+  "physical_gradient_checks": 162,
+  "noise_powers_checked": [
+    0.0,
+    0.1
+  ],
+  "coordinate_cube_constant_float_checks": {
+    "independent_coordinate_radius": 8e-06,
+    "initial_corner_checks": {
+      "initial_mean_angle_over_radius": 11.380711845900006,
+      "initial_spread_error_over_radius": 11.380889623685553,
+      "initial_imbalance_over_radius": 32.761423554899665,
+      "initial_encoder_projector_over_radius": 21.593382396690746,
+      "initial_projection_projector_over_radius": 30.53765297811919
+    },
+    "comparison_sections": [
+      {
+        "theta_fraction": 0.75,
+        "progress_bound": 0.203,
+        "imbalance_multiplier": 2.253322964899015,
+        "mean_angle_over_radius_bound": 17.167373543436717,
+        "projection_error_over_radius_bound": 98.64542704657588,
+        "rounded_projection_error_over_radius_bound": 99
+      },
+      {
+        "theta_fraction": 0.16666666666666666,
+        "progress_bound": 0.774,
+        "imbalance_multiplier": 22.1435885808076,
+        "mean_angle_over_radius_bound": 99.17371603781244,
+        "projection_error_over_radius_bound": 871.0643185686948,
+        "rounded_projection_error_over_radius_bound": 872
+      }
+    ],
+    "common_improvement_lower_bound": 0.0019585421007594452,
+    "common_rebound_lower_bound": 0.014241886558302701,
+    "scope": "Corner checks corroborate formulas; they do not prove interior cube bounds"
+  },
+  "all_checks_passed": true,
+  "limitations": [
+    "Finite grids and floating-point calculations check implementation, not the continuous-neighborhood proof",
+    "This check establishes no random-initialization probability or typicality",
+    "Comparison states are first fixed angle sections, not equal physical times"
+  ]
+}

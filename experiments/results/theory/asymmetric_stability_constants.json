@@ -1,0 +1,42 @@
+{
+  "scope": "Exact rational constant checks; no integration, sampling, or training",
+  "absolute_coordinate_radius": 8e-06,
+  "fixed_augmentation_power": 0.1,
+  "gupa_gain_lower": 0.7340497359330658,
+  "reference_section_progress_enclosures": [
+    [
+      0.20192116134221016,
+      0.20192116134221016
+    ],
+    [
+      0.7725906218010854,
+      0.7725906218010854
+    ]
+  ],
+  "amplification_enclosures": [
+    [
+      2.253322964899015,
+      2.253322964899015
+    ],
+    [
+      22.143588580807602,
+      22.143588580807602
+    ]
+  ],
+  "projector_error_coefficients_upper": [
+    74.00356274847714,
+    98.71234999496244,
+    871.7219758414301
+  ],
+  "risk_change_error_upper": [
+    0.001392,
+    0.007576
+  ],
+  "retained_risk_gap_lower": [
+    0.001958,
+    0.014234
+  ],
+  "energy_upper": 0.1508392033160904,
+  "physical_time_upper": 890.0488602939125,
+  "all_checks_passed": true
+}

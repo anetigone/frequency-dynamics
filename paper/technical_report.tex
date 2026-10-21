@@ -1,0 +1,42 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[margin=0.76in,columnsep=0.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype,amsmath,amssymb,amsthm,mathrsfs,booktabs,graphicx}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xurl}
+\usepackage[colorlinks=true,allcolors=blue!45!black]{hyperref}
+\usepackage{xcolor}
+\usepackage{balance}
+\setlength{\emergencystretch}{1.5em}
+\newcommand{\R}{\mathbb R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\risk}{\mathcal R}
+\newcommand{\row}{\operatorname{row}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\title{Task-Relevant Subspace Motion and Risk Rebound\\in Quadratic Representations}
+\author{Working manuscript}
+\date{October 21, 2026}
+\begin{document}
+\maketitle
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/setup}
+\input{sections/task_geometry}
+\input{sections/theory}
+\input{sections/textures}
+\input{sections/cifar}
+\input{sections/discussion}
+\bibliographystyle{plainnat}
+\bibliography{references}
+\clearpage
+\appendix
+\input{sections/appendix}
+\input{sections/task_geometry_proofs}
+\input{sections/task_stochastic_proofs}
+\input{sections/natural_details}
+\end{document}

@@ -98,4 +98,4 @@ projection 的两种 remainder 指标在三个种子中均改善；encoder 的�
 
 这比立即扩配比或再删除图像对比度更针对稿件的 encoder/projection 区分。若随后延长训练，应固定 r=1、保留三开发种子并报告新预算，检验当前小信号是否扩大，而不是追求任意单个较好终点。
 
-来源：[保存记录诊断](../experiments/results/empirical/dtd_dc_free/diagnosis/diagnostic.json)、[主方向诊断](../experiments/results/empirical/dtd_dc_free/dominant_direction/diagnostic.json)。
+来源：[保存记录诊断](../../experiments/results/empirical/dtd_dc_free/diagnosis/diagnostic.json)、[主方向诊断](../../experiments/results/empirical/dtd_dc_free/dominant_direction/diagnostic.json)。

@@ -72,3 +72,36 @@ Longer midpoint windows raise sign agreement to $69.8\%$ and $71.0\%$, but ampli
 \caption{Square-model one-update direction predictions at empirical checkpoints. Markers average ten seed-level summaries; thin points show seeds. The distinction between individual stochastic updates and replicate means disappears late.}
 \label{fig:intervention}
 \end{figure}
+
+\subsection{Frozen-source predictions on independent future streams}
+\label{sec:texture-motion-prediction}
+A separate protocol calibrates the actual finite-batch field at saved checkpoints and freezes all predictions before drawing future streams. Development uses seeds 0--1 at updates 500 and 2,000 (12 states); validation uses seeds 2--11 at updates 500, 2,000, and 3,500 (90 states). Each includes square, linear, and frozen-front models. These are held out from tuning this protocol, not previously unseen training runs in every earlier analysis. All planned states completed without rank failures. At each source, 16 fit batches, 32 error batches, and four eight-step probe streams precede eight independent validation streams. The three ratios share paired randomness. The ten predefined tasks and source-constructed competitors are reported separately.
+
+The prediction is the frozen source task slope times the horizon. Inflated calibration quantiles give empirical intervals, not uniform stochastic certificates. The usable horizon is at most eight by the declared probe support; zero reported coverage at 16--64 steps is an abstention policy. Table~\ref{tab:frozen-source} retains all square-model band-task slots, including those without a directional window. A slot is one seed, ratio, and task, not an independent repetition.
+
+\begin{table}[t]
+\centering\small
+\caption{Square projection predictions at eight steps, eight predefined bands and three ratios per seed. All 240 slots per checkpoint are included. Windows require the predicted direction at every prefix; validation checks all eight sampled streams. MAE is relative to predicting zero change.}
+\label{tab:frozen-source}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{rrrrr}
+\toprule
+Step&Motion cosine&MAE/zero&\multicolumn{2}{c}{Eight-step windows}\\
+&&&Predicted&Validated\\\midrule
+500&0.979&0.149&91/240&90/240\\
+2,000&0.125&1.211&0/240&0/240\\
+3,500&0.112&1.230&0/240&0/240\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At update 500, projection MAE improves for all ten seeds. Encoder windows are much scarcer: nine of all 720 band-task slots admit eight-step predictions, all at update 500, and all nine pass the sampled-prefix check. The constructed-task slots yield six encoder and eleven projection eight-step windows out of 90 each; constructibility alone does not ensure persistence. Frozen-front projection forecasts also improve over zero-change prediction, so forecast success does not by itself isolate the square-encoder mechanism. These observations support useful early finite-window geometry and retain its limited coverage.
+
+To distinguish prediction bias from future-stream variation, for every source/task/ratio let $p$ be the frozen prediction and $y_i$ its eight outcomes. We retain the exact decomposition
+\begin{equation}
+ \tfrac18\sum_i(y_i-p)^2=(\bar y-p)^2
+                  +\tfrac18\sum_i(y_i-\bar y)^2.
+\end{equation}
+The sample-corrected squared conditional-mean error is $(\bar y-p)^2-s_y^2/8$, with negative estimates retained. At eight steps its square-projection contribution divided by MSE is $35.6\%$, $31.8\%$, and $52.0\%$ across the three stages; encoder values are $31.4\%$, $30.6\%$, and $39.2\%$. These are noisy descriptive estimates from eight streams. They do not identify calibration error, state drift, or finite-batch objective bias separately.
+
+The stored intervals already use task-projected errors. Their term named noise occupies $92$--$98\%$ of projection half-width at eight steps, whereas the observed between-stream population-variance term occupies $42$--$61\%$ of MSE. These have different units and estimands. Neither ratio proves that stochastic noise causes late failure. The conditional theory in Appendix~\ref{app:task-stochastic} therefore separates source estimation, predictable drift, step curvature, and centered task fluctuation; its strict confidence conditions have not been instantiated by these empirical quantiles.

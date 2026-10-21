@@ -1,0 +1,97 @@
+\paragraph{Independent perturbations away from symmetry.}
+The covariance range above preserves an invariant initialization family. The next result relaxes the initialization itself at one fixed, nondegenerate configuration; it does not simultaneously perturb data or augmentation.
+
+\begin{theorem}[A parameter neighborhood with encoder rebound]
+\label{thm:asymmetric-rebound}
+Fix $\Sigma_x=I_2$, independent view noises $\xi_j\sim N(0,I_2/10)$, $\eta_h=\eta_W=1$, $\epsilon=1/100$, and $w_0=1/10$. In the $e_+,e_-$ coordinates put
+\begin{equation}
+ \bar Q=\begin{pmatrix}1/10&1/\sqrt{200}\\1/10&-1/\sqrt{200}\end{pmatrix},
+ \qquad \bar W=(1/10,1/10).
+\end{equation}
+Allow all six initialization coordinates to vary independently:
+\begin{align}
+ \max_{c,j}|q_{cj}(0)-\bar Q_{cj}|&\le8\,10^{-6},\nonumber\\
+ \max_c|w_c(0)-1/10|&\le8\,10^{-6}.
+ \label{eq:asymmetric-cube}
+\end{align}
+Let $\alpha_c$ be the continuous filter angle, $d=(\alpha_1-\alpha_2)/2$, and let $t_j$ be the first hit of the fixed section
+\begin{equation}
+ d_j=\arctan\sqrt{\tan\theta_j},\qquad
+ \theta_1=3\theta_0/4,\quad \theta_2=\theta_0/6.
+\end{equation}
+For every task in Theorem~\ref{thm:bottleneck-family}, both encoder and projection risks satisfy
+\begin{align}
+ R(t_1)&\le R(0)-0.001675,\\
+ R(t_2)&\ge R(0)+0.010905.
+\end{align}
+The two sections are reached with $0<t_1<t_2<900$. Until $t_2$, the ranks remain two and one and the pretraining loss strictly decreases.
+\end{theorem}
+
+\paragraph{Geometry outside the invariant family.}
+The sections are common to the entire box; physical hitting times may differ. The proof controls filter-angle asymmetry and head imbalance, rather than demanding that all growing parameters remain close. Write $v_c=\norm{q_c}^2$, $m=(v_1+v_2)/2$, $u=(w_1+w_2)/2$, $a=(\alpha_1+\alpha_2)/2$, and
+\begin{equation}
+ g=\frac{v_1-v_2}{v_1+v_2},\quad z_w=\frac{w_1-w_2}{w_1+w_2},\quad
+ \sigma=\tfrac12\log\frac{\tan(2d(0))}{\tan(2d)}.
+\end{equation}
+Put $D=2d$. The exact angular equations in an increasing clock $s$ are
+\begin{align}
+ \frac{dd}{ds}&=-u^2m(1-z_w^2)\sin D\cos D,\nonumber\\
+ \frac{da}{ds}&=u^2m(1-z_w^2)g\sin D\cos D.
+\end{align}
+Thus $da/dd=-g$: length imbalance directly rotates the filter midline. Head imbalance also matters, through the evolution of $g$, progress speed, and projection direction. It is not merely a head-selection perturbation.
+
+The encoder space at fixed $d$ is a rotation by $a$ of the symmetric space, regardless of the two positive filter lengths. Its projector therefore obeys
+\begin{equation}
+ \norm{P_{\rm enc}(a,d)-P_{\rm enc}(0,d)}_2\le2|a|.
+\end{equation}
+For the projection an additional mixing coefficient appears:
+\begin{equation}
+ \delta_m=\frac{g+z_w}{1+gz_w},\qquad
+ \norm{P_{\rm proj}-\bar P_{\rm proj}}_2\le\sqrt2|a|+|\delta_m|.
+\end{equation}
+Here the bar denotes the symmetric reference at the same $d$. These bounds target the task spaces directly. Large common growth of the filter lengths or heads need not produce equally large risk error.
+
+The encoder/head distinction remains exact away from symmetry. Let $c_d=\cos d$, $s_d=\sin d$, $\ell_d=\sqrt{c_d^4+s_d^4}$, and let $R_a$ denote input rotation by $a$. The matrices
+\begin{align}
+ D_a&=R_a\diag(c_d^2,s_d^2)R_a^\top/\ell_d,\nonumber\\
+ X_a&=R_aE_\times R_a^\top,\nonumber\\
+ N_a&=R_a\diag(s_d^2,-c_d^2)R_a^\top/\ell_d
+\end{align}
+form an orthonormal basis of the three-dimensional moment space. For a unit quadratic task, write $b_D=\langle\beta,D_a\rangle$, $b_X=\langle\beta,X_a\rangle$, and $b_N=\langle\beta,N_a\rangle$. With $\chi=\sqrt2\delta_m c_ds_d/\ell_d$, direct orthogonal projection gives
+\begin{align}
+ R_{\rm enc}&=b_N^2,\nonumber\\
+ R_{\rm proj}&=b_N^2+\frac{(b_X-\chi b_D)^2}{1+\chi^2}.
+ \label{eq:asymmetric-risk-split}
+\end{align}
+The first term is the unreadable encoder direction; the nonnegative second term is additional head selection. At symmetry $a=\chi=0$, it reduces to the fixed $z^2$ gap in Equation~\eqref{eq:analytic-risks}. Under perturbation that gap can change, so the stability proof bounds both task projectors instead of assuming the symmetric gap remains fixed.
+
+\paragraph{Progress and the retained margin.}
+The progress clock removes the factor $u^2m(1-z_w^2)$, leaving $dd/d\sigma=-\sin D\cos D$ and $da/d\sigma=g\sin D\cos D$. The exact nonlinear imbalance equations imply
+\begin{align}
+ D^+(|g|+|z_w|)&\le4.002(|g|+|z_w|),\nonumber\\
+ \left|\frac{da}{d\sigma}\right|
+ &\le\tfrac12(|g|+|z_w|).
+\end{align}
+Here $D^+$ denotes the upper right derivative with respect to $\sigma$. With $e=8\,10^{-6}$ and $N=|g|+|z_w|$, the source box gives $N(0)<33e$ and $|a(0)|<12e$. Hence
+\begin{align}
+ N(\sigma)&\le33e\exp(4.002\sigma),\nonumber\\
+ |a(\sigma)|&\le12e+\frac{33e}{8.004}\big(e^{4.002\sigma}-1\big).
+\end{align}
+The first and second sections satisfy $\sigma<0.203$ and $\sigma<0.774$. This bounds transverse amplification in a short directional clock, although physical arrival may take hundreds of time units.
+
+Table~\ref{tab:asymmetric-budget} displays the resulting operator-norm projector errors relative to the symmetric reference. Risk differences must include the source error as well as the endpoint error: the comparison is against each perturbed trajectory's own initialization. For both representations, the risk-increment errors are at most $174e$ and $947e$. Subtracting these from the symmetric gaps leaves improvement $>0.001958$ and rebound $>0.014234$, implying the more conservative theorem constants.
+\begin{table}[t]
+\centering\small
+\caption{Uniform projector-error bounds divided by the initialization radius $e$. Source and endpoint errors both enter the risk-increment budget. The columns use common geometric sections, not common physical times.}
+\label{tab:asymmetric-budget}
+\begin{tabular}{lrrr}
+\toprule
+Representation&Source&First section&Second section\\\midrule
+Encoder&48&34.4&198.4\\
+Projection&75&99&872\\\bottomrule
+\end{tabular}
+\end{table}
+
+The argument also closes continuation. Negative conserved quantities $v_c-2w_c^2$ control relative growth; bounded imbalances keep the heads positive and the two filters independent. An energy barrier $V<0.151$ retains the descending objective regime, and $d\sigma/dt>0.000869$ proves arrival before 900. These checks exclude exits through rank loss, gain loss, or parameter blow-up before either section (Appendix~\ref{app:asymmetric-stability}).
+
+The box is small: its absolute radius is $8\,10^{-6}$, about $0.008$--$0.011\%$ of the nonzero base coordinates. It establishes a parameter region outside the invariant family, not typicality under random initialization or arbitrary distributional robustness.

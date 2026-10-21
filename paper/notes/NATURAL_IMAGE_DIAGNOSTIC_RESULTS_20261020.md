@@ -105,4 +105,4 @@ rank-8 训练 MSE 明显优于原 head，但三个种子的验证 MSE均更差�
 
 本轮证据已经支持“方差增长与类别风险改善脱钩”的经验描述；还不支持确认具体 nuisance、宣称信息秩塌缩、或提出可泛化的最佳层间学习率。
 
-来源：[DTD 诊断输出](../experiments/results/empirical/dtd_pilot/diagnosis/diagnostic.json)、[CIFAR 分叉诊断输出](../experiments/results/cifar/checkpoint_branches_development/diagnosis/diagnostic.json)。
+来源：[DTD 诊断输出](../../experiments/results/empirical/dtd_pilot/diagnosis/diagnostic.json)、[CIFAR 分叉诊断输出](../../experiments/results/cifar/checkpoint_branches_development/diagnosis/diagnostic.json)。

@@ -27,7 +27,7 @@ Let $0<\epsilon\le1/100$, $0<w_0\le1/10$, $\eta_h>0$, and $0\le r=\eta_W/\eta_h\
 \begin{equation}
  2\theta_0/3\le\psi\le5\theta_0/6,\qquad |z|\le1/2,
 \end{equation}
-the same two comparison states $t_1<t_2$ satisfy, for both optimal encoder and projection risks,
+the first hits $t_1<t_2$ of the two angle sections defined below are common to all these tasks and satisfy, for both optimal encoder and projection risks,
 \begin{align}
  R(t_1)&\le R(0)-\Delta_1,\\
  R(t_2)&\ge R(0)+\Delta_2,
@@ -56,6 +56,18 @@ The encoder retains $E_\times$ and the diagonal direction $\lambda_+E_++\lambda_
 \end{align}
 The two common states are $\theta_1=3\theta_0/4$ and $\theta_2=\theta_0/6$. Motion first approaches the task direction and then continues past it; the encoder itself loses readability. The fixed projection gap $z^2$ is a separate selection effect.
 
+\paragraph{Why the gaps are uniform.}
+The task cone is fixed before training. Its directions lie strictly between the two comparison angles, so no task-dependent stopping rule is needed. Subtracting the source risks in Equation~\eqref{eq:analytic-risks} gives
+\begin{align}
+ R(0)-R(t_1)={}&(1-z^2)\sin(\theta_0/4)\nonumber\\
+ &\quad\cdot\sin(7\theta_0/4-2\psi),\\
+ R(t_2)-R(0)={}&(1-z^2)\sin(5\theta_0/6)\nonumber\\
+ &\quad\cdot\sin(2\psi-7\theta_0/6).
+\end{align}
+Both sine factors have a positive lower bound on the entire specified interval of $\psi$, and $1-z^2\ge3/4$. This yields fixed gaps for a family of tasks, rather than a separate favorable direction chosen at each state. The off-diagonal coordinate is fully readable in the encoder throughout; the failure occurs in its changing diagonal direction.
+
+The increasing clock is justified by an energy barrier, not assumed from the radial form. Up to $\theta_2$, the explicit solution bounds $V<1/5$, keeping $\Phi'(V)<0$ throughout the full parameter range in the theorem. Thus all modal energies increase while the smaller-to-larger ratio decreases. Continued pretraining rewards energy growth after the trajectory has passed the task directions. This reconciles strict descent of the pretraining loss with worsening optimal encoder risk. The barrier also bounds the clock speed away from zero and proves the stated finite physical arrival time; it does not require a claim about the eventual training limit.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/analytic_bottleneck_family.pdf}
@@ -63,4 +75,6 @@ The two common states are $\theta_1=3\theta_0/4$ and $\theta_2=\theta_0/6$. Moti
 \label{fig:analytic-family}
 \end{figure}
 
-The task family contains an open cone and covers a specified $\pm5\%$ covariance range. This anisotropy range keeps covariance axes aligned with filter sums/differences and uses covariance-relative augmentation and balanced whitened initialization. Physical initial filters change with the covariance to keep that whitened balance. It is not robustness to arbitrary symmetry-breaking initialization or augmentation perturbations, nor a random-initialization probability result. The family also supplies an explicit exclusion case for rate competition: unequal rates alone do not force different directional paths. Appendix~\ref{app:task-geometry} proves the formulas, energy barrier, and reachability.
+The task family contains an open cone and covers a specified $\pm5\%$ covariance range. This anisotropy range keeps covariance axes aligned with filter sums/differences and uses covariance-relative augmentation and balanced whitened initialization. Physical initial filters change with the covariance to keep that whitened balance. The covariance range does not jointly relax those initialization conditions; the next theorem treats initialization perturbations separately with data fixed. Neither result gives a random-initialization probability. The symmetric family also supplies an exclusion case for rate competition: unequal rates alone do not force different ordered subspace paths. This does not equate risk at common energy or update budget, since the energy along that path depends on the rates. Section~\ref{supp:core-proofs} proves the formulas, energy barrier, and reachability.
+
+\input{sections/asymmetric_stability}

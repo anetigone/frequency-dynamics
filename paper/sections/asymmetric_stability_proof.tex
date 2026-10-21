@@ -1,0 +1,186 @@
+\subsection{Proof of Theorem~\ref{thm:asymmetric-rebound}}
+\label{app:asymmetric-stability}
+Put $e=1/125000$. Input whitening is the identity, so $q_c=h_c$ and the proof concerns the actual Euclidean parameters. All angles are continuously unwrapped from the specified initialization. We prove the stronger uniform improvement and rebound gaps $0.001958$ and $0.014234$.
+
+\paragraph{Exact dynamics outside the symmetric manifold.}
+Write
+\begin{align}
+ q_c&=\sqrt{v_c}(\cos\alpha_c,\sin\alpha_c),\\
+ a&=(\alpha_1+\alpha_2)/2,\quad D=2d=\alpha_1-\alpha_2,\\
+ m&=(v_1+v_2)/2,\qquad u=(w_1+w_2)/2,
+\end{align}
+and use the imbalances $g,z_w$ defined in the main text. Define
+\begin{align}
+ F&=\sum_{c=1}^2w_cq_cq_c^\top,\qquad V=2\norm F_F^2,\\
+ \kappa&=2\Phi'(V)=-2\Gamma_{s_v}(s_vV),\qquad s_v=121/100.
+\end{align}
+Differentiation in physical time gives
+\begin{equation}
+ \dot q_c=-4\kappa w_cFq_c,\qquad
+ \dot w_c=-2\kappa q_c^\top Fq_c.
+\end{equation}
+Until the first possible loss of positive gain, the clock $ds/dt=-4\kappa>0$ satisfies
+\begin{align}
+ q_c'&=w_cFq_c,\qquad w_c'=\tfrac12q_c^\top Fq_c,\\
+ I_c&=v_c-2w_c^2\ \text{is constant}.
+ \label{eq:asym-invariants}
+\end{align}
+Angular differentiation yields
+\begin{align}
+ d'&=-u^2m(1-z_w^2)\sin D\cos D,\\
+ a'&=u^2m(1-z_w^2)g\sin D\cos D.
+\end{align}
+For $0<D<\pi/2$, use the progress variable
+\begin{equation}
+ \sigma=\tfrac12\log\frac{\tan D(0)}{\tan D},\qquad
+ \frac{d\sigma}{ds}=u^2m(1-z_w^2).
+ \label{eq:asym-progress}
+\end{equation}
+Its exact equations are
+\begin{equation}
+ \frac{dd}{d\sigma}=-\sin D\cos D,\qquad
+ \frac{da}{d\sigma}=g\sin D\cos D.
+\end{equation}
+\begin{align}
+ \frac{dg}{d\sigma}
+ ={}&\frac{2(1-g^2)}{1-z_w^2}
+ \big[2z_w+g\sin^2D\nonumber\\
+ &\hspace{55pt}{}+gz_w^2(1+\cos^2D)\big],
+ \label{eq:asym-g}\\
+ \frac{dz_w}{d\sigma}
+ &=\frac m{u^2}\left[g-z_w\frac{(1-g^2)\cos^2D}{1-z_w^2}\right].
+ \label{eq:asym-z}
+\end{align}
+In particular the average filter angle can move; the argument does not impose reflection symmetry or equal heads.
+
+\paragraph{Source constants and transverse growth.}
+Let $v_*=3/200$, $L=1/10+1/\sqrt{200}<0.171$, $d_0=\arctan(1/\sqrt2)$, and $D_0=2d_0$. Independent coordinate perturbations give
+\begin{equation}
+ v_*-2Le+2e^2\le v_c(0)\le v_*+2Le+2e^2.
+\end{equation}
+Consequently,
+\begin{align}
+ |g(0)|&<23e,& |z_w(0)|&\le10e,\\
+ |a(0)|&<12e,& |d(0)-d_0|&<12e,
+ \label{eq:asym-source}\\
+ -0.005006&<I_c<-0.004994<0.\nonumber
+\end{align}
+For the angular bounds use
+$\arcsin(\sqrt2e/\sqrt{0.015})<12e$; for the invariant bounds use
+$|I_c+0.005|\le(2L+0.4)e$.
+
+At the two fixed geometric sections, the unperturbed progress values are
+\begin{equation}
+ \bar\sigma_j=\tfrac12\log\left[
+ \frac{\sqrt2(1-\tan\theta_j)}{\sqrt{\tan\theta_j}}\right].
+\end{equation}
+They are approximately $0.2019211613$ and $0.7725906218$. On the initial angular interval,
+$|d(\tfrac12\log\tan D)/dD|=1/\sin2D<8/5$:
+indeed $\sin(2D_0)=4\sqrt2/9$ and its possible decrease is at most $48e$.
+Since $|D(0)-D_0|<24e$, the actual section progress values obey
+\begin{equation}
+ \sigma_1<0.203,\qquad \sigma_2<0.774.
+ \label{eq:asym-section-progress}
+\end{equation}
+
+Bootstrap $|g|,|z_w|\le0.01$. Averaging the invariants gives
+\begin{equation}
+ \bar I=m-2u^2(1+z_w^2)<0,\qquad m/u^2<2(1+z_w^2).
+\end{equation}
+For $N=|g|+|z_w|$, retain the negative damping term in Equation~\eqref{eq:asym-z}. Its upper right derivative and Equation~\eqref{eq:asym-g} imply
+\begin{align}
+ D^+|z_w|&\le2(1+10^{-4})|g|,\\
+ D^+|g|&\le\frac{2(1+2\,10^{-4})}{1-10^{-4}}|g|
+              +\frac4{1-10^{-4}}|z_w|.
+\end{align}
+Thus $D^+N\le4.002N$ and $N(\sigma)\le33e\exp(4.002\sigma)$. Put
+\begin{align}
+ E_1&=e^{4.002(0.203)}<2.254,\\
+ E_2&=e^{4.002(0.774)}<22.144.
+\end{align}
+Then $N<33eE_2<0.005847<0.01$, closing this bootstrap. Moreover, $|da/d\sigma|\le N/2$ yields
+\begin{equation}
+ |a(\sigma)|\le12e+\frac{33e}{8.004}
+                      \big(e^{4.002\sigma}-1\big).
+ \label{eq:asym-rotation-bound}
+\end{equation}
+At the first and second sections, respectively,
+\begin{equation}
+ (N/e,|a|/e)<(74.382,17.2),\quad(730.752,99.2).
+ \label{eq:asym-end-bounds}
+\end{equation}
+The growth factor is bounded in the progress clock, rather than by an exponential in physical time.
+
+\paragraph{Projector bounds and retained task gaps.}
+Let $R_a$ be input-space rotation by $a$. At fixed $d$, the encoder row space is the conjugate by $R_a$ of the span of $\diag(\cos^2d,\sin^2d)$ and the off-diagonal symmetric matrix. Its normal is the normalized conjugate of $\diag(\sin^2d,-\cos^2d)$. The rotation generator has norm at most two, so
+\begin{equation}
+ \norm{P_{\rm enc}(a,d)-P_{\rm enc}(0,d)}_2\le2|a|.
+ \label{eq:asym-encoder-projector}
+\end{equation}
+Up to a positive scalar, the projection matrix is
+\begin{gather}
+ R_a\begin{pmatrix}
+ \cos^2d&\delta_m\sin d\cos d\\
+ \delta_m\sin d\cos d&\sin^2d
+ \end{pmatrix}R_a^\top,\\
+ \delta_m=\frac{g+z_w}{1+gz_w}.
+\end{gather}
+The off-diagonal part is Frobenius orthogonal to the diagonal part and has relative norm at most $|\delta_m|$. Rotating the normalized diagonal part has speed at most $\sqrt2$. Triangle inequality for the one-dimensional projectors gives
+\begin{equation}
+ \norm{P_{\rm proj}(a,d,\delta_m)-P_{\rm proj}(0,d,0)}_2
+ \le\sqrt2|a|+|\delta_m|,
+\end{equation}
+where $|\delta_m|\le N/(1-10^{-4})<1.001N$.
+
+Bars below denote the symmetric reference at the same geometric section. At initialization one must also include the half-angle perturbation: $\theta(d)=\arctan(\tan^2d)$ has derivative at most two on $0<d<\pi/4$. Therefore
+\begin{align}
+ \norm{P_{\rm enc}(0)-\bar P_{\rm enc}(0)}_2&<48e,\\
+ \norm{P_{\rm proj}(0)-\bar P_{\rm proj}(0)}_2&<75e.
+\end{align}
+At the sections $d=d_j$ exactly. Equations~\eqref{eq:asym-end-bounds}--\eqref{eq:asym-encoder-projector} give the following source-fixed bounds:
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Projector error divided by $e$&$t_1$&$t_2$\\\midrule
+Encoder&$34.4$&$198.4$\\
+Projection&$99$&$872$\\\bottomrule
+\end{tabular}
+\end{center}
+For every unit task, $|R(P)-R(\bar P)|\le\norm{P-\bar P}_2$. Including the respective source errors thus changes either risk \emph{increment} by at most $174e$ at $t_1$ and $947e$ at $t_2$. The symmetric task-cone gaps exceed $0.00335$ and $0.02181$, so the perturbed gaps exceed
+\begin{align}
+ 0.00335-174e&=0.001958,\\
+ 0.02181-947e&=0.014234.
+\end{align}
+These imply the stated half-gap bounds uniformly for the entire task family.
+
+\paragraph{Continuation, ranks, and finite physical time.}
+Positive head entries and filter norms increase under Equation~\eqref{eq:asym-invariants}. Direct differentiation also gives
+\begin{align}
+ \frac{d\log m}{d\sigma}
+ ={}&\frac{2[(1+z_w^2)(1+g^2)+4gz_w]}{1-z_w^2}\\
+ &+2(1-g^2)\cos^2D<4.002.\nonumber
+\end{align}
+Consequently, before the second section,
+\begin{align}
+ m&\le(0.015+0.342e+2e^2)E_2<0.333,\\
+ u^2&=\frac{m-\bar I}{2(1+z_w^2)}<0.17.
+\end{align}
+All six parameters remain bounded, their positive norms stay bounded away from zero, and the imbalance bootstrap cannot fail. The explicit relation $\tan D=\tan D(0)e^{-2\sigma}$ then closes a first-exit continuation argument to both sections. In particular the argument has not assumed physical reachability in deriving its projector bounds.
+
+For $0<D<\pi/2$, the two filters and their outer products are linearly independent; the encoder has rank two. Positive heads make $F$ nonzero, so the projection has rank one. The PSD matrix $F$ has trace $2um(1+gz_w)$, hence
+\begin{equation}
+ V\le8u^2m^2(1+gz_w)^2<0.151<0.16.
+\end{equation}
+The monotonicity of $\gamma(Q)=(Q+2)/(2(1+Q)^2)$ implies
+\begin{equation}
+ \Gamma_{121/100}((121/100)V)>29/40.
+\end{equation}
+This excludes loss of positive gain in the continuation argument and gives $-4\kappa>5.8$. Using the increasing $u,m$ and their source lower bounds,
+\begin{align}
+ \frac{d\sigma}{dt}
+ &>5.8(0.1-e)^2(0.015-0.342e+2e^2)(1-10^{-4})\\
+ &>0.000869.\nonumber
+\end{align}
+Thus $t_2<0.774/0.000869<900$. Every head gradient $2\kappa q_c^\top Fq_c$ is nonzero, so Euclidean gradient flow strictly decreases the loss throughout.
+
+The directly executable \path{experiments/code/theory/asymmetric_stability_constants.py} verifies the transcendental comparisons and finite constants using exact rational interval endpoints, outward rounding, and Taylor remainder bounds. It integrates no trajectory and uses floating point only for display. The separate numerical \path{experiments/code/theory/asymmetric_geometry_check.py} checks the physical gradients, angular equations, and projector formulas; these numerical checks do not replace the proof. This result fixes the distribution, augmentation, and rates and does not establish rate-induced path bifurcation outside the symmetric manifold.

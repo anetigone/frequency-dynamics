@@ -6,7 +6,7 @@
 
 | 阶段 | 代码 | 结果与图表 | 协议 / 解释 |
 |---|---|---|---|
-| 理论认证与二维机制 | [code/theory](code/theory/) | [results/theory](results/theory/README.md) | [主稿附录 A](../THEORY_DRAFT.md) |
+| 理论认证与二维机制 | [code/theory](code/theory/) | [results/theory](results/theory/README.md) | [主稿附录 A](../paper/notes/THEORY_DRAFT.md) |
 | 图像恒等式与纹理 pilot | [code/pilot](code/pilot/) | [results/pilot](results/pilot/README.md) | [图像协议](docs/IMAGE_EXPERIMENTS.md)、[历史试跑记录](docs/PILOT_FINDINGS.md) |
 | 总体子空间机制与 K=2 / 局部核 | [code/population](code/population/) | [results/population](results/population/README.md) | [机制确认协议](docs/SUBSPACE_MECHANISM.md) |
 | 完整经验 SGD、局部复验与干预 | [code/empirical](code/empirical/) | [results/empirical](results/empirical/README.md) | [完整经验协议](docs/FULL_EMPIRICAL_PROTOCOL.md) |

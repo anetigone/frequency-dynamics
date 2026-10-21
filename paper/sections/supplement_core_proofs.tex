@@ -1,0 +1,67 @@
+\section{Proofs of the Encoder Rebound Theorems}
+\label{supp:core-proofs}
+The theorem statements and task family are in the main paper. For reference, write $P_X=X^\dagger X$ for a row-space projector and
+\begin{equation}
+ \gamma(Q)=\frac{Q+2}{2(1+Q)^2},\qquad
+ \Gamma_s(Q)=s\gamma(Q)-(s-1).
+\end{equation}
+The first subsection makes the two-filter exterior motion explicit; the next two prove the main paper's symmetric family and its independently perturbed initialization neighborhood.
+
+\subsection{Gaussian patches and the two-filter motion criterion}
+For $x\sim N(0,I_p)$, Gaussian fourth moments make $u=\operatorname{svec}(xx^\top-I)/\sqrt2$ isotropic. Write $H_c=h_ch_c^\top$. Then $b_c=\sqrt2\operatorname{svec}(H_c)$ and
+\begin{equation}
+ J_cv=\sqrt2\operatorname{svec}(h_cv^\top+vh_c^\top),
+ \quad T_c[S]=4(H_cS+SH_c).
+\end{equation}
+For $G=HA$ with symmetric $H$, let $K_0=W^\top HW$. The exact encoder update is
+\begin{equation}
+ \dot b_c=-4\sqrt2\eta_h\operatorname{svec}
+ \left(\sum_j(K_0)_{cj}(H_cH_j+H_jH_c)\right).
+\end{equation}
+The Jordan product is $(h_c^\top h_j)(h_ch_j^\top+h_jh_c^\top)$. Orthogonal or collinear groups are a closure case: those products remain in the current span. For two independent filters put $\rho_h=h_1^\top h_2$, $n=Q_B\operatorname{svec}(h_1h_2^\top+h_2h_1^\top)$, and $p_B=B^\dagger(1,1)^\top$. Both $n,p_B$ are nonzero, and
+\begin{equation}
+ \dot BQ_B=-4\sqrt2\eta_h(K_0)_{12}\rho_h(1,1)^\top n^\top.
+\end{equation}
+Thus, for $\eta_h>0$, the encoder moves exactly when $(K_0)_{12}\rho_h\ne0$. Its projector tangent is $vn^\top+nv^\top$ with $v=-4\sqrt2\eta_h(K_0)_{12}\rho_hp_B$. The unit tasks $(v/\norm v\pm n/\norm n)/\sqrt2$ have opposing risk derivatives of magnitude $\norm v\norm n$. A task exactly along $n$ has zero first derivative and can only gain quadratically at the source. This establishes task relevance without asserting that all nonlinear encoders drift or that drift always hurts a task.
+
+\subsection{Proof of Theorem~\ref{thm:bottleneck-family}}
+In whitened input coordinates $q_c=\Sigma_x^{1/2}h_c$, Euclidean $h$ training induces metric $\Sigma_x$ on $q$. On the symmetric family $q_1+q_2$ and $q_1-q_2$ remain along $e_+,e_-$; both head entries remain $w$. With $\kappa=2\Phi'(V)$, direct differentiation gives
+\begin{align}
+ \dot\lambda_\pm&=-8\eta_h\kappa w^2\nu_\pm\lambda_\pm^2,\\
+ \dot w&=-\eta_W\kappa w(\lambda_+^2+\lambda_-^2).
+\end{align}
+Changing to $\tau$ gives Equation~\eqref{eq:analytic-family}. Since $2\nu_+>\nu_-$, the ratio $\lambda_-/\lambda_+$ strictly decreases. The unique state with $0<\theta<\theta_0$ occurs at
+\begin{equation}
+ \tau(\theta)=\frac{1/2-\tan\theta}{\epsilon(\nu_+-\nu_-\tan\theta)}
+ <\frac1{2\nu_+\epsilon}.
+\end{equation}
+The sum of the two encoder rows is the diagonal direction in the main text; their difference is a nonzero multiple of $E_\times$. This proves the ranks and Equation~\eqref{eq:analytic-risks}. At the two fixed comparison angles, the improvement and excess over initialization are respectively
+\begin{align}
+ &(1-z^2)\sin(\theta_0/4)\sin(7\theta_0/4-2\psi),\\
+ &(1-z^2)\sin(5\theta_0/6)\sin(2\psi-7\theta_0/6).
+\end{align}
+Their minima on the task cone are the stated $\Delta_1,\Delta_2$. Independent additive label noise simply adds a common constant floor.
+
+It remains to prove the descending regime and finite physical reachability rather than assume them. Population-centered Gaussian views with covariance-relative noise have $S=sI$, $D=2(s-1)I$, $s=(1+\eta)^2\le36/25$. Thus $\kappa=-2\Gamma_s(sV)$ as in the original construction. Since $\theta_0>11/24$, $\tan\theta_2>3/40$. At $\theta_2$ the closed formulas imply
+\begin{align}
+ \lambda_+&=\frac{2\epsilon(\nu_+/\tan\theta_2-\nu_-)}{2\nu_+-\nu_-}<33\epsilon,\\
+ \lambda_-&<\tfrac52\epsilon,\qquad
+ w^2<\tfrac1{100}+\tfrac{5}{2}\frac{(65/2)\epsilon}{19/20}<\tfrac{87}{100}.
+\end{align}
+The modal values and $w^2$ increase up to this state, so throughout the interval
+\begin{equation}
+ V=2w^2(\lambda_+^2+\lambda_-^2)
+ <2\tfrac{87}{100}\big[(33/100)^2+(1/40)^2\big]<\tfrac15.
+\end{equation}
+Consequently $sV<1/3$, and monotonicity of $\gamma$ gives
+\begin{equation}
+ \Gamma_s(sV)\ge1-\tfrac{36}{25}(1-\gamma(1/3))
+ =\tfrac{101}{200}>\tfrac12.
+\end{equation}
+This strict barrier closes a first-exit argument for the descending regime. In particular $\dot\tau>8\eta_hw_0^2$, while $\tau_2<1/(2\nu_+\epsilon)\le10/(19\epsilon)$. Therefore $t_2<5/(76\eta_hw_0^2\epsilon)$. The exact formulas bound all parameters before this state, and nonzero front gradients make the loss strictly decrease, including when the head rate is zero.
+
+The covariance interval is an explicit structured anisotropic family. It preserves the alignment and initialization conditions of the theorem. It does not supply a bound for arbitrary perturbations away from this invariant manifold. Similarly, the rate independence of the ordered subspace path is an exclusion result within this family, not a proof that rate bifurcation persists under symmetry breaking.
+
+As an implementation check, \path{experiments/code/theory/analytic_bottleneck_check.py} evaluates 216 closed-form states, compares SVD risks on 25 tasks per state, and differentiates the Gaussian physical quadratic-moment objective in $h,W$ for 648 state/noise combinations. The maximum risk and parameter-velocity discrepancies are about $1.25\times10^{-15}$ and $1.44\times10^{-15}$. The checks include rotated covariance axes, preserve ranks two/one, and satisfy the uniform gaps. They do not replace the analytic proof or constitute random-initialization evidence. No trajectory is trained or integrated.
+
+\input{sections/asymmetric_stability_proof}

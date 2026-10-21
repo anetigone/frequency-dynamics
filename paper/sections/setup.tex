@@ -6,11 +6,11 @@ Choose $d$ independent non-DC, non-self-conjugate Fourier pairs of a real period
 q_k=\frac{|x_k^F|^2-g_k}{g_k},\qquad \E q=0,\quad \operatorname{Cov}(q)=I.
 \end{equation}
 The network is $x\mapsto W\operatorname{GAP}((h*x)^2)$, without biases. With the spatial/Fourier normalization fixed in Appendix~\ref{app:metric}, its centered encoder and projection are
-\begin{equation}
-r_{\rm enc}=Bq,\qquad z=Aq,\qquad
-B_{ck}=g_k|h_{ck}|^2,\quad A=WB.
+\begin{align}
+r_{\rm enc}&=Bq,\qquad z=Aq,\nonumber\\
+B_{ck}&=g_k|h_{ck}|^2,\qquad A=WB.
 \label{eq:effective}
-\end{equation}
+\end{align}
 For full-support kernels the Fourier coordinates are free; for local kernels they are coupled by the spatial support constraint. We retain that constraint in training and differentiation.
 
 \paragraph{Pretraining objective.}

@@ -77,4 +77,4 @@ projection accuracy 差为 -0.1064/-0.5319/+0.1064 pp，MSE 三个种子全部�
 
 本轮没有启动该训练，也未修改主实验结果或论文正文。
 
-核验：原模型的 probe 与上一轮结果逐值一致；所有 GUPA 分解加和一致。来源：[完整消融结果](../experiments/results/empirical/dtd_pilot/dc_ablation/diagnostic.json)。
+核验：原模型的 probe 与上一轮结果逐值一致；所有 GUPA 分解加和一致。来源：[完整消融结果](../../experiments/results/empirical/dtd_pilot/dc_ablation/diagnostic.json)。

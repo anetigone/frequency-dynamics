@@ -18,4 +18,4 @@
 
 已完成定点原文审计，尚未完成决定性新颖性验收或图像纹理实验。Tepe 全文、Liao 完整结果与前向引用图仍待核查。固定风险间隔的确定性机制目标已完成，下一阶段优先补齐未解除的核查与视觉相关性验证，分别报告 encoder/projection probe。定理 T 不声称唯一极小值、大范围初始化稳健性或高概率随机网络结论。
 
-代码与结果统一见 [experiments/](experiments)；运行入口见 [experiments/README.md](experiments/README.md)。主认证入口为 `python -B experiments/code/theory/verify.py`，输出为 [certificate.json](experiments/results/theory/certificate.json)。不再维护独立证书说明稿或哈希校验文件。
+代码与结果统一见 [experiments/](../../experiments)；运行入口见 [experiments/README.md](../../experiments/README.md)。主认证入口为 `python -B experiments/code/theory/verify.py`，输出为 [certificate.json](../../experiments/results/theory/certificate.json)。不再维护独立证书说明稿或哈希校验文件。
