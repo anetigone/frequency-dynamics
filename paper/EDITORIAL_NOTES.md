@@ -1,15 +1,5 @@
 # 首稿说明
 
-## 2026-10-21 理论冲刺更新
-
-以下“首稿选择”记录上一版定位，现稿以 [THEORY_SPRINT_20261021.md](THEORY_SPRINT_20261021.md) 的结果为准。工作标题为 **Task-Relevant Subspace Motion and Risk Rebound in Quadratic Representations**。正文已加入一般局部二阶矩几何、解析真实编码器瓶颈族、有限幅度/窗口及旧轨迹的起点预测；自然图像压缩为一张边界表，细节完整保留在附录。
-
-旧局部阈值代表与证书中心属于同一均匀物理参数缩放族，已在正文与附录明确其能量轨道等变关系；大尺度状态的物理可达性仍单独限制。新的解析瓶颈族与这个旧族是不同构造，不能混作同一结论。
-
-主张边界：±5% 协方差范围保持指定对齐、相对协方差增强及白化平衡初始化，不是任意扰动稳定性；解析对称族排除配比方向竞争；自然图像上的新几何量与窗口常数尚未实测。定理级新颖性对照、离开对称族的稳定性，以及投稿模板/页数整理仍未完成。
-
-## 以下为 2026-10-20 首稿记录
-
 ## 写作选择
 
 暂定标题：**What Layerwise Learning Rates Select: Risk Rebound and Subspace Motion in Compressed Representations**。

@@ -1,4 +1,4 @@
-\section{Certified Projection Rebound and Matched-Function Rates}
+\section{Certified Risk Rebound and Update Geometry}
 \label{sec:theory}
 \subsection{A finite-time fixed-gap construction}
 Take $C=d=2$, $K=1$, $\beta=e_1$, and unit parameter learning rates. Define the positive initialization coordinates
@@ -47,7 +47,7 @@ This holds step by step for ordinary gradient descent. The relative rate acquire
 In coordinates $h_c=c\bar h$, $W_c=c^{-2}\bar W$, the gradients scale as $\nabla_{h_c}L=c^{-1}\nabla_{\bar h}L$ and $\nabla_{W_c}L=c^2\nabla_{\bar W}L$. Substituting into the update gives the stated factors.
 \end{proof}
 
-For transparent threshold arithmetic, display the unshrunk representative of the same construction family:
+An explicit direction test uses a different initialization from Theorem~\ref{thm:gap}:
 \begin{equation}
 B_0=\begin{pmatrix}2&1/5\\1/5&2/5\end{pmatrix},\quad
 w_0=\begin{pmatrix}1/10\\9/10\end{pmatrix},\quad g=(1,2).
@@ -58,9 +58,7 @@ All scaled versions have $a_0=(19/50,19/50)^\top$. For $S=I,D=0$, direct differe
 =\frac{235-480c^6}{834+1300c^6}.
 \label{eq:threshold}
 \end{equation}
-The sign reverses at $c_*=(47/96)^{1/6}\simeq0.887778$, or relative learning rate $r_*=47/96$ in the unscaled coordinates. Opposite derivatives at the same initial representation and equal-energy section cannot be removed by a positive time change. This threshold is specific to the construction, not a universal recommended ratio.
-
-Multiplying all physical parameters $h,W$ by $\rho=2/5$ gives exactly the center of Theorem~\ref{thm:gap}: $B\mapsto\rho^2B$, $W\mapsto\rho W$. For a descending radial objective, this uniform scaling preserves the row-space path in relative-energy coordinates. The threshold therefore also holds at the certificate center, and Section~\ref{sec:origin-windows} certifies its finite-window rate split there. This connects the local threshold and fixed-gap example within one family. It does not transfer physical reachability to the unshrunk state: that state may leave the descending regime before $\ell=6$.
+The sign reverses at $c_*=(47/96)^{1/6}\simeq0.887778$, or relative learning rate $r_*=47/96$ in the unscaled coordinates. Opposite derivatives at the same initial representation and equal-energy section cannot be removed by a positive time change. This threshold is specific to the displayed construction, not a universal recommended ratio. The fixed-gap initialization is a separate scaled-down state and is certified independently.
 
 \subsection{Which space changes?}
 \begin{proposition}[Linear population row-space conservation]

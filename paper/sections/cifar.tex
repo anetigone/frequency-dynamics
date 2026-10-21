@@ -1,26 +1,61 @@
-\section{Natural Images as Boundary Evidence}
+\section{CIFAR-10: A Compression Diagnostic}
 \label{sec:cifar}
-The local second-moment representation in Section~\ref{sec:task-geometry} is an architecture identity for these experiments. Its population risk and movement bounds do not, however, predict natural-image behavior until their task moments, normal update budgets, and stability constants have been measured. The existing CIFAR-10 and DTD results delimit this gap; they are not a validation of the new finite-horizon bounds. Full protocols, capacity scans, DC interventions, and local derivative diagnostics are retained in Appendix~\ref{app:natural-details}.
+Natural-image experiments test the scope of the mechanism rather than reproduce the two-coordinate threshold. We use standard CIFAR-10~\cite{krizhevsky2009learning}, grayscale input, 64 $11\times11$ valid convolutional filters, squaring, GAP, and an eight-dimensional head. Training starts from scratch, without downstream labels. The training split is 45,000/5,000, and the standard 10,000-image test set is reserved for the fixed final-budget comparison. Augmentations are reflected crops, horizontal flips, contrast changes, and additive noise. Classification uses unregularized affine OLS on one-hot labels, evaluating encoder and projection separately. Natural-image accuracy is not the theorem's population square risk.
+
+\subsection{Layerwise rates do not establish a speed-independent gain}
+Five paired seeds and three ratios run for 4,000 updates at batch size 256, approximately 22.8 training-set passes. Encoder test accuracy is $36.48\%$, $36.45\%$, and $36.52\%$ for $r=0.1,1,10$; projection accuracy is $23.39\%$, $23.50\%$, and $23.81\%$. The fixed-budget projection difference is approximately $0.43$ percentage points before rounding the group means. At common calibration energy $\ell=2$, however, the corresponding validation difference is approximately $+0.11$ points with a five-seed descriptive bootstrap interval $[-0.42,+0.54]$. Other common-energy intervals also cross zero. Energy is measured on a fixed unlabeled calibration set and its first crossing is checked every ten updates; it is a proxy with recorded overshoot, not an exact population progress variable. The results do not establish either a stable speed-independent benefit or its absence.
+
+\subsection{More capacity mostly improves the initial features}
+Development diagnostics use seeds 0, 1, and 12, three architectures, and two supervised references, for 33 runs of 4,000 updates. These runs use validation labels only for evaluation, never the test set. Table~\ref{tab:capacity} separates initial performance from learned improvement.
 
 \begin{table}[t]
 \centering\small
-\caption{Natural-image boundary evidence: validation OLS accuracy (\%), initialization $\to$ final budget. Three development seeds per row; CIFAR frozen readouts share the same encoders. Rank-8 fitting uses training labels. DTD uses official partition 1.}
-\label{tab:natural-boundary}
+\caption{Validation OLS accuracy (\%) for capacity diagnostics, $r=1$; means over three development seeds. Each cell shows initialization $\to$ 4,000 updates.}
+\label{tab:capacity}
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{llrr}
+\begin{tabular}{lrr}
 \toprule
-Dataset&Representation&Initial&Final\\\midrule
-CIFAR&Encoder&36.31&36.04\\
-&Original eight-dimensional head&23.49&23.71\\
-&Supervised rank-8 readout&35.75&35.59\\\midrule
-DTD&Encoder&8.65&8.51\\
-&Zero-DC encoder&8.78&8.56\\
+Architecture&Encoder&Projection\\\midrule
+$C=64,K=8$&$36.31\to36.04$&$23.49\to23.71$\\
+$C=256,K=8$&$43.04\to43.04$&$23.66\to23.65$\\
+$C=64,K=32$&$36.31\to36.23$&$32.05\to32.14$\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-CIFAR uses grayscale images, 64 local $11\times11$ filters, squaring, GAP, and an eight-dimensional head. At a fixed frozen encoder, supervised rank-8 least squares recovers almost all of the full encoder's validation MSE advantage over the original head. The approximately twelve-point accuracy gap is already present at initialization (Table~\ref{tab:natural-boundary}). It demonstrates available class-dependent compression, not a large training-induced deletion of class information. Reduced-rank fitting optimizes training MSE, not validation accuracy. The separate five-seed final-test comparison has encoder accuracy near $36.5\%$ across rate ratios; equal-energy validation comparisons do not establish a stable speed-independent gain.
+Width and projection dimension improve absolute readability, but their gains largely exist at random initialization. Supervised training of the original model reaches encoder OLS accuracy $40.07\%$ through the encoder path and projection OLS accuracy $38.69\%$ through the joint projection path. Thus $24\%$ is not an expressivity ceiling for eight-dimensional outputs. The supervised references use Adam and prescribed gradient clipping, unlike unsupervised SGD, and are attainable references rather than matched optimization or capacity upper bounds.
 
-On DTD, objective improvement concentrates encoder variance in an existing image statistic associated with DC response. Removing that response at evaluation or training with spatially zero-mean filters does not yield clear encoder class gains. Zero-DC training instead emphasizes a statistic associated with pixel variance. These outcomes are consistent with objective--task mismatch, but neither spectral concentration nor removal of one dominant statistic identifies the cause of weak class learning.
+The wide model has a small exploratory ratio signal: $r=10$ minus $r=0.1$ projection accuracy is positive for all three development seeds at $\ell=1$ and $2$, with means near $+0.20$ and $+0.19$ points. Multiple inspected sections, few development seeds, and inconsistent MSE signs at some sections prevent a stable intervention claim. Some $K=32$ energy sections are missing; we retain those missing cases rather than treating available pairs as a complete experiment.
 
-The existing label-conditioned CIFAR derivative diagnostic has eligible opposing contributions in only four of 27 state--stream combinations. All four reverse the first-step risk sign, with changes of order $10^{-9}$; none preserves both predicted signs at twenty updates. Predictions and the first update share the same gradient and use validation labels. This is a local calculation check, not an independent finite-horizon test. Source-state task coupling, separate future-gradient errors, and usable curvature bounds have not been measured for these runs. We therefore do not claim that the new theory explains their small magnitude or short persistence. Testing that claim requires calibration states or batches separated from the future update stream, rather than further searches for classification gains.
+\subsection{A fixed encoder admits a much better eight-dimensional head}
+We freeze the original $r=1$ encoder at initialization and update 4,000 for each development seed: six source states, with only three independent seeds. Each state compares the original head, full encoder OLS, an optimal rank-8 affine least-squares fit, and a supervised head trained with cross-entropy (CE). The rank-8 solution uses training labels only. Its affine intercept is absorbed into the final decoder, leaving the projection itself linear. CE training updates only the projection and classifier; kernels are checked for exact equality before and after training.
+
+\begin{table}[t]
+\centering\small
+\caption{Same frozen encoder, different heads. Validation accuracy (\%), three paired development seeds per source state.}
+\label{tab:frozen}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrr}
+\toprule
+Readout&Initial&Trained\\\midrule
+Full encoder OLS&36.31&36.04\\
+Original head + OLS&23.49&23.71\\
+Rank-8 least squares&35.75&35.59\\
+CE-trained head + OLS&30.89&28.49\\
+CE-trained classifier&30.83&27.73\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For the trained encoder, rank-8 fitting improves accuracy over the original head by approximately $11.88$ points, remaining only $0.45$ points below full encoder OLS. Its validation one-hot MSE is $0.08147432$, compared with $0.08631537$ for the original head and $0.08141745$ for the full encoder. It removes $98.84\%$ of this particular MSE gap; this is not a percentage of all semantic information. A better compressed choice exists without any encoder change.
+
+Crucially, almost the same gap is already present at initialization. These data do not show that pretraining created a large new semantic loss. The CE-trained head improves over the source head but falls short of rank-8 fitting even on training accuracy ($28.71\%$ versus $36.59\%$). The gap is therefore not solely a validation overfitting effect, but CE versus square loss, augmented versus clean inputs, scaling, clipping, and budget are confounded; factorized optimization alone is not identified as its cause.
+
+Ten-class centered one-hot targets have at most nine independent directions, so near-recovery by eight coordinates has a direct algebraic context. Reduced-rank fitting is globally optimal for training MSE, not validation accuracy. It establishes available task-dependent compression, not a label-free way to find it or an architecture-specific phenomenon.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/frozen_heads.pdf}
+\caption{Validation accuracy for different readouts of the same fixed encoder. Points are paired development seeds. The large source-head gap exists both before and after pretraining. Rank-8 fitting is supervised.}
+\label{fig:frozen}
+\end{figure}
