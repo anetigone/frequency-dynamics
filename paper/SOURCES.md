@@ -16,6 +16,9 @@ Paths below are relative to this directory. Existing results are read-only input
 | Three-seed capacity diagnostics | [imported summary](../experiments/results/cifar/capacity_development/summary.json), [interpretation](../experiments/results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md) |
 | Frozen encoder: six states, three seeds | [imported summey.json](../experiments/results/cifar/frozen_encoder_heads/summey.json), [interpretation](../experiments/results/cifar/frozen_encoder_heads/FROZEN_HEAD_REVIEW.md) |
 | Reduced-rank implementation | [frozen_encoder_probe.py](../experiments/code/cifar/frozen_encoder_probe.py) |
+| Natural-image objective decomposition and class learning | [diagnostic interpretation](NATURAL_IMAGE_DIAGNOSTIC_RESULTS_20261020.md) |
+| DTD DC attribution, ablation and constrained training | [DC attribution](DTD_DOMINANT_DIRECTION_RESULTS_20261020.md), [ablation](DTD_DC_ABLATION_RESULTS_20261020.md), [DC-free diagnosis](DTD_DC_FREE_DIAGNOSIS_20261020.md) |
+| CIFAR local direction coverage, reversals and effect sizes | [imported summary](../experiments/results/cifar/risk_direction_development/summary.json), [protocol](../experiments/docs/CIFAR_RISK_DIRECTION.md), [implementation](../experiments/code/cifar/cifar_risk_direction.py) |
 | Novelty boundary and unresolved literature audit | [SOURCE_AUDIT.md](../SOURCE_AUDIT.md) |
 
 Bibliographic metadata was checked on the official NeurIPS page and versioned arXiv abstract pages on 2026-10-20. The CIFAR dataset page links the cited 2009 technical report. This targeted metadata check does not replace the outstanding theorem-level literature audit.
