@@ -1,0 +1,109 @@
+\section{Complete Encoder Rebound on Independent Texture Initializations}
+\label{supp:encoder-rebound}
+\subsection{Development, fixed comparison, and controls}
+The complete-rebound validation reuses the periodic-texture dictionary and exact image-forward identity in Appendix~\ref{sec:textures}, but uses a new set of initialization and data seeds. Historical seeds 2--11 were inspected to develop the comparison at updates 1,000 and 4,000 with amplitude threshold $\delta=0.001$. Those choices were fixed before seeds 20--25 were run. This is development-informed small validation, not public preregistration. Ten tasks are specified by the existing coordinate and band-sum definitions; no task is chosen from a new trajectory. The empirical minimum is descriptive only and never enters the success criterion.
+
+Each initialization draws independent spectral filter coordinates $N(0,1)/4$ and head entries $N(0,1)$, then rescales the head to initial clean-output energy $V_0=0.001$. Label-free mobility-trace calibration balances the active parameter blocks and normalizes their initial weighted total trace. The resulting distribution is calibrated, rather than iid Gaussian in all final parameter coordinates. It imposes no two-filter reflection symmetry and is separate from the theorem's six-coordinate neighborhood. We train true $32\times32$ full-support pixel kernels with $C=8$, $K=1$, augmentation power $0.2$, 32,768 fixed unlabeled samples per seed, batch size 256, learning rate $0.002$, rate ratio one, and 4,000 ordinary SGD updates in float64. The finite-dataset objective uses sampled view moments. Population task risks and population GUPA enter evaluation only.
+
+Square, linear-factor, and frozen-encoder models share data, minibatches, views, and initial $A$. Initial encoder comparability is checked independently from stored $B$ matrices: across all paired seeds/models, the maximum $\norm{P_{B_i(0)}-P_{B_j(0)}}_F$ is $8.25\,10^{-15}$, the maximum fixed-task risk difference is $2.45\,10^{-15}$, and the maximum entry difference in $A_0$ is $5.90\,10^{-17}$. Raw $B$ entries can differ by $0.13457$ and singular values by $0.25427$ after independent calibration. Matching the effective map alone would not imply matching encoder spaces or risks. Here those spaces and risks match numerically, while factor scales, parameterizations, and mobilities differ. The controls support their role in these trajectories, without proving a unique causal attribution. Finite-data linear updates need not satisfy the exact isotropic population conservation premise.
+
+\subsection{All fixed-time amplitudes and objective cross-check}
+For every fixed task we retain $I=R(0)-R(1000)$ and $D=R(4000)-R(0)$, with a complete rebound only when both exceed $0.001$. Table~\ref{supp:all-rebound-gaps} reports all 60 square-encoder pairs; the sample unit remains the seed. Every planned model/seed run completed, and no failed or missing run was removed. Main Table~\ref{main:rebound-counts} retains the six-seed denominator for every model and task. Each of the ten fixed tasks has zero successful encoder seeds for both linear and frozen controls. Complete projection task-events also occur under linear and frozen controls (five and four, respectively), so projection rebound alone does not isolate encoder readability loss.
+
+\begin{table*}[t]
+\centering\footnotesize
+\caption{All signed square-encoder amplitudes, rounded to four decimals for display. Each seed contributes two columns: improvement $I$ and excess above initialization $D$. The unrounded values determine success. Positive values alone are insufficient: both must strictly exceed $0.001$. The dagger marks the one successful segment within $25\%$ of this threshold; this is a descriptive margin flag, not a changed success rule.}
+\label{supp:all-rebound-gaps}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lrrrrrrrrrrrr}
+\toprule
+&\multicolumn{2}{c}{Seed 20}&\multicolumn{2}{c}{Seed 21}&\multicolumn{2}{c}{Seed 22}&\multicolumn{2}{c}{Seed 23}&\multicolumn{2}{c}{Seed 24}&\multicolumn{2}{c}{Seed 25}\\
+Fixed task&$I$&$D$&$I$&$D$&$I$&$D$&$I$&$D$&$I$&$D$&$I$&$D$\\\midrule
+single $x$ low&-0.0140&+0.0274&+0.0851&+0.1150&+0.0019&+0.0308&-0.0600&+0.1220&-0.0056&+0.0221&-0.0022&+0.0813\\
+single $y$ low&+0.0093&+0.2136&-0.0299&+0.0845&+0.0270&-0.0569&-0.0836&+0.0019&+0.0122&-0.0400&-0.0112&+0.1614\\
+$x$ low&-0.0062&-0.0710&+0.0137&+0.1030&-0.0119&+0.0815&-0.0032&-0.0955&-0.0134&+0.0381&+0.0035&+0.0299\\
+$x$ high&-0.0117&+0.1324&-0.0031&+0.0158&+0.0180&-0.0451&+0.0876&-0.1044&+0.0292&-0.0405&-0.0051&+0.0115\\
+$y$ low&+0.0068&+0.0631&-0.0218&+0.0325&+0.0010$^{\dagger}$&+0.0044&+0.0005&+0.0483&-0.0068&+0.0263&-0.0165&+0.0687\\
+$y$ high&-0.0059&+0.0340&-0.0039&-0.0169&+0.0056&-0.0097&-0.0170&+0.1245&-0.0757&+0.3749&-0.0013&+0.0159\\
+diagonal low&+0.0019&+0.0071&+0.0259&-0.0327&-0.0018&-0.0062&-0.0066&+0.0275&-0.0042&+0.0242&-0.0055&+0.0681\\
+diagonal high&-0.0021&+0.0301&-0.0041&+0.0440&-0.0165&+0.0048&+0.0102&-0.0564&-0.0218&+0.0105&+0.0165&-0.0964\\
+antidiagonal low&-0.0110&-0.0302&+0.0049&+0.0470&-0.0084&+0.0326&-0.1041&+0.0608&-0.0164&+0.1206&+0.0069&-0.0251\\
+antidiagonal high&+0.0001&-0.0490&-0.0076&+0.0232&-0.0014&+0.0341&+0.0320&+0.0332&+0.0308&-0.1721&-0.0218&+0.0925\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{supp:rebound-loss-events} lists all ten successful square-encoder task-events and their objective comparisons. Nine satisfy $L(0)>L(1000)>L(4000)$, across seeds 20, 21, 22, and 25. They are correlated events, not nine independent replications. Seed 23's antidiagonal-high event is the sole exception: its objective rises slightly over the second interval. Every square endpoint still has lower objective than initialization. The marginal encoder event is seed 22's $y_{\rm low}$ task, with $I=0.00102469744$ and $D=0.00442211118$; it should be read with its actual amplitude rather than treated as equally strong as the larger events.
+
+\begin{table}[t]
+\centering\small
+\caption{Every successful square-encoder task-event. ``Loss down'' means the three-point comparison $L(0)>L(1000)>L(4000)$, not monotonicity at every SGD update.}
+\label{supp:rebound-loss-events}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{rlrrc}
+\toprule
+Seed&Task&$I$&$D$&Loss down\\\midrule
+20&single $y$ low&0.009341&0.213591&Yes\\
+20&$y$ low&0.006795&0.063062&Yes\\
+20&diagonal low&0.001919&0.007110&Yes\\
+21&single $x$ low&0.085087&0.114976&Yes\\
+21&$x$ low&0.013688&0.103034&Yes\\
+21&antidiagonal low&0.004949&0.047017&Yes\\
+22&single $x$ low&0.001937&0.030817&Yes\\
+22&$y$ low&0.001025&0.004422&Yes\\
+23&antidiagonal high&0.032048&0.033225&No\\
+25&$x$ low&0.003482&0.029919&Yes\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Square-model population objectives and single-view energies at the fixed comparison points. All seeds start at $L(0)\simeq-0.000998447$ and $Q(0)=0.00144$. Energies use the same $Q=sV$, $s=1.44$, as the main text.}
+\label{supp:rebound-loss-energy}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{rrrrr}
+\toprule
+Seed&$L(1000)$&$L(4000)$&$Q(1000)$&$Q(4000)$\\\midrule
+20&-0.009645&-0.301932&0.014102&1.353723\\
+21&-0.019425&-0.301854&0.028848&1.302152\\
+22&-0.006902&-0.301864&0.010047&1.303866\\
+23&-0.301918&-0.301821&1.358109&1.297021\\
+24&-0.016641&-0.301902&0.024602&1.311433\\
+25&-0.001825&-0.301949&0.002636&1.327156\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All square-model terminal $Q$ values exceed one; seed 23 already exceeds one at the early comparison (Table~\ref{supp:rebound-loss-energy}). These observations remain empirical evidence for complete rebound beyond the construction, but do not instantiate the theorem's full energy and population-flow conditions. They establish neither trajectory-wide objective monotonicity nor universal stability after the energy boundary. Figures~\ref{supp:rebound-tasks-first}--\ref{supp:rebound-tasks-second} show every available seed, model, fixed task, and representation; no favorable curve is isolated from unsuccessful cases.
+
+\subsection{Rank and targeted step refinement}
+Every 25 updates and at each fixed comparison, encoder/projection ranks remain eight/one. The minimum retained square-encoder singular value over all recorded states is $0.0182809$ and the minimum ratio to the largest singular value is $0.0197198$. Recomputing ranks and risks with relative cutoffs $\max(\operatorname{shape}(B))\epsilon_{\rm mach}$, $10^{-12}$, $10^{-10}$, and $10^{-8}$ gives identical results throughout; the projection is checked analogously. Figure~\ref{supp:rebound-geometry} retains losses, singular values, ranks, and projector displacements for all runs.
+
+Targeted numerical checks reuse the same data, minibatches, and views, replacing each update by two half updates. Seeds 20, 21, and 22 are checked separately: seed 21 contains strong successful events, and seed 22 contains the near-threshold event. They do not add independent seeds, replace original results, or retune the primary rule. No encoder or projection primary decision changes in these three checks. For seed 21's $x_{\rm low}$ task, $(I,D)$ changes from $(0.0136882604,0.1030342689)$ to $(0.0137071359,0.1026140047)$. For seed 22's marginal $y_{\rm low}$ task, it changes from $(0.00102469744,0.00442211118)$ to $(0.00102492757,0.00441360277)$. The maximum absolute risk differences over all recorded tasks and both representations are approximately $0.001293$, $0.004797$, and $0.000809$ for the square model at seeds 20, 21, and 22. Thus the decisions persist in these checks, while the full curves are not numerically identical. This does not establish convergence of every event or every seed under step refinement.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/encoder_rebound_tasks_1.pdf}
+\caption{Risk changes from each run's own initialization for the first five fixed tasks, all six new seeds and three models, encoder and projection separately. Vertical lines mark the fixed comparison updates; horizontal lines mark zero and $\pm0.001$.}
+\label{supp:rebound-tasks-first}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/encoder_rebound_tasks_2.pdf}
+\caption{Remaining five fixed tasks under the same display and primary rule as Figure~\ref{supp:rebound-tasks-first}. Full trajectories preserve unsuccessful and projection-only cases.}
+\label{supp:rebound-tasks-second}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/encoder_rebound_geometry.pdf}
+\caption{All 18 main-validation trajectories: evaluation-only population objective, numerical encoder rank, encoder/projection minimum nonzero singular values, and projector displacement. Empirical SGD need not make the population objective decrease at every update.}
+\label{supp:rebound-geometry}
+\end{figure*}
+
+\subsection{Further frozen-source diagnostics}
+The independent-stream predictor protocol and its failed windows remain in Appendix~\ref{sec:texture-motion-prediction}; these local forecasts are distinct from fixed-time complete rebound. Across square-projection band slots at eight steps, absolute source-slope ranking has mean task-order agreement $0.857$, compared with $0.5$ for a displacement-only baseline tying tasks at a state and ratio. Task cross-block ranking gives $0.798$. These are descriptive ordering scores rather than signed finite-window guarantees.
+
+Pooled mean eight-step interval width is $0.00491$, versus mean absolute realized change $0.000305$, a ratio near 16. Coverage can therefore coexist with limited useful direction information. Empirically validated windows check sampled future streams, while quantile inflation supplies no uniform guarantee over all future SGD streams. The stored error decomposition retains both mean offset and stream dispersion and does not uniquely identify calibration, drift, or noise as the source of late prediction failure.
