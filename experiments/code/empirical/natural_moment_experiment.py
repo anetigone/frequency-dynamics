@@ -63,8 +63,9 @@ def grids(args, n):
     steps = epoch_step(args.epochs, n, args.batch_size)
     evaluations = sorted({0, steps, *(epoch_step(e, n, args.batch_size)
                                      for e in args.eval_epochs if 0 <= e <= args.epochs)})
-    knn = sorted({0, steps, *(epoch_step(e, n, args.batch_size)
-                             for e in args.knn_epochs if 0 <= e <= args.epochs)})
+    knn = [] if getattr(args, 'skip_knn', False) else sorted({
+        0, steps, *(epoch_step(e, n, args.batch_size)
+                    for e in args.knn_epochs if 0 <= e <= args.epochs)})
     # Every KNN observation is also a full moment/OLS observation.
     return steps, sorted(set(evaluations) | set(knn)), knn
 
@@ -104,6 +105,8 @@ def protocol(args, split):
     steps, evaluations, knn = grids(args, split['train_size'])
     keys = ['dataset', 'seeds', 'epochs', 'batch_size', 'lr', 'ratio', 'trace_draws',
             'prediction_batches', 'knn_k', 'risk_threshold', 'audit_size', 'audit_every']
+    if getattr(args, 'skip_knn', False):
+        keys.append('skip_knn')
     return dict(arguments={k: getattr(args, k) for k in keys}, split=split,
                 steps=steps, evaluation_steps=evaluations, knn_steps=knn,
                 architecture='64 x 11x11 valid convolution, square, global average, linear 8-output head',
@@ -365,6 +368,7 @@ def main():
     parser.add_argument('--audit-every', type=int, default=100)
     parser.add_argument('--save-every', type=int, default=1000)
     parser.add_argument('--knn-k', type=int, default=20)
+    parser.add_argument('--skip-knn', action='store_true', help='Skip expensive pairwise kNN; retain OLS and geometry')
     parser.add_argument('--knn-batch', type=int, default=128)
     parser.add_argument('--risk-threshold', type=float, default=.001)
     parser.add_argument('--image-size', type=int, default=64, help='DTD only; use its prepared image size')
