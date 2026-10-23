@@ -1,5 +1,5 @@
 \begin{abstract}
-Pretraining can make the encoder itself less readable while its objective improves. We identify a mechanism: redistribution of readable directions at preserved rank. For convolution, squaring, and global pooling, local second moments give an exact feature dictionary. Correlated filters and head coupling move the encoder's prediction space even under an isotropic objective. In an explicit joint parameter gradient flow with a genuine encoder bottleneck, a prespecified task cone uniformly improves and then exceeds its initial risk, for both encoder and projection. The encoder increase rules out head selection as the sole cause; optimal unregularized population probes remove finite-label fitting and invertible feature scaling as explanations. A quantitative stability theorem preserves positive gaps under independent perturbations of all six initialization coordinates in a small explicit neighborhood. Finite-data textures yield complete encoder rebound for seven fixed tasks in one or two of six new seeds at fixed comparison times; matched linear and frozen-encoder controls yield none. Long-run CIFAR training also exhibits rank-preserving rebound on fixed moment tasks, with empirical optimal training risk and held-out error agreeing at retrospectively selected times. Class readouts distinguish this effect from projection selection. These results identify how continued pretraining can rotate a fixed-dimensional encoder space away from task-relevant directions.
+Pretraining can make the encoder itself less readable while its objective improves. We identify a mechanism: redistribution of readable directions at preserved rank. For convolution, squaring, and global pooling, local second moments give an exact feature dictionary. Correlated filters and head coupling move the encoder's prediction space even under an isotropic objective. In an explicit joint parameter gradient flow with a genuine encoder bottleneck, a prespecified task cone uniformly improves and then exceeds its initial risk, for both encoder and projection. The encoder increase rules out head selection as the sole cause; optimal unregularized population probes remove finite-label fitting and invertible feature scaling as explanations. A quantitative stability theorem preserves positive gaps under independent perturbations of all six initialization coordinates in a small explicit neighborhood. Fifty paired texture seeds show complete encoder rebound under both square and linear training; observed task-wise frequencies depend on the architecture and comparison rule, excluding architecture exclusivity. Long-run CIFAR training also exhibits rank-preserving rebound on fixed moment tasks, with empirical optimal training risk and held-out error agreeing at retrospectively selected times. Class readouts distinguish this effect from projection selection. These results identify how continued pretraining can rotate a fixed-dimensional encoder space away from task-relevant directions.
 \end{abstract}
 
 \section{Introduction}
@@ -12,7 +12,7 @@ The core result concerns a genuine encoder bottleneck: one projected output, two
 
 The solvable trajectory has a reflection symmetry, but rebound persists when all four filter coordinates and both head entries vary independently in an explicit box. At fixed data, rates, and nonzero augmentation, angular and imbalance equations control the task projectors through a directional progress clock. We prove first arrival, bounded parameters, preserved ranks, and finite physical time. This turns an exactly solvable trajectory into a parameter region with the same task-uniform improvement and rebound.
 
-Controlled textures test complete rebound beyond the analytic family using independent nonsymmetric initializations. Ten tasks are fixed; earlier seeds select two comparison times and a risk-amplitude threshold before six new seeds are run. Seven tasks each rebound in one or two new seeds, while three never do; matched linear and frozen-encoder controls yield no encoder rebounds. Exact population risks at finite-data SGD checkpoints remove fitted-probe error. These observations establish instances beyond the construction, with limited task-wise frequency and no random-initialization typicality claim.
+Controlled textures test complete rebound beyond the analytic family on 50 new paired seeds with calibrated nonsymmetric initializations. All ten fixed tasks exhibit sampled-path encoder rebound under both square and linear training: task-wise counts range from 6--13/50 and 1--7/50 respectively. The original fixed-time comparison gives 1--9/50 for square and 0--2/50 for linear. Frozen encoders yield none. Exact population risks remove fitted-probe error. These observations establish instances beyond the construction, while ruling out an empirical claim that encoder rebound is exclusive to square parameterization.
 
 Long-run CIFAR experiments extend the evidence to natural inputs. Three fixed moment tasks each exhibit complete encoder rebound in two of three seeds, with training-optimal empirical risk and held-out error agreeing at the same retrospectively selected times. Class readouts follow a different path: the encoder improves slightly overall, while late projection risk worsens as its selection gap grows. Natural-image evidence thus separates encoder readability loss from head selection without claiming universal class degradation.
 
@@ -156,49 +156,43 @@ This task dependence separates encoder movement from its risk effect: each fixed
 \paragraph{Fixed tasks and independent training.}
 Periodic $32\times32$ textures contain 16 independent non-DC power coordinates: four directions, two radial bands, and two frequency pairs per group. Ten fixed unit-variance tasks comprise two coordinates and eight direction/band sums. We train eight square channels and one head output using true full-support pixel kernels, evaluating their periodic-image forward exactly in the Fourier dictionary. Training uses 32,768 unlabeled samples, batch size 256, 4,000 SGD updates, learning rate $0.002$, augmentation power $0.2$, and unit head/front rate ratio. Task risks are exact optimal unregularized population risks for the known synthetic distribution; labels enter evaluation only.
 
-\paragraph{Complete encoder rebound beyond the construction.}
-We use earlier seeds 2--11 to develop comparison times 1,000/4,000 and threshold $\delta=10^{-3}$, then fix them before running new seeds 20--25. For each prespecified task, a complete rebound requires both
+\paragraph{Fifty paired seeds and two comparison rules.}
+Our main report uses seeds 100--149, separate from the earlier six-seed validation retained in Appendix~\ref{supp:encoder-rebound}. All 150 square, linear, and frozen-encoder trajectories complete the fixed 4,000-update budget, with 161 observations every 25 updates. Gaussian filter/head draws undergo label-free energy and mobility-trace calibration; the resulting distribution is calibrated, not unmodified iid Gaussian. Ten tasks and threshold $\delta=10^{-3}$ are fixed. We report sampled-path complete rebound,
 \begin{equation}
- I=R(0)-R(1000)>\delta,\quad D=R(4000)-R(0)>\delta.
+ \max_{0<s<t\le4000}\min\{R(0)-R(s),R(t)-R(0)\}>\delta,
  \label{main:empirical-rebound-rule}
 \end{equation}
-Independent Gaussian filter/head draws undergo stated, label-free energy and mobility-trace calibration; they do not satisfy the two-filter symmetry. All 18 model/seed trajectories complete. Seven fixed tasks each rebound in one or two seeds; the other three yield none (Table~\ref{main:rebound-counts}). Tasks within a seed are correlated, and six seeds do not estimate occurrence probabilities precisely. Descriptively, five seeds have at least one successful task; none has all ten.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{figures/encoder_rebound_x_low.pdf}
-\caption{Fixed-task encoder risk relative to its own initialization, all six seeds and three models. The task $x_{\rm low}$ is an illustrative display; Table~\ref{main:rebound-counts} retains every fixed task. Lines mark updates 1,000/4,000 and thresholds $\pm10^{-3}$. A complete rebound crosses below the negative threshold at the first comparison and above the positive threshold at the second.}
-\label{main:encoder-rebound}
-\end{figure}
+where $s,t$ range over recorded updates, alongside the original fixed-time rule $R(0)-R(1000)>\delta$ and $R(4000)-R(0)>\delta$. The latter was developed on earlier seeds 2--11. Sampled-path witnesses are selected retrospectively on a fixed grid and budget; neither rule estimates a continuous-time occurrence probability. Ordinary drawup, $\max_{s<t}[R(t)-R(s)]$, need not exceed initialization and is reported separately in Appendix~\ref{supp:texture-fifty}.
 
 \begin{table}[t]
 \centering\small
-\caption{Complete encoder rebound at the fixed times and threshold in Equation~\eqref{main:empirical-rebound-rule}. Every entry retains all six planned seeds. These are task-wise counts, not independent task repetitions.}
+\caption{Complete encoder rebound among 50 paired seeds per task. Sampled-path and fixed 1,000/4,000-update rules are reported separately, both with $\delta=10^{-3}$. Sq/Lin/Fr denote square, linear, and frozen encoder. Tasks within a seed are correlated.}
 \label{main:rebound-counts}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lrrr}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
 \toprule
-Fixed task&Square&Linear&Frozen\\\midrule
-single $x$ low&2/6&0/6&0/6\\
-single $y$ low&1/6&0/6&0/6\\
-$x$ low&2/6&0/6&0/6\\
-$x$ high&0/6&0/6&0/6\\
-$y$ low&2/6&0/6&0/6\\
-$y$ high&0/6&0/6&0/6\\
-diagonal low&1/6&0/6&0/6\\
-diagonal high&0/6&0/6&0/6\\
-antidiagonal low&1/6&0/6&0/6\\
-antidiagonal high&1/6&0/6&0/6\\\bottomrule
+&\multicolumn{3}{c}{Sampled path}&\multicolumn{3}{c}{Fixed times}\\
+Fixed task&Sq&Lin&Fr&Sq&Lin&Fr\\\midrule
+single $x$ low&7&4&0&5&0&0\\
+single $y$ low&9&4&0&1&0&0\\
+$x$ low&10&7&0&3&0&0\\
+$x$ high&13&6&0&9&2&0\\
+$y$ low&7&6&0&5&0&0\\
+$y$ high&9&3&0&5&0&0\\
+diagonal low&12&5&0&6&0&0\\
+diagonal high&7&1&0&3&0&0\\
+antidiagonal low&6&7&0&5&1&0\\
+antidiagonal high&6&6&0&1&0&0\\\bottomrule
 \end{tabular}
 \end{table}
 
-For $x_{\rm low}$, the successful seeds have $(I,D)=(0.013688,0.103034)$ and $(0.003482,0.029919)$: the evidence includes effects well above threshold. Appendix~\ref{supp:encoder-rebound} gives all signed gaps and flags the near-threshold $y_{\rm low}$ case. Encoder/projection ranks remain eight/one at every recorded state. Relative SVD cutoffs $10^{-12},10^{-10},10^{-8}$ and the default give identical risks and decisions.
+Table~\ref{main:rebound-counts} retains every task and planned seed. Both trainable encoders exhibit sampled-path complete rebound on all ten tasks. Square counts are higher on eight tasks, equal on one, and lower on antidiagonal-low. Even the fixed-time rule yields linear events on $x$-high (2/50) and antidiagonal-low (1/50). Thus the earlier six-seed absence of linear events does not extend to this larger report. These are descriptive paired counts, not a universal ordering or ten independent architecture tests. Pointwise Wilson intervals, projection results, and drawup counts appear in Appendix~\ref{supp:texture-fifty}.
 
 \paragraph{What the controls establish.}
-Models share data, batches, views, and initial effective map $A$. Independently checking the stored initial $B$ also gives matching encoder spaces (maximum paired projector distance $8.3\,10^{-15}$) and task risks (difference $2.5\,10^{-15}$); this is not inferred from matching $A$. Calibrated factor scales differ. Linear and frozen-encoder controls yield no complete encoder rebound on any fixed task. This supports an effect of architecture and parameterization in this configuration, without identifying a unique causal source. Finite-data linear gradients need not be isotropic; their encoder space can drift.
+Models share data, batches, views, and initial effective map $A$. Independent checks of stored $B$ also give matching encoder spaces (maximum paired projector distance $6.65\,10^{-15}$) and task risks (difference $1.89\,10^{-15}$). Calibrated factor scales and mobilities differ. Frozen encoder risks stay constant, while projection rebound occurs under all three models. Linear encoder rebound is compatible with finite-data anisotropy: the exact conservation statement assumes isotropic population updates. Squaring supplies an additional motion mechanism under that premise; empirical rebound itself is not specific to squaring.
 
 \paragraph{Objective and theorem boundary.}
-All square-model terminal population objectives are lower than initialization. Nine of ten successful encoder task-events, across four seeds, also satisfy $L(0)>L(1000)>L(4000)$; the exception is seed 23's antidiagonal-high task. These correlated events are cross-tabulated in the appendix, not counted as independent trials. Seed 23's objective rises slightly over the second interval, so empirical SGD does not reproduce strict trajectory-wide objective descent. All square endpoints have $Q=sV>1$, with $s=1.44$. The theory guarantees rebound under controlled conditions; this experiment observes the same type of complete rebound in a wider empirical configuration. It does not validate every theorem assumption or stability beyond the energy interval.
+All 50 square-model endpoint population objectives improve over initialization. Of 43 square encoder fixed-time task-events, 39 also satisfy $L(0)>L(1000)>L(4000)$; all three linear events do. These correlated event counts concern the fixed-time rule, not every sampled-path witness. Empirical SGD does not establish trajectory-wide population descent. Encoder/projection ranks remain $8/1$, and supplementary SVD cutoffs preserve all decisions. Square endpoints have $Q=sV\in[1.241,1.395]$, outside the theorem's energy region. The experiment establishes complete rebound beyond the construction without validating every theorem premise.
 
 \paragraph{Motion and short-horizon prediction.}
 Earlier population controls isolate encoder motion from projection selection: at common $\ell=\log(V/V_0)=3$, square encoder displacement averages $0.3064$, while the linear control is at rounding scale. Under empirical training both can move; full and local suites and their preserved ranks are retained in Appendix~\ref{sec:textures}. Frozen-source predictions on independent future streams are useful early but fail late: square-projection eight-step MAE/zero-change ratios are $0.149$, $1.211$, and $1.230$ across training stages. Only nine of 720 encoder band slots admit eight-step windows. These are local predictive diagnostics, separate from complete rebound; coverage, interval widths, and error decompositions are supplementary.
@@ -240,4 +234,4 @@ This late projection deterioration is a widening compression gap; its endpoint s
 \section{Discussion}
 Continued objective descent can carry an encoder through task-aligned directions and then away from them. The encoder's own risk increase locates the loss before projection; preserved rank identifies redistribution of readable directions. In the theory and controlled textures, optimal unregularized population decoders exclude finite-label fitting error and invertible feature scaling as explanations. The stability theorem retains the gaps under independent perturbations of every initialization coordinate. CIFAR adds empirical fixed-task witnesses with consistent held-out error, while keeping that finite-sample risk object distinct.
 
-The guarantee is local and constructive: its initialization radius $8\,10^{-6}$ at fixed data, augmentation, and rates gives no random-initialization probability. The structured covariance interval is a separate result. Rate changes preserve the symmetric family's ordered subspace path, so rebound supplies no universal rate-selection rule. Texture events have limited task-wise frequency and endpoints outside the theorem's energy interval; CIFAR witness times are retrospective. Neither establishes typicality or uniquely identifies natural-image dynamics. Early source-frozen forecasts have sparse encoder coverage and late failure; empirical quantiles do not instantiate the supplementary stochastic propositions. The results establish task-specific finite-time readability loss, while class transfer and predictive control retain clear boundaries.
+The guarantee is local and constructive: its initialization radius $8\,10^{-6}$ at fixed data, augmentation, and rates gives no random-initialization probability. The structured covariance interval is a separate result. Rate changes preserve the symmetric family's ordered subspace path, so rebound supplies no universal rate-selection rule. Fifty paired texture seeds show rebound under both square and linear training; frequencies depend on task, calibrated initialization, grid, and comparison rule. This excludes architecture exclusivity and does not establish broad typicality. Square endpoints exceed the theorem's energy region; CIFAR witness times are retrospective. Early source-frozen forecasts have sparse encoder coverage and late failure; empirical quantiles do not instantiate the supplementary stochastic propositions. The results establish task-specific finite-time readability loss, while class transfer and predictive control retain clear boundaries.

@@ -1,5 +1,6 @@
-\section{Complete Encoder Rebound on Independent Texture Initializations}
+\section{Earlier Six-Seed Fixed-Time Texture Validation}
 \label{supp:encoder-rebound}
+This section retains the earlier seeds 20--25 and their targeted step-refinement checks. The main report now uses the separate 50-seed comparison in Section~\ref{main:experiments} and Appendix~\ref{supp:texture-fifty}, where linear encoders also exhibit complete rebound. No six-seed absence below is an architecture-exclusivity claim.
 \subsection{Development, fixed comparison, and controls}
 The complete-rebound validation reuses the periodic-texture dictionary and exact image-forward identity in Appendix~\ref{sec:textures}, but uses a new set of initialization and data seeds. Historical seeds 2--11 were inspected to develop the comparison at updates 1,000 and 4,000 with amplitude threshold $\delta=0.001$. Those choices were fixed before seeds 20--25 were run. This is development-informed small validation, not public preregistration. Ten tasks are specified by the existing coordinate and band-sum definitions; no task is chosen from a new trajectory. The empirical minimum is descriptive only and never enters the success criterion.
 
@@ -8,7 +9,7 @@ Each initialization draws independent spectral filter coordinates $N(0,1)/4$ and
 Square, linear-factor, and frozen-encoder models share data, minibatches, views, and initial $A$. Initial encoder comparability is checked independently from stored $B$ matrices: across all paired seeds/models, the maximum $\norm{P_{B_i(0)}-P_{B_j(0)}}_F$ is $8.25\,10^{-15}$, the maximum fixed-task risk difference is $2.45\,10^{-15}$, and the maximum entry difference in $A_0$ is $5.90\,10^{-17}$. Raw $B$ entries can differ by $0.13457$ and singular values by $0.25427$ after independent calibration. Matching the effective map alone would not imply matching encoder spaces or risks. Here those spaces and risks match numerically, while factor scales, parameterizations, and mobilities differ. The controls support their role in these trajectories, without proving a unique causal attribution. Finite-data linear updates need not satisfy the exact isotropic population conservation premise.
 
 \subsection{All fixed-time amplitudes and objective cross-check}
-For every fixed task we retain $I=R(0)-R(1000)$ and $D=R(4000)-R(0)$, with a complete rebound only when both exceed $0.001$. Table~\ref{supp:all-rebound-gaps} reports all 60 square-encoder pairs; the sample unit remains the seed. Every planned model/seed run completed, and no failed or missing run was removed. Main Table~\ref{main:rebound-counts} retains the six-seed denominator for every model and task. Each of the ten fixed tasks has zero successful encoder seeds for both linear and frozen controls. Complete projection task-events also occur under linear and frozen controls (five and four, respectively), so projection rebound alone does not isolate encoder readability loss.
+For every fixed task we retain $I=R(0)-R(1000)$ and $D=R(4000)-R(0)$, with a complete rebound only when both exceed $0.001$. Table~\ref{supp:all-rebound-gaps} reports all 60 square-encoder pairs; the sample unit remains the seed. All 18 planned model/seed runs completed. In this earlier six-seed batch, each fixed task has zero successful encoder seeds for both linear and frozen controls. In contrast, the separate 50-seed report in Main Table~\ref{main:rebound-counts} contains linear events under this same fixed-time rule and under the sampled-path rule. Complete projection task-events also occur in the earlier linear and frozen controls (five and four, respectively), so projection rebound alone does not isolate encoder readability loss.
 
 \begin{table*}[t]
 \centering\footnotesize
@@ -99,7 +100,7 @@ Targeted numerical checks reuse the same data, minibatches, and views, replacing
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/encoder_rebound_geometry.pdf}
-\caption{All 18 main-validation trajectories: evaluation-only population objective, numerical encoder rank, encoder/projection minimum nonzero singular values, and projector displacement. Empirical SGD need not make the population objective decrease at every update.}
+\caption{All 18 earlier six-seed validation trajectories: evaluation-only population objective, numerical encoder rank, encoder/projection minimum nonzero singular values, and projector displacement. Empirical SGD need not make the population objective decrease at every update.}
 \label{supp:rebound-geometry}
 \end{figure*}
 

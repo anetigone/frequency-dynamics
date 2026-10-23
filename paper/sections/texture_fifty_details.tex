@@ -1,0 +1,82 @@
+\section{Fifty-Seed Paired Texture Report}
+\label{supp:texture-fifty}
+\paragraph{Scope and complete coverage.}
+The main empirical report uses 50 independent seeds 100--149, each paired across square, linear, and frozen-encoder models. These seeds are separate from the earlier six-seed validation below and are not pooled with it. All 150 planned trajectories complete all 161 observations on the fixed grid $\{0,25,\ldots,4000\}$. Training and task definitions match Section~\ref{main:experiments}: 16 independent texture power coordinates, ten fixed tasks, eight encoder channels, one projection output, and exact unregularized population task risks evaluated along finite-data SGD training. The initialization is an independent Gaussian draw followed by label-free energy and Jacobian-trace calibration. Frequencies therefore concern this calibrated distribution, training setup, grid, and budget.
+
+\paragraph{Three distinct measurements.}
+Sampled-path complete rebound requires an ordered pair of positive recorded times with improvement and excess over initialization both strictly greater than $\delta=0.001$, as in Equation~\eqref{main:empirical-rebound-rule}. The reported witness maximizes the smaller of these two gaps over the recorded path. This retrospective path statistic is distinct from the original fixed 1,000/4,000-update rule. Ordinary drawup permits any earlier reference, including initialization, and need not cross above the initial risk after an improvement. It is a weaker event. Tables~\ref{main:rebound-counts}, \ref{supp:fifty-projection}, and \ref{supp:fifty-drawup} keep these definitions separate.
+
+The independent repetition is the seed. Tasks, representations, and checkpoints do not add independent samples. Table~\ref{supp:fifty-intervals} gives pointwise Wilson 95\% intervals for sampled-path encoder frequencies. All planned paths complete, so no seed is excluded. These are descriptive intervals for each task and model, with no simultaneous coverage across tasks and no paired architecture-effect test. Square has more observed encoder events on eight tasks, the same number on antidiagonal-high, and fewer on antidiagonal-low; the data do not imply a uniform architecture ordering.
+
+\begin{table}[t]
+\centering\small
+\caption{Sampled-path encoder rebound among 50 seeds. Entries give percentage and pointwise Wilson 95\% interval, rounded to whole percentage points. Frozen encoders have zero events on every task (interval $[0,7]\%$).}
+\label{supp:fifty-intervals}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrr}
+\toprule
+Fixed task&Square (\%)&Linear (\%)\\\midrule
+single $x$ low&14 [7,26]&8 [3,19]\\
+single $y$ low&18 [10,31]&8 [3,19]\\
+$x$ low&20 [11,33]&14 [7,26]\\
+$x$ high&26 [16,40]&12 [6,24]\\
+$y$ low&14 [7,26]&12 [6,24]\\
+$y$ high&18 [10,31]&6 [2,16]\\
+diagonal low&24 [14,37]&10 [4,21]\\
+diagonal high&14 [7,26]&2 [0,10]\\
+antidiagonal low&12 [6,24]&14 [7,26]\\
+antidiagonal high&12 [6,24]&12 [6,24]\\\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Projection complete-rebound counts out of 50 seeds for every task. Sq/Lin/Fr denote square, linear, and frozen encoder. Projection rebound occurs under all models, including a fixed encoder.}
+\label{supp:fifty-projection}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+&\multicolumn{3}{c}{Sampled path}&\multicolumn{3}{c}{Fixed times}\\
+Fixed task&Sq&Lin&Fr&Sq&Lin&Fr\\\midrule
+single $x$ low&17&5&3&9&5&1\\
+single $y$ low&16&9&10&7&5&2\\
+$x$ low&25&8&6&10&7&1\\
+$x$ high&18&5&4&8&3&2\\
+$y$ low&27&5&6&12&2&2\\
+$y$ high&15&3&4&10&1&2\\
+diagonal low&21&2&2&8&2&0\\
+diagonal high&21&4&4&11&4&2\\
+antidiagonal low&23&4&9&10&3&5\\
+antidiagonal high&21&10&9&5&3&0\\\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Ordinary drawup greater than $0.001$, counts out of 50. These are not complete-rebound counts. Frozen encoder risks remain constant, whereas their trainable heads can change projection risk.}
+\label{supp:fifty-drawup}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+&\multicolumn{3}{c}{Encoder}&\multicolumn{3}{c}{Projection}\\
+Fixed task&Sq&Lin&Fr&Sq&Lin&Fr\\\midrule
+single $x$ low&50&39&0&50&45&33\\
+single $y$ low&50&42&0&50&45&30\\
+$x$ low&50&41&0&50&48&29\\
+$x$ high&50&40&0&50&49&27\\
+$y$ low&50&46&0&50&48&29\\
+$y$ high&48&35&0&50&44&29\\
+diagonal low&49&41&0&50&50&29\\
+diagonal high&50&44&0&50&47&22\\
+antidiagonal low&50&39&0&50&48&31\\
+antidiagonal high&48&40&0&50&49&29\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Pairing and numerical checks.}
+Models share data, minibatches, views, and initial effective map. Direct comparison of stored initial encoder matrices gives a maximum paired encoder projector distance $6.65\,10^{-15}$ and fixed-task risk difference $1.89\,10^{-15}$; the maximum entry difference in $A_0$ is $4.26\,10^{-17}$. Initial factor scales differ after independent calibration. Across all recorded states, encoder/projection ranks stay $8/1$. Relative SVD cutoffs $10^{-12},10^{-10},10^{-8}$ preserve risks and both complete-rebound decisions. This excludes the measured numerical rank-truncation explanation, without supplying a new step-refinement result for all 50 seeds.
+
+\paragraph{Objective comparisons and interpretation.}
+Under the fixed-time rule there are 43 square encoder task-events, of which 39 satisfy the two-segment population-objective comparison $L(0)>L(1000)>L(4000)$. All three linear encoder events satisfy it. These are correlated event counts rather than independent trials, and are not an objective check at each sampled-path witness. All 50 square endpoints have lower population objective than initialization, with $Q=sV\in[1.241,1.395]$, $s=1.44$. The endpoints lie outside the theorem's energy region; finite-data SGD does not reproduce strict population gradient flow or ensure per-update monotonicity.
+
+Linear events under both rules prevent interpreting complete encoder rebound as exclusive to squaring. Finite-data conditional gradients can be anisotropic, so these events do not contradict exact row-space conservation under isotropic population updates. The theorem isolates an additional square-mobility mechanism even under isotropic objective moments; the empirical comparison measures outcomes under the stated finite-data conditions. The earlier six-seed absence of linear events is retained below as historical evidence at its original scope, not as the main architecture comparison.
