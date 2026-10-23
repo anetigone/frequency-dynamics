@@ -1,0 +1,86 @@
+\section{Long-run CIFAR moment tasks and class readouts}
+\label{supp:natural-long}
+\paragraph{Protocol and risk objects.}
+This experiment uses the official CIFAR-10 training set of 50,000 images and test set of 10,000, separately from the earlier development-split experiments in Appendix~\ref{app:natural-details}. Grayscale images are normalized using training statistics. The model has 64 valid $11\times11$ convolutional filters, squaring, global pooling, and an eight-output linear projection. Independent Gaussian filters and heads undergo label-free energy and Jacobian-trace calibration. SGD uses batch size 256, learning rate $0.002$, equal front/head rates, and no momentum, weight decay, clipping, or output normalization. Seeds 30--32 each complete 976,563 updates. An epoch denotes $256/50{,}000$ times the update count under sampling with replacement, rather than an exact traversal.
+
+Eleven fixed local second-moment functionals comprise DC energy, patch mean square, patch contrast, and low/high band energies along four directions. Each target is centered and scaled using training moments only. Affine unregularized OLS is refitted on the entire training set at 31 fixed checkpoints; the same decoder gives official-test error. Training risk is the finite-training-distribution optimum, whereas test error includes decoder generalization. Neither is the unknown natural-distribution population optimum. Labels do not enter pretraining, initialization, or stopping. The audit objective uses 256 fixed training images and fixed view pairs. DTD remains a separate 200-epoch experiment; these results do not supply DTD long-run evidence.
+
+\paragraph{All fixed tasks.}
+For each task and seed, a complete event requires ordered recorded times $0<s<t$ with $R(0)-R(s)>10^{-3}$ and $R(t)-R(0)>10^{-3}$. A joint event requires the same $(s,t)$ to satisfy all four training/test inequalities. Table~\ref{supp:natural-task-counts} retains every fixed task. Encoder training and test each have seven events; six are joint. The remaining events are training-only seed 31/$x$-high and test-only seed 30/diagonal-low, and are not combined into a joint witness. Projection has 28 joint events out of 33 task--seed combinations. These counts describe correlated tasks across three independent seeds, not 33 independent replications.
+
+\begin{table}[t]
+\centering\small
+\caption{Complete events among three CIFAR seeds. Encoder joint counts require a common early/late pair across splits. Projection train, test, and joint counts coincide.}
+\label{supp:natural-task-counts}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrr}
+\toprule
+&\multicolumn{3}{c}{Encoder}&Projection\\
+Fixed task&Train&Test&Joint&Joint\\\midrule
+DC energy&0&0&0&3\\
+Patch mean square&0&0&0&2\\
+Patch contrast&0&0&0&3\\
+$x$ low&2&2&2&2\\
+$x$ high&1&0&0&3\\
+$y$ low&0&0&0&3\\
+$y$ high&2&2&2&3\\
+Diagonal low&0&1&0&2\\
+Diagonal high&0&0&0&2\\
+Antidiagonal low&0&0&0&3\\
+Antidiagonal high&2&2&2&2\\\midrule
+Total task--seed events&7&7&6&28\\\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Witness selection and amplitudes.}
+For descriptive display, each joint witness maximizes the minimum of its four gaps over the saved grid. Ties prefer an earlier late point, then a larger minimum early improvement. Table~\ref{supp:natural-witnesses} lists these common-pair gaps. Epochs are rounded to the nominal grid. Tasks, grid, and threshold were fixed before training; the displayed tasks and times were selected retrospectively, using both training and test measurements. Thus test agreement is cross-split consistency rather than an independent confirmation of a source-only prediction. Three joint minima are only $1.16$--$1.48$ times the threshold, compared with more than six times the threshold for both antidiagonal-high witnesses.
+
+\begin{table}[t]
+\centering\small
+\caption{All six common-pair encoder witnesses. $I=R(0)-R(s)$ and $D=R(t)-R(0)$. Gaps below are multiplied by $10^3$ and use training-target variance units.}
+\label{supp:natural-witnesses}
+\setlength{\tabcolsep}{1.6pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Seed&Task&$s\to t$&$I_{\rm tr}$&$D_{\rm tr}$&$I_{\rm te}$&$D_{\rm te}$\\\midrule
+30&$x$ low&750/4000&1.176&1.500&1.252&1.339\\
+30&Anti. high&200/500&9.111&12.066&10.567&6.517\\
+31&$y$ high&200/300&1.485&6.060&1.888&5.685\\
+32&$x$ low&1000/5000&1.770&1.253&1.875&1.162\\
+32&$y$ high&1500/3000&4.581&6.393&6.735&5.651\\
+32&Anti. high&750/2000&6.298&11.323&8.696&9.094\\\bottomrule
+\end{tabular}
+\end{table}
+
+All six witnesses satisfy $L(0)>L(s)>L(t)$ for the fixed-view audit, but the denser audit records contain upward fluctuations in both intervals. They do not establish per-update monotonicity or exact population descent. For seed 32's antidiagonal-high witness, audit values are $-0.00924,-3.03073,-5.09336$. Seed 30's antidiagonal-high training risk later recovers to $0.418261$ at 5,000 epochs, below its initial $0.445912$; test error similarly recovers to $0.372774$ from $0.395159$. Finite-time rebound does not imply permanent loss. DC, mean-square, and contrast tasks already have encoder initial risks below the threshold, excluding a threshold-sized initial improvement by nonnegativity; their zero counts do not test against the mechanism on equal terms.
+
+\paragraph{Long-run class measurements.}
+Table~\ref{supp:natural-class-long} reports three-seed means. Encoder training class MSE improves from initialization to endpoint in every seed, and test accuracy increases in every seed. Seed 32's test MSE rises slightly, by $7.66\,10^{-6}$, despite higher accuracy. OLS optimality concerns training squared error, not classification accuracy.
+
+\begin{table}[t]
+\centering\small
+\caption{Three-seed CIFAR means at fixed epochs. MSE is per one-hot coordinate; accuracies are percentages. Standardization and whitening are fitted on training features.}
+\label{supp:natural-class-long}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrr}
+\toprule
+Readout&0&200&5000\\\midrule
+Encoder train MSE&0.08076794&0.08081010&0.08055515\\
+Encoder test MSE&0.08088482&0.08093473&0.08066333\\
+Encoder test acc.&36.677&36.613&37.257\\
+Projection test acc.&23.670&23.410&26.890\\
+Encoder raw kNN&28.223&22.523&30.980\\
+Encoder std. kNN&30.940&29.960&33.047\\
+Encoder whitened kNN&30.120&30.423&31.063\\\bottomrule
+\end{tabular}
+\end{table}
+
+All 18 seed/representation/kNN-method curves attain their highest observed accuracy at 5,000 epochs. kNN uses only 13 fixed checkpoints, with none between 2,000 and 5,000; unobserved intermediate peaks remain possible. The early raw-kNN decline is therefore temporary at the measured endpoint, and does not reproduce a late decline. At 200 epochs, standardization reduces the encoder's raw decline from $5.70$ to $0.98$ percentage points, while whitening gives a $0.303$-point increase. This metric dependence is distinct from an OLS risk change.
+
+\paragraph{Projection selection.}
+From 3,000 to 5,000 epochs, all three seeds improve encoder training/test MSE while worsening projection training/test MSE. Mean training encoder MSE changes from $0.08070112$ to $0.08055515$; projection MSE changes from $0.08438508$ to $0.08510045$. The training selection gap therefore widens by $0.00086133$, overcoming the encoder improvement of $0.00014597$. Test MSE changes are $-0.00016644$ and $+0.00066337$ respectively. The same arithmetic decomposition applies on test, but its gap has no empirical-optimum nesting guarantee. The 3,000-epoch point is a retrospectively identified favorable mean checkpoint, not a validated early-stopping rule. Projection endpoints still improve over initialization.
+
+\paragraph{Rank, spectrum, and bounds.}
+All 93 checkpoints retain encoder/projection ranks $64/8$. Relative SVD cutoffs $10^{-12},10^{-10},10^{-8}$ produce risks identical to the default for both classes and moment tasks. The minimum observed encoder singular-value ratio is $4.16\,10^{-4}$, well above these thresholds. Features are computed in float32 and OLS in float64; this check concerns solver truncation, not an independent higher-precision feature computation.
+
+Projection PC1's mean variance share decreases from approximately $84.25\%$ to $17.07\%$, with endpoint PC1--DC training $R^2$ only $0.015$--$0.032$, while full-encoder DC risk stays very low. Persistent DC concentration cannot explain the entire long-run trajectory. The class bound in Equation~\eqref{main:finite-task-bound}, evaluated in the training sample-function space and converted to per-coordinate MSE, is $0.253$--$0.264$ for endpoint encoders, exceeding constant-predictor risk $0.09$. It is too loose to explain the small class changes and does not bound official-test error. Natural-image witnesses establish empirical task readability changes, not unique attribution to square mobility, typicality across tasks, or validation of useful natural-distribution prediction bounds.

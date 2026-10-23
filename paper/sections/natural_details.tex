@@ -1,4 +1,4 @@
-\section{Natural-image protocols and detailed diagnostics}
+\section{Earlier natural-image protocols and diagnostics}
 \label{app:natural-details}
 Natural-image experiments test whether direction selection has observable task consequences beyond the controlled construction. They reveal substantial objective improvement without substantial class-readability gains, and a local risk-direction effect with limited coverage and persistence. On CIFAR-10~\cite{krizhevsky2009learning}, we use grayscale input, 64 $11\times11$ valid convolutional filters, squaring, GAP, and an eight-dimensional head. Unsupervised pretraining starts from scratch without downstream labels. The training split is 45,000/5,000, and the standard 10,000-image test set is reserved for the fixed final-budget comparison. Augmentations are reflected crops, horizontal flips, contrast changes, and additive noise. Classification uses unregularized affine OLS on one-hot labels, evaluating encoder and projection separately. Validation MSE is a finite-sample task risk, not the theorem's population risk. Supervised references and the label-conditioned intervention below are distinguished from pretraining.
 
