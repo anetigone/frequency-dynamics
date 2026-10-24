@@ -2,7 +2,7 @@
 
 本文是方法和复现命令说明，不是待办清单。当前进展、已完成结果和下一步统一见 [STATUS.md](../../STATUS.md)；本机下载结果的实际位置也在那里说明。
 
-确认协议使用五个 CIFAR 种子 40–44，跑到 2000 个样本曝光等价 epoch。原 30–32 是探索种子，新五个独立报告，不混成八个确认种子。五个种子只能给出较宽的发生率区间；本轮首先检验预先固定任务/窗口是否能重复，不追求精确估计发生率。
+确认协议使用五个 CIFAR 种子 40–44，跑到 2000 个样本曝光等价 epoch。原 30–32 是正式长程实验，完整轨迹及其 head/度量诊断均可作为论文正式结果。本协议的主任务和两个窗口根据原三种子的结果选定，因此原三种子是这项后续检验的发现阶段，新五个是独立固定窗口确认；这一区分不意味着原结果只是试跑或不计入证据。两批可在统一时长、窗口后作八种子的描述性汇总，但新种子的确认结果仍单独报告，不称为八个事前固定的独立确认。五个确认种子只能给出较宽的发生率区间；本检验首先测量固定任务/窗口能否重复，不追求精确估计发生率。
 
 全部沿用官方 CIFAR train 50k/test 10k 及原网络、增强、SGD 和初始化设置。新结果写入独立目录，保留原 5000-epoch 实验。原 `.pt` checkpoint 留在服务器，不需要下载到本机。本机只运行无数据的 plan 和小型合成 smoke。
 
@@ -61,3 +61,50 @@ find experiments/results/empirical/natural_confirmation_cifar10 \
 ```
 
 若修改了 `RESULT_ROOT`，相应替换打包路径。原三种子 5000-epoch 结果及论文文件无需覆盖。
+
+## 事件分解与带方向几何分解
+
+这两项沿用 `natural_rebound_confirmation.py`，不新增种子、预训练、任务或确认窗口。当前完成情况及结果链接只在 [STATUS.md](../../STATUS.md) 维护。
+
+### 已保存风险的事件分解
+
+`analyze` 只读取现有 JSON，不加载 Torch、图像或 checkpoint。它将全部十一任务、encoder/projection 的固定窗口分为完整回升、仅先改善、仅晚期超初值及均未达标，保留每项训练/测试幅度；另报四个相邻区间、五点网格上的全部合法配对和普通 drawup。两个 split 必须使用同一对时刻；最大改善和最大超额各自存在并不等于存在有序的完整事件。
+
+```bash
+python -B experiments/code/empirical/natural_rebound_confirmation.py analyze \
+  --output experiments/results/empirical/natural_confirmation_cifar10
+# 使用现有批量入口等价执行：
+bash experiments/run_mechanism_followup_server.sh events
+```
+
+输出放在原实验目录的 `event_analysis/`，不改原 `confirmation_summary/`、`summary/`、protocol 或评估文件。`fixed_windows.csv` 是原确认规则的分类与连续幅度；`all_pairs.csv`、`path_events.csv` 是事后描述；`adjacent_changes.csv` 保留每个相邻区间。`coverage.csv` 明示缺失种子，不将缺失计作无事件。`points.csv` 保留逐点风险。初始导数与至 200 epoch 的变化、首次审计目标低于 −3 的时刻也仅作描述，不形成新的确认规则。
+
+### 读取已有 checkpoint 的几何诊断
+
+在服务器保留的五种子目录中读取 `step_0.pt`、`step_39063.pt`、`step_97657.pt`、`step_146485.pt`、`step_390625.pt`。只对官方 50k 训练图像提取固定特征，不调用优化器，不下载数据；比较 0→200、200→500、500→750、750→2000 四个相邻区间。测试误差仍由训练拟合 decoder 衡量，不在测试集重拟合 projector。
+
+对训练方差标准化并除以样本数平方根的目标 y，以中心化特征的薄 SVD 得到源、末状态正交基 Q0、Q1。令 P0=Q0Q0ᵀ、P1=Q1Q1ᵀ、u=P0y、v=(I−P0)y，精确分解为：
+
+`ΔR = uᵀ(I−P1)u − vᵀP1v − 2uᵀP1v`。
+
+三项分别保存为 `lost_readable`、`gained_residual`、`signed_cross`；前两项在精确算术中非负，第二项从风险差中减去。实现只使用 Q1ᵀQ0 和目标投影，不构造 50000×50000 矩阵。对每个任务保存源/末风险、恒等式误差和相对原 OLS 记录的误差。它是事后经验训练风险恒等式，不能当作源状态预测、测试风险界或唯一动力学归因。
+
+```bash
+# 检查服务器原 checkpoint 是否在位，不读取真实图像。
+bash experiments/run_mechanism_followup_server.sh geometry-plan
+# 数值评估与汇总为两个独立 Python 进程；无训练。
+bash experiments/run_mechanism_followup_server.sh geometry
+```
+
+如需分开指定 checkpoint 来源及分析输出位置：
+
+```bash
+python -B experiments/code/empirical/natural_rebound_confirmation.py geometry \
+  --source /path/to/natural_confirmation_cifar10 \
+  --output /path/to/analysis_output --data-root /path/to/existing/cifar-cache \
+  --device cuda --threads 1 --feature-batch 256
+python -B experiments/code/empirical/natural_rebound_confirmation.py geometry-summary \
+  --output /path/to/analysis_output
+```
+
+数值评估在 `geometry_analysis/` 保存来源参数与逐种子 JSON；重跑保留已完成种子。汇总生成全任务 `signed_terms.csv` 和 `findings.md`，并报告缺失种子及误差。改变来源或参数时使用独立输出目录。下载这一子目录的 JSON/CSV/Markdown 即可，checkpoint 与特征留在服务器；不必保存全量特征。

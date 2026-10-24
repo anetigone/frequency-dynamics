@@ -12,6 +12,8 @@ python -B experiments/code/empirical/texture_rebound_sweep.py --stage plan
 
 自然图像的共同入口是 [natural_moment_experiment.py](natural_moment_experiment.py)：训练、续跑、固定矩任务和类别读取评估分阶段执行。[natural_rebound_confirmation.py](natural_rebound_confirmation.py)固定确认任务与时间窗口；[natural_metric_intervention.py](natural_metric_intervention.py)从同一 checkpoint 作配对更新度量干预；[natural_head_counterfactual.py](natural_head_counterfactual.py)在冻结 encoder 上比较历史 head 与监督低秩参照。读取和汇总函数分别在 [natural_moment_eval.py](natural_moment_eval.py)、[summarize_natural_moments.py](summarize_natural_moments.py)。
 
+确认入口另提供 `analyze`（已保存风险的事件分解）、`geometry-plan`、`geometry`（已有 checkpoint 的相邻区间带方向分解）与 `geometry-summary`。后二者分进程执行，不新增训练；命令、数学口径和输出说明见[机制补充协议](../../docs/followup.md#事件分解与带方向几何分解)。
+
 纹理回升使用 [texture_rebound_sweep.py](texture_rebound_sweep.py)组织配对运行与两种回升统计，底层训练在 [encoder_rebound.py](encoder_rebound.py)。短期分叉和局部几何预测使用 [texture_motion_prediction.py](texture_motion_prediction.py)，与完整轨迹回升分别报告。
 
 服务器批量入口仍为 [run_supplemental_server.sh](../../run_supplemental_server.sh) 和 [run_mechanism_followup_server.sh](../../run_mechanism_followup_server.sh)。参数与输出说明见[自然图像协议](../../docs/natural.md)、[纹理协议](../../docs/textures.md)、[机制补充实验](../../docs/followup.md)及[运动预测](../../docs/motion.md)。

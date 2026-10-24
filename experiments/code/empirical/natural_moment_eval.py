@@ -213,6 +213,48 @@ def _sample_basis(features):
     return u[:, keep], values, float(threshold)
 
 
+def signed_geometry(initial, current, targets, train):
+    """Exact training-risk change: lost source component - gained residual + cross.
+
+    Uses two thin sample-space bases and their small overlap matrix, never an
+    N-by-N projector. This is a retrospective identity, not a source forecast.
+    Test error of a train-fitted decoder has no such projector decomposition.
+    """
+    initial, current, targets = map(_matrix, (initial, current, targets))
+    train = _indices(train)
+    if not len(train) or not (len(initial) == len(current) == len(targets)):
+        raise ValueError('Features and targets need matching rows and nonempty train')
+    first, _, _ = _sample_basis(initial[train])
+    later, _, _ = _sample_basis(current[train])
+    standardized, _, scale = _standardized_targets(targets, train)
+    y = standardized[train] / math.sqrt(len(train))
+    overlap = later.T @ first
+    a, b = first.T @ y, later.T @ y
+    projected_source = overlap @ a
+    projected_residual = b - projected_source
+    source_power = a.square().sum(0)
+    total = y.square().sum(0)
+    initial_risk = total - source_power
+    current_risk = total - b.square().sum(0)
+    lost = source_power - projected_source.square().sum(0)
+    gained = projected_residual.square().sum(0)
+    cross = -2 * (projected_source * projected_residual).sum(0)
+    delta = current_risk - initial_risk
+    rank0, rank1 = first.shape[1], later.shape[1]
+    d2 = max(0., float((rank0 + rank1) / 2 - overlap.square().sum()))
+    rows = []
+    for j in range(y.shape[1]):
+        reconstructed = lost[j] - gained[j] + cross[j]
+        rows.append(dict(initial_risk=float(initial_risk[j]), current_risk=float(current_risk[j]),
+            delta_risk=float(delta[j]), lost_readable=float(lost[j]),
+            gained_residual=float(gained[j]), signed_cross=float(cross[j]),
+            reconstructed_delta=float(reconstructed), identity_error=float(reconstructed-delta[j]),
+            a0=float((initial_risk[j].clamp_min(0)*source_power[j]).sqrt())))
+    return dict(scope='exact empirical training-risk identity; retrospective, not a prediction or test bound',
+                initial_rank=rank0, current_rank=rank1, equal_rank=rank0 == rank1,
+                distance_frobenius_over_sqrt2=math.sqrt(d2), task_scale=scale.tolist(), tasks=rows)
+
+
 def _aggregate_bound(y, first, current, d, equal_rank):
     """Y is centered and divided by sqrt(number of training observations)."""
     coefficient = first.T @ y

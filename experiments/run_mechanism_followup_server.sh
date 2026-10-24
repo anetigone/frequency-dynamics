@@ -53,7 +53,7 @@ finish_heads() {
 
 stage="${1:-plan}"
 if [[ $# -gt 1 ]]; then
-    printf 'Usage: bash experiments/run_mechanism_followup_server.sh [plan|confirm|metric|heads|all|summary|smoke]\n' >&2
+    printf 'Usage: bash experiments/run_mechanism_followup_server.sh [plan|confirm|metric|heads|all|summary|events|geometry-plan|geometry|smoke]\n' >&2
     exit 2
 fi
 case "$stage" in
@@ -75,13 +75,19 @@ case "$stage" in
         metric summarize
         heads summarize
         ;;
+    events) confirmation analyze ;;
+    geometry-plan) confirmation geometry-plan ;;
+    geometry)
+        confirmation geometry
+        confirmation geometry-summary
+        ;;
     smoke)
         confirmation smoke
         metric smoke
         heads smoke
         ;;
     *)
-        printf 'Unknown stage: %s\nChoose plan, confirm, metric, heads, all, summary, or smoke.\n' "$stage" >&2
+        printf 'Unknown stage: %s\nChoose plan, confirm, metric, heads, all, summary, events, geometry-plan, geometry, or smoke.\n' "$stage" >&2
         exit 2
         ;;
 esac

@@ -15,7 +15,7 @@ from torch.nn import functional as F
 
 from natural_moment_eval import (fixed_moment_dictionary, fixed_moment_filters,
                                  fit_readouts, geometry_bound, knn_metrics,
-                                 directional_readout_slopes)
+                                 directional_readout_slopes, signed_geometry)
 from summarize_natural_moments import trajectory_event
 
 
@@ -45,6 +45,42 @@ def main():
 
     n, channels, outputs, classes = 100, 7, 3, 4
     features = torch.randn(n, channels, dtype=torch.float64, generator=rng)
+    # Independent dense-projector calculation for all three signed terms.
+    # Small synthetic matrices only: production code never constructs N x N.
+    first = torch.randn(40, 4, dtype=torch.float64, generator=rng)
+    later = torch.randn(40, 4, dtype=torch.float64, generator=rng)
+    y = torch.randn(40, 3, dtype=torch.float64, generator=rng)
+    index = torch.arange(40)
+    signed = signed_geometry(first, later, y, index)
+    centered = lambda x: x-x.mean(0)
+    q0 = torch.linalg.qr(centered(first)).Q
+    q1 = torch.linalg.qr(centered(later)).Q
+    p0, p1 = q0@q0.T, q1@q1.T
+    y0 = centered(y)/centered(y).square().mean(0).sqrt()/math.sqrt(40)
+    row, residual = p0@y0, (torch.eye(40)-p0)@y0
+    expected_lost = (row*((torch.eye(40)-p1)@row)).sum(0)
+    expected_gain = (residual*(p1@residual)).sum(0)
+    expected_cross = -2*(row*(p1@residual)).sum(0)
+    for j, item in enumerate(signed['tasks']):
+        torch.testing.assert_close(torch.tensor(item['lost_readable'], dtype=torch.float64), expected_lost[j])
+        torch.testing.assert_close(torch.tensor(item['gained_residual'], dtype=torch.float64), expected_gain[j])
+        torch.testing.assert_close(torch.tensor(item['signed_cross'], dtype=torch.float64), expected_cross[j])
+        assert abs(item['identity_error']) < 1e-12
+    remix = torch.randn(4, 4, dtype=torch.float64, generator=rng)+5*torch.eye(4)
+    remixed_signed = signed_geometry(first@remix+2, later@remix-3, y, index)
+    for a, b in zip(signed['tasks'], remixed_signed['tasks']):
+        for key in ('lost_readable', 'gained_residual', 'signed_cross', 'delta_risk'):
+            assert abs(a[key]-b[key]) < 1e-12
+    changed_rank = signed_geometry(first, later[:, :2], y, index)
+    assert not changed_rank['equal_rank']
+    assert max(abs(r['identity_error']) for r in changed_rank['tasks']) < 1e-12
+    # A known rotation hurts a perfectly readable task entirely by the lost term.
+    normal = q1[:, :1]-q0@(q0.T@q1[:, :1]); normal /= normal.norm()
+    rotated = q0[:, :1]*math.cos(.3)+normal*math.sin(.3)
+    rotation = signed_geometry(q0[:, :1], rotated, q0[:, :1], index)['tasks'][0]
+    assert abs(rotation['delta_risk']-math.sin(.3)**2) < 1e-12
+    assert abs(rotation['lost_readable']-math.sin(.3)**2) < 1e-12
+    assert abs(rotation['gained_residual']) < 1e-12 and abs(rotation['signed_cross']) < 1e-12
     head = torch.randn(channels, outputs, dtype=torch.float64, generator=rng)
     targets = torch.randn(n, 5, dtype=torch.float64, generator=rng)
     labels = torch.arange(n) % classes
@@ -133,6 +169,8 @@ def main():
                           'analytic OLS directional slopes agree with central differences',
                           'analytic rotation risk and Frobenius motion bound',
                           'aggregate bound and rank-change handling',
+                          'signed finite-risk terms agree with dense projectors and known rotation',
+                          'signed decomposition affine invariance and unequal-rank identity',
                           'blocked KNN agrees with brute force; whitened KNN affine invariance'])
     output = RESULTS / 'checks' / 'natural_moment_checks.json'
     output.parent.mkdir(parents=True, exist_ok=True)
