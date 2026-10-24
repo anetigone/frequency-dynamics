@@ -87,4 +87,4 @@ remainder 的相对误差在两个表示、三个种子中全部增加；不是�
 
 本轮数值核验：PCA 全表示 probe 与上一轮原始表示 probe 最大差 1.39e-17；PC1/remainder alignment 加和与 full 一致；PCA 方差占比与已存特征值一致。未更改原始输出或正文。
 
-来源：[完整诊断数据](../../experiments/results/empirical/dtd_pilot/dominat_direction/diagnostic.json)。
+来源：[完整诊断数据](../../../experiments/results/empirical/dtd_pilot/dominat_direction/diagnostic.json)。

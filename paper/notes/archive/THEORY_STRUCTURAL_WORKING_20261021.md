@@ -195,7 +195,7 @@ The projector chord satisfies s(t)<=L_N(t). Combining with (1) gives the finite-
  |R(t)-R(0)|\leq2\alpha_0L_N(t)+\omega L_N(t)^2. \tag{3}
 \]
 
-For parameter blocks, L_N<=sum_j integral eta_j||A^dagger M_j[G](I-P_A)||_F. The integral is an effective normal update budget. A bound measured retrospectively along the whole path is a verification, not a calibration-state forecast. To use (3) prospectively, one must bound that integral on a specified neighborhood or future update stream without inspecting its future task risks. Likewise, a raw learning-rate sum is not a normal movement budget unless a Jacobian and singular-value bound converts it.
+For parameter blocks, `L_N<=sum_j integral eta_j||A^dagger M_j[G](I-P_A)||_F`. The integral is an effective normal update budget. A bound measured retrospectively along the whole path is a verification, not a calibration-state forecast. To use (3) prospectively, one must bound that integral on a specified neighborhood or future update stream without inspecting its future task risks. Likewise, a raw learning-rate sum is not a normal movement budget unless a Jacobian and singular-value bound converts it.
 
 ## 5. Gaussian patch model: the Jordan-product mechanism
 

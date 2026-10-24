@@ -1,12 +1,14 @@
-# 本轮服务器实验
+# 自然图像确认与反事实诊断协议
 
-本轮新增五个 CIFAR 种子 40–44，跑到 2000 个样本曝光等价 epoch。原 30–32 是探索种子，新五个独立报告，不混成八个确认种子。五个种子只能给出较宽的发生率区间；本轮首先检验预先固定任务/窗口是否能重复，不追求精确估计发生率。
+本文是方法和复现命令说明，不是待办清单。当前进展、已完成结果和下一步统一见 [STATUS.md](../../STATUS.md)；本机下载结果的实际位置也在那里说明。
+
+确认协议使用五个 CIFAR 种子 40–44，跑到 2000 个样本曝光等价 epoch。原 30–32 是探索种子，新五个独立报告，不混成八个确认种子。五个种子只能给出较宽的发生率区间；本轮首先检验预先固定任务/窗口是否能重复，不追求精确估计发生率。
 
 全部沿用官方 CIFAR train 50k/test 10k 及原网络、增强、SGD 和初始化设置。新结果写入独立目录，保留原 5000-epoch 实验。原 `.pt` checkpoint 留在服务器，不需要下载到本机。本机只运行无数据的 plan 和小型合成 smoke。
 
 ## 同步与运行
 
-同步 `experiments/code/empirical/` 中本轮新增的三个脚本，以及更新的 `natural_moment_experiment.py` 和 `experiments/run_mechanism_followup_server.sh`。继续保留已有 `natural_moment_eval.py`、`summarize_natural_moments.py` 和原工程的依赖目录；无需下载新数据。
+需要在服务器复现时，同步 `experiments/code/empirical/` 的现有源码，以及 `natural_moment_experiment.py` 和 `experiments/run_mechanism_followup_server.sh`。继续保留已有 `natural_moment_eval.py`、`summarize_natural_moments.py` 和原工程的依赖目录；无需下载新数据。
 
 在服务器项目根目录运行：
 

@@ -1,14 +1,10 @@
-# 代码索引
+# 实验代码
 
-按阶段定位脚本；共享模型在 shared，独立实现检查在 checks。
+研究状态与结论见[STATUS](../../STATUS.md)，运行说明见[实验入口](../README.md)。代码目录沿用现有路径，按下面的研究对象查找当前入口。
 
-- [theory](theory/README.md)：区间认证与二维机制。
-- [pilot](pilot/README.md)：最初纹理开发与图像核验。
-- [population](population/README.md)：总体机制与总体状态上的经验分叉。
-- [empirical](empirical/README.md)：完整经验 SGD、诊断和经验状态分叉。
-- [cifar](cifar/README.md)：标准数据审计、真实图像训练、OLS 与汇总。
-- [shared](shared/README.md)：真实平方图像模型与共享目标。
-- [checks](checks/README.md)：实现、完整性和迁移核验。
+- 自然图像：当前训练、固定窗口确认、度量干预和 head 反事实都在 [empirical/](empirical/README.md)。数据划分与服务器命令见[自然图像协议](../docs/natural.md)和[机制补充实验](../docs/followup.md)。
+- 合成纹理：[纹理回升入口](empirical/texture_rebound_sweep.py)复用像素核训练与总体风险计算；[population/](population/README.md)保留总体子空间机制，短期运动预测另见 [empirical/](empirical/README.md)。协议见[纹理实验](../docs/textures.md)和[运动预测](../docs/motion.md)。
+- 理论：[theory/](theory/README.md)提供解析机制、区间算术与定理数值核验；[checks/](checks/README.md)提供图像恒等式、风险和导数的实现检查。
+- 共享依赖：[shared/](shared/README.md)保存共同图像目标与数据工具。[cifar/](cifar/README.md)、[pilot/](pilot/README.md)及部分较早经验脚本仍提供当前代码调用的模型、增强、初始化和几何函数。
 
-统一入口：`python -B experiments/run.py --list`。
-[实验导航](../README.md) · [结果索引](../results/README.md)
+从仓库根目录可以直接运行具体脚本，也可以使用 `python -B experiments/run.py --list` 查找入口。这个入口按现有源码文件自动发现，不要求登记新脚本。

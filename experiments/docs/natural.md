@@ -1,6 +1,8 @@
-# 自然图像矩任务与长时间尺度补充实验
+# 自然图像矩任务与长程实验协议
 
-本轮只补代码、服务器命令和合成小验证；本机不下载真实数据、不启动正式训练。自然图像的补充目标有三项：在固定且有图像含义的二阶矩任务上测量 encoder/projection 可读性；在更长时间尺度比较类别 OLS 和对尺度敏感的 kNN；把类别任务的零变化与任务耦合界作定量比较。全部任务、种子、参数和采样时刻在正式运行前固定，不按曲线选择成功案例。
+本文是方法和复现命令说明，不是待办清单。当前进展、已完成结果和下一步统一见 [STATUS.md](../../STATUS.md)；本机下载结果的实际位置也在那里说明。
+
+正式训练在服务器执行，本机只做合成小验证和已有结果分析。协议包含三类测量：在固定且有图像含义的二阶矩任务上测量 encoder/projection 可读性；在更长时间尺度比较类别 OLS 和对尺度敏感的 kNN；把类别任务的零变化与任务耦合界作定量比较。全部任务、种子、参数和采样时刻在正式运行前固定，不按曲线选择成功案例。
 
 入口为 `experiments/code/empirical/natural_moment_experiment.py`，阶段为 `plan`、`train`、`evaluate`、`summarize`、`smoke`。不指定阶段时仅输出计划，不访问数据。统一服务器入口为 `experiments/run_supplemental_server.sh`，默认同样只输出计划。沿用服务器既有 Python 环境中的 PyTorch、torchvision、NumPy、Matplotlib；DTD 的准备文件还沿用原图像处理依赖。不增加额外包管理流程。
 
@@ -12,7 +14,7 @@
 | 图像 | 32×32 灰度，训练集全局均值/标准差 | 已准备的 64×64 灰度，原 train-only 归一化 |
 | 数据入口 | `--data-root` 下的 `cifar-10-batches-py/`，`download=False` | `--data-root` 下的 `prepared_gray_64.pt` |
 | 测试集 | 固定 checkpoint 的测量；不用来选择任务、参数或停止点 | 不下载、不使用 DTD test |
-| 新种子 | 30、31、32 | 30、31、32 |
+| 协议种子 | 30、31、32 | 30、31、32 |
 | 总预算 | 5,000 exposure-equivalent epochs | 5,000 exposure-equivalent epochs，可先只跑到 200 |
 
 每一步从官方训练集有放回均匀采样 256 张图像。这里的 epoch 定义为 `step * 256 / train_size`，是累计样本曝光量，不是逐遍无放回遍历数据。CIFAR 5,000 epoch 每种子为 976,563 次更新；DTD 为 36,719 次。新 CIFAR 的官方 50k/10k 结果不与历史 45k/5k 结果合并计算。
@@ -63,7 +65,7 @@ export DEVICE=cuda
 bash experiments/run_supplemental_server.sh plan
 ```
 
-先做 200 epoch 的自然图像矩任务与类别读取测量：
+需要分阶段复现时，先测量到 200 epoch：
 
 ```bash
 bash experiments/run_supplemental_server.sh first
@@ -101,4 +103,4 @@ bash experiments/run_supplemental_server.sh smoke
 
 显存不足时可降低纯评估的 `FEATURE_BATCH` 或 `KNN_BATCH`；它们不改变任务或训练参数。不要以此改动正式 `--batch-size 256`。默认 DTD/CIFAR 均将输入图像放在选定 device，服务器需为完整输入及卷积中间量留出显存。
 
-输出在每套 suite 的 `summary/`：`moment_risks.csv`、`class_readouts.csv`、`knn.csv`、`local_predictions.csv`、`geometry_bounds.csv`、`dominant_statistics.csv`、`trajectory_events.csv`、`task_frequencies.csv`、`rank_sensitivity.csv`、`rank_sensitivity_events.csv`、`coverage.csv`、`audit.csv`、`findings.md` 及曲线图。`geometry_and_dominance.png/pdf` 展示位移和占优方向统计。覆盖表保留缺失种子、失败和部分观察时长；不把较短轨迹与完整轨迹混成同一时长的发生率。纹理结果仍分开放在该 suite 的 `encoder_rebound_summary/`（原固定时点指标）和 `trajectory_summary/`（全轨迹指标），详见 `TEXTURE_REBOUND_50_SEEDS.md`。
+输出在每套 suite 的 `summary/`：`moment_risks.csv`、`class_readouts.csv`、`knn.csv`、`local_predictions.csv`、`geometry_bounds.csv`、`dominant_statistics.csv`、`trajectory_events.csv`、`task_frequencies.csv`、`rank_sensitivity.csv`、`rank_sensitivity_events.csv`、`coverage.csv`、`audit.csv`、`findings.md` 及曲线图。`geometry_and_dominance.png/pdf` 展示位移和占优方向统计。覆盖表保留缺失种子、失败和部分观察时长；不把较短轨迹与完整轨迹混成同一时长的发生率。纹理结果仍分开放在该 suite 的 `encoder_rebound_summary/`（原固定时点指标）和 `trajectory_summary/`（全轨迹指标），详见[纹理协议](textures.md)。

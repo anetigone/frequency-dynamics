@@ -61,7 +61,7 @@
 - 汇总：逐种子值、相对初始化变化、同架构配比差、固定步数架构差、共同能量缺失种子与超调；三个种子仅报告描述性均值和样本标准差。
 
 初始状态和训练参数写入 protocol.json。不校验源码哈希；相同数据划分、任务列表和无监督配置可以在原目录接着运行。
-监督初版的源码已原样保存为 [历史源码](../archive/cifar_capacity_before_supervised_fix_20261020.py)。
+监督初版的源码已原样保存为 [历史源码](../../archive/cifar_capacity_before_supervised_fix_20261020.py)。
 已完成运行和数值评估可以跳过复用；未完成运行从相同初态重跑，不声称恢复优化器中途状态。
 数值评估与 NumPy / Matplotlib 汇总分别启动进程，沿用现有 OpenMP 隔离方式。
 
@@ -91,10 +91,10 @@ python -B experiments/run.py check_cifar_capacity
 汇总生成 `summary.json`、`findings.md` 和无监督组的 `capacity_validation.png`。
 有监督单独组没有无监督曲线，故不生成该图。
 
-实现回归检查：[检查记录](../results/checks/cifar_capacity_checks.json)。
+实现回归检查：[检查记录](../../results/checks/cifar_capacity_checks.json)。
 覆盖 11 个训练条件、初始化和随机流配对、监督两路径、真实 OLS / 绘图汇总、缺失能量截面、不完整实验拒绝和无源码校验的旧目录续跑。
-历史短程检查：[记录](../results/checks/cifar_supervised_fix_realdata.json)。该 SGD 配置后来在服务器第 3397 步发散，不作为完整稳定性的证据。
-当前配置已在本机 GPU 上完成三个开发种子各两组监督轨迹，六条均跑满 4000 步，最终参数全部有限。验证期间未读取验证 / 测试指标，见 [完整记录](../results/checks/cifar_supervised_full_4000_adam/README.md)。裁剪比例也已报告。
+历史短程检查：[记录](../../results/checks/cifar_supervised_fix_realdata.json)。该 SGD 配置后来在服务器第 3397 步发散，不作为完整稳定性的证据。
+当前配置已在本机 GPU 上完成三个开发种子各两组监督轨迹，六条均跑满 4000 步，最终参数全部有限。验证期间未读取验证 / 测试指标，见 [完整记录](../../results/checks/cifar_supervised_full_4000_adam/README.md)。裁剪比例也已报告。
 
 ## 在旧目录直接续跑
 
@@ -128,4 +128,4 @@ python -B experiments/run.py summarize_cifar_capacity
 
 ## 服务器结果已收回
 
-2026-10-20：33 条开发运行的 summary 已同步，见 [结果解读](../results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md)。该批运行使用 RTX 4090 D、PyTorch 2.8.0+cu128，与本机数值稳定性验证分开记录。所有准确率均为验证集指标，没有测试集选型。
+2026-10-20：33 条开发运行的 summary 已同步，见 [结果解读](../../results/cifar/capacity_development/DIAGNOSTIC_REVIEW.md)。该批运行使用 RTX 4090 D、PyTorch 2.8.0+cu128，与本机数值稳定性验证分开记录。所有准确率均为验证集指标，没有测试集选型。

@@ -7,13 +7,13 @@
 
 | 项目 | 完成量 | 输出 |
 |---|---:|---|
-| 从头到尾的有限数据经验 SGD | 90 条，三模型×三配比×十种子，各 4000 步 | [主实验](../results/empirical/full_sgd_main/findings.md) |
-| 同初始化/数据的独立 SGD 流 | 额外 40 条；平方、线性各种子共三条流 | [主实验重复性](../results/empirical/full_sgd_main/summary.json) |
-| 11×11 局部经验复验 | 90 条，各 4000 步 | [局部结果](../results/empirical/full_sgd_local/findings.md) |
-| 经验状态的重复分叉 | 90 个真实经验 checkpoint；每个 32 条未来流；中点 8 条流延长到 8/64 步 | [干预结果](../results/empirical/full_sgd_interventions/findings.md) |
-| 固定状态的均值/方差诊断 | 两个开发种子、三模型、三个 batch 大小，各重复 64 次 | [批次诊断](../results/empirical/batch_drift_diagnostic/findings.md) |
-| CIFAR-10 标准数据检查 | 七文件 MD5、形状、类型、类别数量全部通过 | [数据审计](../results/cifar/cifar_audit.json) |
-| CIFAR-10 本机预算比较 | 五种子×三配比，各 4000 步，固定步数/共同能量评估及最终测试 | [自然图像结果](../results/cifar/cifar_local_five/findings.md) |
+| 从头到尾的有限数据经验 SGD | 90 条，三模型×三配比×十种子，各 4000 步 | [主实验](../../results/empirical/full_sgd_main/findings.md) |
+| 同初始化/数据的独立 SGD 流 | 额外 40 条；平方、线性各种子共三条流 | [主实验重复性](../../results/empirical/full_sgd_main/summary.json) |
+| 11×11 局部经验复验 | 90 条，各 4000 步 | [局部结果](../../results/empirical/full_sgd_local/findings.md) |
+| 经验状态的重复分叉 | 90 个真实经验 checkpoint；每个 32 条未来流；中点 8 条流延长到 8/64 步 | [干预结果](../../results/empirical/full_sgd_interventions/findings.md) |
+| 固定状态的均值/方差诊断 | 两个开发种子、三模型、三个 batch 大小，各重复 64 次 | [批次诊断](../../results/empirical/batch_drift_diagnostic/findings.md) |
+| CIFAR-10 标准数据检查 | 七文件 MD5、形状、类型、类别数量全部通过 | [数据审计](../../results/cifar/cifar_audit.json) |
+| CIFAR-10 本机预算比较 | 五种子×三配比，各 4000 步，固定步数/共同能量评估及最终测试 | [自然图像结果](../../results/cifar/cifar_local_five/findings.md) |
 
 统计单位为配对种子：纹理十个，CIFAR 五个；轨迹、checkpoint、任务和批次重复不重复计作独立种子。
 

@@ -62,8 +62,8 @@
 
 ## 输出和未完成工作
 
-可直接查看 [results/figures/](../results/pilot/figures) 的 PNG；
-[pilot_summary.json](../results/pilot/figures/pilot_summary.json) 汇总共同能量截面风险。
+可直接查看 [results/figures/](../../results/pilot/figures) 的 PNG；
+[pilot_summary.json](../../results/pilot/figures/pilot_summary.json) 汇总共同能量截面风险。
 各训练目录包含 config、trajectory、result、预测 JSON 及本地 checkpoint。
 
 后续需锁定协议后用独立种子确认，补 K=2/局部卷积的系统训练和长期分叉。

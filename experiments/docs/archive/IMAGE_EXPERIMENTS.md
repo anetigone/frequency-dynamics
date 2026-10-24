@@ -133,6 +133,6 @@ kernel_coefficient、head_coefficient 和各配比的总体风险方向预测。
 分别评估 encoder 和 projection；不能套用二维 c*。
 尚未连接服务器，也未启动自然图像下载或训练。
 
-后续进展见 [SUBSPACE_MECHANISM.md](SUBSPACE_MECHANISM.md)：已完成锁定协议后的十种子总体确认、
+后续进展见 [SUBSPACE_MECHANISM.md](../geometry.md)：已完成锁定协议后的十种子总体确认、
 K=2/局部核与真实经验 SGD 的 1/8/64 步分叉。本文件上面的“尚未完成”记录为第一批 pilot 时的状态；
 完整有限数据预训练确认、自然图像与更长期干预仍未完成。

@@ -205,7 +205,7 @@ $$\dot V=-\eta_V W^\top H(A)WV=C(t)V.$$
 
 $$\dot B_{ck}=-4\eta_h g_kB_{ck}(W^\top\nabla_A L)_{ck},$$
 
-通常不具有统一的左乘形式。在真正瓶颈 $C<d$ 时，它可以改变 encoder 行空间。完整推导、局部卷积的 Jacobian Gram 和按模型独立校准见[机制记录](../../experiments/docs/SUBSPACE_MECHANISM.md)。主定理 T 自身取 $C=d=2$：其可逆 encoder 的行空间不变，不能用新高维实验反向将 T 改写成 encoder 退化定理。
+通常不具有统一的左乘形式。在真正瓶颈 $C<d$ 时，它可以改变 encoder 行空间。完整推导、局部卷积的 Jacobian Gram 和按模型独立校准见[机制记录](../../../experiments/docs/geometry.md)。主定理 T 自身取 $C=d=2$：其可逆 encoder 的行空间不变，不能用新高维实验反向将 T 改写成 encoder 退化定理。
 
 ## 3. 单通道：冻结头对照与路径边界
 
@@ -703,7 +703,7 @@ $$a_0=(0.02432,0.02432),\quad V_0=0.0011829248.$$
 
 局部 Taylor 预测也作了独立数值核对：$e=0.001$ 时两个指定时刻的风险约为 0.49999321 和 0.50002088；$e=0.0005$ 时约为 0.49999830 和 0.50000515。风险差除以 $e^2$ 分别约为 27.673 和 27.405，趋向公式 (33) 的常数 $2\mathsf a^2/\mathsf b\approx27.142$。这些很小的间隔不支持“局部定理已经给出常数级效果”的说法。
 
-脚本为 [mechanism_checks.py](../../experiments/code/theory/mechanism_checks.py)，完整结果为 [mechanism_results.json](../../experiments/results/theory/mechanism_results.json)，按能量采样的轨迹为 [mechanism_profiles.csv](../../experiments/results/theory/mechanism_profiles.csv)。保留物理时间列，便于同时按时间与能量比较。尚未做有限训练集、有限标签或图像数据实验。
+脚本为 [mechanism_checks.py](../../../experiments/code/theory/mechanism_checks.py)，完整结果为 [mechanism_results.json](../../../experiments/results/theory/mechanism_results.json)，按能量采样的轨迹为 [mechanism_profiles.csv](../../../experiments/results/theory/mechanism_profiles.csv)。保留物理时间列，便于同时按时间与能量比较。尚未做有限训练集、有限标签或图像数据实验。
 
 ### 命题 Q：一个显式八维参数盒内的初始改善余量
 
@@ -734,7 +734,7 @@ $$\left[-\frac{299837128047619056070318565}{1914941680522697657082440034},
 
 ### 6.4 学习率对照、扰动与增加坐标
 
-新增脚本 [representation_checks.py](../../experiments/code/theory/representation_checks.py) 与 [representation_results.json](../../experiments/results/theory/representation_results.json) 分别核查：命题 L 的两种时间配对、命题 Q 的精确区间证书、encoder 与 projection 的不同评测结果，以及较长轨迹的数值稳健性。
+新增脚本 [representation_checks.py](../../../experiments/code/theory/representation_checks.py) 与 [representation_results.json](../../../experiments/results/theory/representation_results.json) 分别核查：命题 L 的两种时间配对、命题 Q 的精确区间证书、encoder 与 projection 的不同评测结果，以及较长轨迹的数值稳健性。
 
 轨迹统一使用相对能量进度 $\ell=1.7,6$ 两个预先固定的截面，分别定义改善量 $\mathcal R(0)-\mathcal R(1.7)$、回升量 $\mathcal R(6)-\mathcal R(1.7)$，以及超出初值量 $\mathcal R(6)-\mathcal R(0)$。扰动后初始方向可以不同，因此每条轨迹均使用自己的初始风险和 $V_0$。这类扰动扫描不能当作匹配同一 $a_0$ 的尺度实验。
 
@@ -768,7 +768,7 @@ $$\left[-\frac{299837128047619056070318565}{1914941680522697657082440034},
 
 真实经验 SGD 分叉使用另行预设的 $\ell=0.75,1.5,2.25$ checkpoint，模型间共享批次与增强噪声，预测由当前有效映射及解析更新几何计算，先于分叉写出。平方模型在 1/8/64 步窗口的种子平均符号吻合率为 91.4%/97.2%/98.4%，恒预测降低的对应基线约 52.6%/52.6%/52.7%。这仍使用已知任务方向，checkpoint 来自总体训练，不能称为无需标签干预、完整经验预训练验证或长期风险保证。经验 SGD 下线性 encoder 也出现非零子空间变化，明确界定了命题 S 的适用范围。
 
-原始数据、校准检查、种子统计及局部核验证见[子空间结果](../../experiments/results/population/subspace_summary/findings.md)与[经验分叉结果](../../experiments/results/population/subspace_empirical_confirm/findings.md)。这些是数值确认，不是新增的高维认证定理，也没有自然图像结论。
+原始数据、校准检查、种子统计及局部核验证见[子空间结果](../../../experiments/results/population/subspace_summary/findings.md)与[经验分叉结果](../../../experiments/results/population/subspace_empirical_confirm/findings.md)。这些是数值确认，不是新增的高维认证定理，也没有自然图像结论。
 
 ### 6.6 从头到尾的经验 SGD：平均方向与随机移动分开
 
@@ -782,7 +782,7 @@ $$\left[-\frac{299837128047619056070318565}{1914941680522697657082440034},
 
 在完整经验训练第 500/2000/3500 步的预设状态上，对未来批次重复分叉，平方模型单步符号概率分别约 91.8%/57.0%/52.6%，恒预测降低的基线为 55.6%/47.7%/50.8%。早期总体几何具有信息，晚期单批次预测明显退化。中点 8/64 步的符号概率提高伴随幅度误差增加，不能理解为窗口越长线性展开越准确。阈值存在与否和误差单独报告；目前不主张精确配比定位或晚期可靠控制。
 
-主实验不进行能量早停或输出重标定，后段可能超过定理 T 的 $Q<1$ 能量区间；该部分只是经验外推，且高维实验始终不属于二维证书。快速功率恒等式更新的仍是真实像素核；已训练状态连续 8 步实际图像 SGD 核验的参数差最大约 $2.3\times10^{-16}$。完整输出见[经验收尾](../../experiments/docs/LOCAL_CLOSEOUT.md)。
+主实验不进行能量早停或输出重标定，后段可能超过定理 T 的 $Q<1$ 能量区间；该部分只是经验外推，且高维实验始终不属于二维证书。快速功率恒等式更新的仍是真实像素核；已训练状态连续 8 步实际图像 SGD 核验的参数差最大约 $2.3\times10^{-16}$。完整输出见[经验收尾](../../../experiments/docs/archive/LOCAL_CLOSEOUT.md)。
 
 ### 6.7 CIFAR-10：固定预算外推的弱证据
 
@@ -790,7 +790,7 @@ $$\left[-\frac{299837128047619056070318565}{1914941680522697657082440034},
 
 固定最终步的 encoder 测试准确率均值在 $r=0.1,1,10$ 下为 36.48%/36.45%/36.52%，projection 为 23.39%/23.50%/23.81%。但在固定无标签校准集的共同输出能量 $\ell=2$ 附近，projection 的 $r=10$ 减 $r=0.1$ 验证差异均值仅约 +0.11 个百分点，五种子 bootstrap 描述区间约为 [-0.42,+0.54] 个百分点；其他共同能量截面的 projection 区间也跨零。
 
-因此当前预算下，不能建立自然图像上超出训练速度的稳定收益，encoder 变化也很小。分类结果不是总体平方风险，不验证二维阈值；能量只是在固定校准图像上的代理，首次穿越网格与超调量完整记录。该实验尚非长程收敛比较。全部预设训练完成后才统一评估固定最终步的测试集，未按测试标签选停止点或配比。完整结果见 [CIFAR-10 汇总](../../experiments/results/cifar/cifar_local_five/findings.md)。
+因此当前预算下，不能建立自然图像上超出训练速度的稳定收益，encoder 变化也很小。分类结果不是总体平方风险，不验证二维阈值；能量只是在固定校准图像上的代理，首次穿越网格与超调量完整记录。该实验尚非长程收敛比较。全部预设训练完成后才统一评估固定最终步的测试集，未按测试标签选停止点或配比。完整结果见 [CIFAR-10 汇总](../../../experiments/results/cifar/cifar_local_five/findings.md)。
 
 ## 7. 结果定位与研究重点
 
@@ -991,12 +991,12 @@ $$
 
 ### A.5 复算与精确证书余量
 
-代码与结果统一位于 [experiments/](../../experiments)：
+代码与结果统一位于 [experiments/](../../../experiments)：
 
-- [interval_core.py](../../experiments/code/theory/interval_core.py)：整数定点区间、Taylor 级数、有理向量场及风险包含。
-- [verify.py](../../experiments/code/theory/verify.py)：整段中心轨迹、连续参数误差管、分母和风险间隔认证。
-- [certificate.json](../../experiments/results/theory/certificate.json)：精确整数端点、每步对数误差上界与 Jacobian 上界参数。
-- [check_arithmetic.py](../../experiments/code/theory/check_arithmetic.py)：用独立的 `fractions.Fraction` 核查带符号乘除的外包性质；它只检验算术实现，不代替轨迹证明。
+- [interval_core.py](../../../experiments/code/theory/interval_core.py)：整数定点区间、Taylor 级数、有理向量场及风险包含。
+- [verify.py](../../../experiments/code/theory/verify.py)：整段中心轨迹、连续参数误差管、分母和风险间隔认证。
+- [certificate.json](../../../experiments/results/theory/certificate.json)：精确整数端点、每步对数误差上界与 Jacobian 上界参数。
+- [check_arithmetic.py](../../../experiments/code/theory/check_arithmetic.py)：用独立的 `fractions.Fraction` 核查带符号乘除的外包性质；它只检验算术实现，不代替轨迹证明。
 
 从仓库根目录使用标准 Python 3（不加 `-O`，必须启用断言），不依赖第三方库：
 

@@ -2,7 +2,7 @@
 
 ## 2026-10-21 核验与内容收紧
 
-当前使用 [main.tex](../main.tex) 编译单一 [完整 PDF](../output/pdf/main.pdf)，包含正文、参考文献和附录；压缩前入口保存为 [technical_report.tex](../technical_report.tex)。主文以encoder外向运动、解析回升族和非对称稳定性为中心。随机包络、旧投影证书与完整诊断保留在附录，不作为并列核心贡献。
+当前使用 [main.tex](../../main.tex) 编译单一 [完整 PDF](../../output/pdf/main.pdf)，包含正文、参考文献和附录；压缩前入口保存为 [technical_report.tex](../../technical_report.tex)。主文以encoder外向运动、解析回升族和非对称稳定性为中心。随机包络、旧投影证书与完整诊断保留在附录，不作为并列核心贡献。
 
 核心证明已独立逐项核对，见CORE_THEOREM_AUDIT_20261021.md。定理级邻近对照见THEOREM_LITERATURE_COMPARISON_20261021.md：已补入直接的几何过冲先例与二阶矩/Riccati工具先例，保留组合性贡献措辞，不以未命中证明首创。八篇重点相关声明及两篇追加结构近邻已核；不是穷尽所有推论或前向引用的认证。
 

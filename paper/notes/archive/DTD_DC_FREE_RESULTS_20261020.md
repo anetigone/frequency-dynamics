@@ -79,4 +79,4 @@ python -B experiments/run.py diagnose_dominant_direction experiments/results/emp
 
 本轮复核了均值、样本标准差及相对初态的逐种子差，均与 summary 一致；没有启动新训练或改写结果。
 
-来源：[DC-free summary](../../experiments/results/empirical/dtd_dc_free/summary.json)、[原 pilot summary](../../experiments/results/empirical/dtd_pilot/summary.json)。
+来源：[DC-free summary](../../../experiments/results/empirical/dtd_dc_free/summary.json)、[原 pilot summary](../../../experiments/results/empirical/dtd_pilot/summary.json)。

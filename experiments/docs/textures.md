@@ -1,6 +1,8 @@
-# 50 个新种子的合成纹理补充实验
+# 合成纹理配对实验协议
 
-2026-10-22。服务器执行正式训练；本机仅做短合成 smoke。原 6 种子验证和历史结果保留，不与本轮新种子合并成独立重复。
+本文是方法和复现命令说明，不是待办清单。当前进展、已完成结果和下一步统一见 [STATUS.md](../../STATUS.md)；本机下载结果的实际位置也在那里说明。
+
+服务器执行正式训练；本机仅做短合成 smoke。原 6 种子验证和历史结果保留，不与本轮新种子合并成独立重复。
 
 入口为 `experiments/code/empirical/texture_rebound_sweep.py`，默认只打印计划，不创建目录或启动训练。默认新种子 100–149，共 50 个独立种子，每种子配对 square、linear、frozen_front，r=1，共 150 条轨迹。沿用原配置：32×32 全支撑像素滤波器、d=16、C=8、K=1、float64 CPU、32,768 个训练样本、batch=256、SGD lr=0.002、增强功率 0.2、4,000 步。每 25 步记录，固定比较点仍为 1,000 和 4,000。每进程限制一个 Torch CPU 线程，不争用自然图像训练的 GPU。
 
@@ -53,6 +55,6 @@ python -B experiments/code/empirical/texture_rebound_sweep.py --stage summary
 & H:/anaconda3/envs/py312/python.exe -B experiments/code/empirical/texture_rebound_sweep.py --stage all --seeds 100 101 --steps 8 --early-step 2 --late-step 8 --record-every 2 --output experiments/results/checks/texture_rebound_sweep_smoke
 ```
 
-正式 50 种子实验尚待服务器执行；本文件不宣称已经得到新的正式发生率。
+正式结果和完成状态见 STATUS；本协议不维护另一份运行进度。
 
-已完成本机 smoke：6/6 短轨迹正常完成，固定时点与轨迹汇总均生成。另用手工风险序列验证先后顺序、完整回升与普通 drawup 的区别及空分母处理；`checks/texture_rebound_sweep_missing_smoke` 是由短轨迹构造的缺失/故障报告样例（1 complete、1 simulated failure、1 missing），仅核验缺失不被默认为无事件，不是新增训练结果。训练与 NumPy/Matplotlib 汇总在 `--stage all` 中使用两个独立进程，避免本机环境重复加载 OpenMP DLL。
+Smoke 与手工风险序列检查先后顺序、完整回升与普通 drawup 的区别及空分母处理；`checks/texture_rebound_sweep_missing_smoke` 是由短轨迹构造的缺失/故障报告样例（1 complete、1 simulated failure、1 missing），仅核验缺失不被默认为无事件，不是新增训练结果。训练与 NumPy/Matplotlib 汇总在 `--stage all` 中使用两个独立进程，避免本机环境重复加载 OpenMP DLL。
