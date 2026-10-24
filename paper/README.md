@@ -1,6 +1,8 @@
 # 论文稿
 
-当前阅读入口为[合并 PDF](output/pdf/main.pdf)：正文 8 页、参考文献 1 页、附录 30 页，共 39 页。附录与正文共用文献表和内部交叉引用，物理页码连续。正文围绕编码器外向运动、解析回升族、六坐标独立扰动的定量稳定性，以及固定任务的完整 encoder 回升。纹理主报告使用 50 个配对种子、三个模型的 150 条完整轨迹，同时报告采样路径和固定时点判据；square 与 linear 均有 encoder 完整回升，不作架构排他性结论。原六种子结果和步长检查保留于附录。CIFAR 三种子 5000 epoch 结果展示自然图像固定矩任务的完整 encoder 回升，并区分类别读取与 projection 选择差距。自然图像见证时刻为事后选择，训练经验最优风险与测试误差分别报告。短期预测细节移入附录；随机窗口保留为条件性延伸。
+当前阅读入口为[合并 PDF](output/pdf/main.pdf)：正文 8 页、参考文献 1 页、附录 32 页，共 41 页。附录与正文共用文献表和内部交叉引用，物理页码连续。正文围绕编码器外向运动、解析回升族、六坐标独立扰动的定量稳定性，以及固定任务的完整 encoder 回升。纹理主报告使用 50 个配对种子、三个模型的 150 条完整轨迹，同时报告采样路径和固定时点判据；square 与 linear 均有 encoder 完整回升，不作架构排他性结论。原六种子结果和步长检查保留于附录。CIFAR 的三种子长程发现结果与五个新种子的固定窗口确认分别报告；正文主表展示固定晚期 encoder 的 head 反事实，附录保留矩任务见证、度量干预及完整交叉比较。训练经验最优风险与测试误差分别报告。短期预测细节移入附录；随机窗口保留为条件性延伸。
+
+2026-10-24 补充结果：新种子固定窗口确认 1/5（seed 41，200→500 epoch，最小四项 gap 为 0.004158），到 2000 epoch 又恢复。原三种子 checkpoint 的 pullback 度量干预改变轨迹，但未消除回升。固定 5000 epoch encoder 后，原晚期 head、较早 head、训练标签最优八维 head、完整 encoder 的测试准确率分别为 26.89%、29.06%、36.51%、37.26%；监督 head 消除原 head 相对完整 encoder 的均值测试 MSE 差距约 97.6%，仅作诊断参照。两类 checkpoint 诊断不新增独立预训练重复，时间交叉分解不作唯一因果归因。详见 [natural_followup_details.tex](sections/natural_followup_details.tex)。
 
 - [main.tex](main.tex)：唯一当前编译入口；正文在 [sections/submission.tex](sections/submission.tex)，附录顺序在 [sections/appendix_contents.tex](sections/appendix_contents.tex)。
 - [notes/](notes/)：开发说明、理论工作记录、结果分析、文献对照和历史审阅；从工作区根目录移入的早期记录也在这里。

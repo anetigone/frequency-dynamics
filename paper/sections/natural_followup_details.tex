@@ -1,0 +1,90 @@
+\section{Natural-Image Confirmation, Metric Intervention, and Head Counterfactuals}
+\label{supp:natural-followup}
+These follow-ups address three separate questions: repetition of a fixed moment-task event under new training randomness, sensitivity to a filter optimization metric, and recoverability of class readout at a fixed encoder. All use the same official CIFAR-10 train/test split as Appendix~\ref{supp:natural-long}. The previously inspected test images are reused for specified measurements, not a new untouched image sample. Only the first experiment adds new pretraining initializations; metric branches and head diagnostics reuse the original three seeds.
+
+\subsection{Five new seeds with fixed tasks and windows}
+Seeds 40--44 each train to 2,000 sample-exposure epochs, with five fixed evaluations at 0, 200, 500, 750, and 2,000. Before these runs, the primary task is fixed to antidiagonal-high energy, the threshold to $\delta=0.001$, and the two windows to 200/500 and 750/2,000. The latter choices use the earlier discovery seeds 30--32. A success requires all four gaps---training improvement, training excess over initialization, and the corresponding test gaps---to exceed $\delta$ at the same pair. Table~\ref{supp:followup-confirmation} reports the minimum gap for every seed and window, retaining failures. No run is missing. Encoder counts are 1/5 and 0/5; the seed union is 1/5. Projection counts are also 1/5 and 0/5.
+
+\begin{table}[t]
+\centering\small
+\caption{Fixed-window encoder confirmation on antidiagonal-high energy. Each entry is the minimum of four training/test gaps in training-target variance units. Success requires $>0.001$. The sole success is seed 41's first window.}
+\label{supp:followup-confirmation}
+\begin{tabular}{rrr}
+\toprule
+Seed&200/500 epochs&750/2,000 epochs\\\midrule
+40&$-0.020110$&$-0.022574$\\
+41&$+0.004158$&$-0.001856$\\
+42&$-0.005924$&$-0.013446$\\
+43&$-0.006579$&$-0.023321$\\
+44&$-0.005242$&$-0.034101$\\\bottomrule
+\end{tabular}
+\end{table}
+
+Seed 41's training risks at 0/200/500 epochs are $0.443971128$, $0.438180053$, and $0.450300658$; test errors are $0.394428382$, $0.386648908$, and $0.398586313$. The four gaps are $0.005791075$, $0.006329530$, $0.007779474$, and $0.004157931$. Its fixed-view audit objective decreases across those three points, from $-0.009394$ to $-0.643324$ to $-2.725391$, but the finer audit records fluctuate. By 2,000 epochs, training and test risks are below initialization by $0.001332711$ and $0.001856338$. This is finite-time rebound followed by recovery.
+
+The five new seeds confirm repetition across initialization and SGD randomness on the same image split. They are not pooled with the three discovery seeds into eight confirmation trials. A pointwise Wilson 95\% interval for the two-window seed union 1/5 is approximately $[3.62,62.45]\%$. Secondary retrospective searches over all eleven tasks yield five encoder task--seed events across 3/5 seeds and eighteen projection events across 5/5; these do not replace the primary 1/5 result. All 25 evaluations retain ranks $64/8$, and the three supplementary SVD cutoffs preserve risks and decisions.
+
+\subsection{Changing the filter metric at paired source states}
+For each original seed 30--32, branches start from the 200-epoch checkpoint and continue to 500, or start from 750 and continue to 2,000. Each of six source states has an SGD and a pullback branch; all twelve complete. Parameters, function family, head update rule, and future minibatch/augmentation stream are paired. For a filter $h$, put $q=\|h\|^2$ and $C=hh^\top$. The alternative front update is
+\begin{align}
+ M(h)g&=\frac{g}{2q}-\frac{h(h^\top g)}{4q^2}
+          =(J_C^*J_C)^{-1}g,\\
+ \Delta h&=-\eta_h\alpha M(h)g_h.
+\end{align}
+This uses the inverse pullback of the Frobenius metric on the rank-one quadratic manifold. It retains the rank-one constraint, data anisotropy, and head coupling; it is not whitening of the complete natural-moment space. The head learning rate and rule are unchanged, although its later gradient and trajectory can change with the encoder.
+
+The scalar $\alpha$ matches estimated source clean-centered-output mobility traces. Four independent clean batches of 256 images and 16 shared Rademacher VJP probes per batch estimate $T_{\rm orig}=\operatorname{mean}\|g\|^2$ and $T_{\rm pre}=\operatorname{mean}g^\top Mg$; $\alpha=T_{\rm orig}/T_{\rm pre}$ is frozen during continuation. This is a source Monte Carlo scalar match, not an exact augmented-objective mobility match in every direction or at later states. It neither matches task slopes nor forces equal objective progress.
+
+\begin{table}[t]
+\centering\small
+\caption{Metric intervention on the fixed primary task. Endpoint risk differences are pullback minus SGD. All six training/test differences are positive. Sources within each original seed are correlated.}
+\label{supp:followup-metric}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{rrrr}
+\toprule
+Seed&Source/late epoch&$\Delta R_{\rm train}$&$\Delta R_{\rm test}$\\\midrule
+30&200/500&0.008932&0.004481\\
+31&200/500&0.005039&0.004390\\
+32&200/500&0.004887&0.003620\\
+30&750/2000&0.043453&0.039284\\
+31&750/2000&0.030122&0.032991\\
+32&750/2000&0.035322&0.032844\\\bottomrule
+\end{tabular}
+\end{table}
+
+Complete encoder rebound relative to the original initialization is observed at 2/6 SGD sources and 3/6 pullback sources. The additional event is another source from seed 30, not an additional independent seed. Pullback does not eliminate either original event. All twelve audit objectives improve from source to endpoint, while fluctuating along the way. Projection differences have mixed signs: for seed 31 from 750 epochs, pullback increases encoder test risk by $0.032991$ while decreasing projection test risk by $0.058123$. Encoder and projection cannot substitute for one another.
+
+For approximately common progress, each branch records the first crossing of source audit-loss drops $0.1,0.25,0.5,1.0$, checked every 100 updates. All 24 source/drop pairs are observed. Pullback has larger encoder Frobenius projector displacement in 24/24 pairs, higher training risk in 21/24, and higher test error in 18/24. Actual audit-loss differences reach $0.01493$ and individual overshoots $0.02531$. For seed 31, source 750 and drop 0.25, the two actual audit losses differ by $-0.0000213$ while pullback training/test risks are higher by $0.004963/0.004626$. These are correlated descriptive comparisons at approximate fixed-view audit progress, not exactly equal population loss. Different crossing times also consume different prefixes of the paired random stream.
+
+At seed 32's 750-epoch source, a shared independent 16-batch mean-gradient estimate gives primary training-risk slopes $-6.804\,10^{-7}$ for SGD and $+1.993\,10^{-7}$ for pullback, while both estimated objective derivatives are negative. For these fixed estimated vectors, a positive scalar clock change cannot account for the task-slope reversal. There are no repeated-gradient uncertainty bounds or split-half sign confirmation, however, and source slopes agree with the whole-window risk change in only 2/6 SGD and 3/6 pullback cases. Thus this local calculation does not predict finite-time rebound or uniquely identify its source. All 114 branch evaluations retain ranks $64/8$ and cutoff-stable moment risks; 21 overlapping ordinary-SGD evaluations reproduce the stored original measurements.
+
+\subsection{Same-encoder head swaps and optimal rank-eight compression}
+This diagnostic uses the original 3,000/5,000-epoch checkpoints of seeds 30--32 without new pretraining. Each encoder's full feature matrix is held fixed while its head is varied. Every representation receives a newly fitted affine OLS decoder on all 50,000 training images; all test errors use that decoder. The comparison includes the original head, the other checkpoint's unsupervised head, the complete 64-dimensional encoder, and a training-label-optimal rank-eight head. Checkpoint weights are not modified. The test split is reused for these fixed comparisons and does not select head, rank, or checkpoint.
+
+The supervised reference is the global affine reduced-rank training least-squares solution. Center training encoder features and take an SVD $X_c=USV^\top$ on its numerical support. For centered one-hot targets $Y_c$, truncate $U^\top Y_c$ to rank eight and map the retained fitted values back through $VS^{-1}$. This produces an eight-output linear head with the intercept assigned to the final decoder. It optimizes training MSE, not test MSE or accuracy. Direct scores and a refitted OLS decoder give the same saved risks. Centered ten-class one-hot targets have at most nine independent directions, so near-full performance at rank eight is also consistent with the task's small output dimension.
+
+\begin{table}[t]
+\centering\small
+\caption{All four temporal encoder/head combinations. Each row is a three-seed mean after refitting training OLS. Epoch indices identify frozen encoder $F$ and head $W$.}
+\label{supp:followup-crossed-heads}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{rrrrr}
+\toprule
+$F$&$W$&Train MSE&Test MSE&Test acc. (\%)\\\midrule
+3000&3000&0.08438508&0.08445436&28.273\\
+3000&5000&0.08482795&0.08483432&26.897\\
+5000&3000&0.08449451&0.08451106&29.060\\
+5000&5000&0.08510045&0.08511773&26.890\\\bottomrule
+\end{tabular}
+\end{table}
+
+At the fixed late encoder, replacing $W_{5000}$ by $W_{3000}$ improves training/test MSE and accuracy in every seed. The test-accuracy gains are $2.78,2.55,1.18$ points, with mean $2.17$. This comparison does not use labels to change the head itself: $W_{3000}$ comes from earlier unsupervised training, while the final decoder is refitted as for every readout.
+
+For the late encoder, mean test risks are $R_{\rm orig}=0.085117728$, $R_{\rm oracle}=0.080771410$, and $R_{\rm full}=0.080663333$. The recovered fraction is
+\begin{equation}
+ \frac{R_{\rm orig}-R_{\rm oracle}}{R_{\rm orig}-R_{\rm full}}
+ =0.975737.
+\end{equation}
+This is a ratio of mean risk gaps, not the mean seed-wise ratio (0.975650), total risk reduction, or accuracy-gap recovery. Individual seed test-gap recovery is $97.02$--$98.11\%$. At 3,000 epochs the corresponding ratio is already $97.35\%$, so much of the head selection gap predates the late interval. The late oracle's mean training risk is $0.080652260$, between full encoder $0.080555149$ and original head $0.085100448$. Training nesting and direct/refitted oracle risk agreement hold; no such general ordering is asserted for test accuracy.
+
+The original mean test-MSE deterioration is $0.000663367$. Holding the late encoder fixed assigns $0.000606664$ to changing the early head to the late head; holding the early encoder fixed assigns $0.000379964$. Their difference reflects interaction, so neither term yields a unique causal fraction of the temporal deterioration. The reliable conclusion is that the late encoder retains useful class-dependent eight-dimensional compression and that the original late head limits readout. The supervised head is a diagnostic reference, not an unsupervised algorithm or evidence that the pretraining objective should select that head. Invertible output scaling cannot explain the OLS differences.
